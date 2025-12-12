@@ -1201,8 +1201,6 @@ fn test_parse_subclassification(#[case] input: &str) {
     assert_eq!(parsed.as_str(), input);
 }
 
-// Membership and Import Tests
-
 #[rstest]
 #[case("MyRef")]
 #[case("public MyRef")]
@@ -1484,8 +1482,8 @@ fn test_parse_invariant(#[case] input: &str) {
 // Feature Tests
 
 #[rstest]
-#[case("type MyFeature;")]
-#[case("type MyFeature {}")]
+#[case("feature MyFeature;")]
+#[case("feature MyFeature {}")]
 fn test_parse_feature_basic(#[case] input: &str) {
     let pairs = KerMLParser::parse(syster::parser::kerml::Rule::feature, input).unwrap();
     let parsed = pairs.into_iter().next().unwrap();
@@ -1493,9 +1491,9 @@ fn test_parse_feature_basic(#[case] input: &str) {
 }
 
 #[rstest]
-#[case("in type MyFeature;")]
-#[case("out type MyFeature;")]
-#[case("inout type MyFeature;")]
+#[case("in feature MyFeature;")]
+#[case("out feature MyFeature;")]
+#[case("inout feature MyFeature;")]
 fn test_parse_feature_with_direction(#[case] input: &str) {
     let pairs = KerMLParser::parse(syster::parser::kerml::Rule::feature, input).unwrap();
     let parsed = pairs.into_iter().next().unwrap();
@@ -1503,9 +1501,9 @@ fn test_parse_feature_with_direction(#[case] input: &str) {
 }
 
 #[rstest]
-#[case("abstract type MyFeature;")]
-#[case("composite type MyFeature;")]
-#[case("portion type MyFeature;")]
+#[case("abstract feature MyFeature;")]
+#[case("composite feature MyFeature;")]
+#[case("portion feature MyFeature;")]
 fn test_parse_feature_with_composition(#[case] input: &str) {
     let pairs = KerMLParser::parse(syster::parser::kerml::Rule::feature, input).unwrap();
     let parsed = pairs.into_iter().next().unwrap();
@@ -1513,9 +1511,9 @@ fn test_parse_feature_with_composition(#[case] input: &str) {
 }
 
 #[rstest]
-#[case("readonly type MyFeature;")]
-#[case("derived type MyFeature;")]
-#[case("end type MyFeature;")]
+#[case("readonly feature MyFeature;")]
+#[case("derived feature MyFeature;")]
+#[case("end feature MyFeature;")]
 fn test_parse_feature_with_property(#[case] input: &str) {
     let pairs = KerMLParser::parse(syster::parser::kerml::Rule::feature, input).unwrap();
     let parsed = pairs.into_iter().next().unwrap();
@@ -1523,9 +1521,9 @@ fn test_parse_feature_with_property(#[case] input: &str) {
 }
 
 #[rstest]
-#[case("type MyFeature ordered;")]
-#[case("type MyFeature nonunique;")]
-#[case("type MyFeature ordered nonunique;")]
+#[case("feature MyFeature ordered;")]
+#[case("feature MyFeature nonunique;")]
+#[case("feature MyFeature ordered nonunique;")]
 fn test_parse_feature_with_multiplicity_properties(#[case] input: &str) {
     let pairs = KerMLParser::parse(syster::parser::kerml::Rule::feature, input).unwrap();
     let parsed = pairs.into_iter().next().unwrap();
@@ -1533,9 +1531,9 @@ fn test_parse_feature_with_multiplicity_properties(#[case] input: &str) {
 }
 
 #[rstest]
-#[case("in abstract readonly type MyFeature ordered;")]
-#[case("out composite derived type MyFeature nonunique;")]
-#[case("inout portion end type MyFeature ordered nonunique;")]
+#[case("in abstract readonly feature MyFeature ordered;")]
+#[case("out composite derived feature MyFeature nonunique;")]
+#[case("inout portion end feature MyFeature ordered nonunique;")]
 fn test_parse_feature_combined_modifiers(#[case] input: &str) {
     let pairs = KerMLParser::parse(syster::parser::kerml::Rule::feature, input).unwrap();
     let parsed = pairs.into_iter().next().unwrap();
@@ -1602,9 +1600,9 @@ fn test_parse_textual_representation(#[case] input: &str) {
 
 // Multiplicity tests
 #[rstest]
-#[case("type;")]
-#[case("type myMultiplicity;")]
-#[case("type myMultiplicity : MyType;")]
+#[case("feature;")]
+#[case("feature myMultiplicity;")]
+#[case("feature myMultiplicity : MyType;")]
 fn test_parse_multiplicity(#[case] input: &str) {
     let pairs = KerMLParser::parse(syster::parser::kerml::Rule::multiplicity, input).unwrap();
     let parsed = pairs.into_iter().next().unwrap();
@@ -1613,9 +1611,9 @@ fn test_parse_multiplicity(#[case] input: &str) {
 
 // MultiplicityRange tests
 #[rstest]
-#[case("type;")]
-#[case("type myRange;")]
-#[case("type myRange { type bound; }")]
+#[case("feature;")]
+#[case("feature myRange;")]
+#[case("feature myRange { feature bound; }")]
 fn test_parse_multiplicity_range(#[case] input: &str) {
     let pairs = KerMLParser::parse(syster::parser::kerml::Rule::multiplicity_range, input).unwrap();
     let parsed = pairs.into_iter().next().unwrap();
@@ -1636,9 +1634,9 @@ fn test_parse_metadata_feature(#[case] input: &str) {
 
 // ItemFeature tests
 #[rstest]
-#[case("type;")]
-#[case("type myItem;")]
-#[case("type myItem : ItemType;")]
+#[case("feature;")]
+#[case("feature myItem;")]
+#[case("feature myItem : ItemType;")]
 fn test_parse_item_feature(#[case] input: &str) {
     let pairs = KerMLParser::parse(syster::parser::kerml::Rule::item_feature, input).unwrap();
     let parsed = pairs.into_iter().next().unwrap();
@@ -1672,6 +1670,253 @@ fn test_parse_succession_item_flow(#[case] input: &str) {
 #[case("expr myBool;")]
 fn test_parse_boolean_expression(#[case] input: &str) {
     let pairs = KerMLParser::parse(syster::parser::kerml::Rule::boolean_expression, input).unwrap();
+    let parsed = pairs.into_iter().next().unwrap();
+    assert_eq!(parsed.as_str(), input);
+}
+
+// Tests for missing critical rules
+
+#[test]
+fn test_parse_file_empty() {
+    let input = "";
+    let result = KerMLParser::parse(syster::parser::kerml::Rule::file, input);
+    assert!(
+        result.is_ok(),
+        "Failed to parse empty file: {:?}",
+        result.err()
+    );
+}
+
+#[test]
+fn test_parse_file_with_whitespace() {
+    let input = "   \n\t  \r\n  ";
+    let result = KerMLParser::parse(syster::parser::kerml::Rule::file, input);
+    assert!(
+        result.is_ok(),
+        "Failed to parse file with whitespace: {:?}",
+        result.err()
+    );
+}
+
+#[rstest]
+#[case("3.14")]
+#[case(".5")]
+#[case("0.0")]
+fn test_parse_float(#[case] input: &str) {
+    let pairs = KerMLParser::parse(syster::parser::kerml::Rule::float, input).unwrap();
+    let parsed = pairs.into_iter().next().unwrap();
+    assert_eq!(parsed.as_str(), input);
+}
+
+#[rstest]
+#[case(".5")]
+#[case(".123")]
+#[case(".0")]
+fn test_parse_fraction(#[case] input: &str) {
+    let pairs = KerMLParser::parse(syster::parser::kerml::Rule::fraction, input).unwrap();
+    let parsed = pairs.into_iter().next().unwrap();
+    assert_eq!(parsed.as_str(), input);
+}
+
+#[rstest]
+#[case("e10")]
+#[case("E-5")]
+#[case("e+3")]
+fn test_parse_exponent(#[case] input: &str) {
+    let pairs = KerMLParser::parse(syster::parser::kerml::Rule::exponent, input).unwrap();
+    let parsed = pairs.into_iter().next().unwrap();
+    assert_eq!(parsed.as_str(), input);
+}
+
+#[rstest]
+#[case("myElement")]
+#[case("Base::Derived")]
+#[case("Pkg::Sub::Element")]
+fn test_parse_element_reference(#[case] input: &str) {
+    let pairs = KerMLParser::parse(syster::parser::kerml::Rule::element_reference, input).unwrap();
+    let parsed = pairs.into_iter().next().unwrap();
+    assert_eq!(parsed.as_str(), input);
+}
+
+#[rstest]
+#[case("MyType")]
+#[case("Base::MyType")]
+fn test_parse_type_reference(#[case] input: &str) {
+    let pairs = KerMLParser::parse(syster::parser::kerml::Rule::type_reference, input).unwrap();
+    let parsed = pairs.into_iter().next().unwrap();
+    assert_eq!(parsed.as_str(), input);
+}
+
+#[rstest]
+#[case("myFeature")]
+#[case("Base::myFeature")]
+fn test_parse_feature_reference(#[case] input: &str) {
+    let pairs = KerMLParser::parse(syster::parser::kerml::Rule::feature_reference, input).unwrap();
+    let parsed = pairs.into_iter().next().unwrap();
+    assert_eq!(parsed.as_str(), input);
+}
+
+#[rstest]
+#[case("MyClassifier")]
+#[case("Base::MyClassifier")]
+fn test_parse_classifier_reference(#[case] input: &str) {
+    let pairs =
+        KerMLParser::parse(syster::parser::kerml::Rule::classifier_reference, input).unwrap();
+    let parsed = pairs.into_iter().next().unwrap();
+    assert_eq!(parsed.as_str(), input);
+}
+
+#[rstest]
+#[case("<shortName>")]
+#[case("regularName")]
+#[case("<shortName> regularName")]
+fn test_parse_element(#[case] input: &str) {
+    let pairs = KerMLParser::parse(syster::parser::kerml::Rule::element, input).unwrap();
+    let parsed = pairs.into_iter().next().unwrap();
+    assert_eq!(parsed.as_str(), input);
+}
+
+#[rstest]
+#[case("MyElement")]
+fn test_parse_annotation(#[case] input: &str) {
+    let pairs = KerMLParser::parse(syster::parser::kerml::Rule::annotation, input).unwrap();
+    let parsed = pairs.into_iter().next().unwrap();
+    assert_eq!(parsed.as_str(), input);
+}
+
+#[rstest]
+#[case("comment /* text */")]
+#[case("doc /* documentation */")]
+fn test_parse_owned_annotation(#[case] input: &str) {
+    let pairs = KerMLParser::parse(syster::parser::kerml::Rule::owned_annotation, input).unwrap();
+    let parsed = pairs.into_iter().next().unwrap();
+    assert_eq!(parsed.as_str(), input);
+}
+
+#[rstest]
+#[case("namespace MyNamespace;")]
+#[case("namespace MyNamespace {}")]
+fn test_parse_namespace_body(#[case] input: &str) {
+    let pairs = KerMLParser::parse(syster::parser::kerml::Rule::namespace, input).unwrap();
+    let parsed = pairs.into_iter().next().unwrap();
+    // Verify namespace rule was matched and input was fully consumed
+    assert_eq!(parsed.as_rule(), syster::parser::kerml::Rule::namespace);
+    assert_eq!(parsed.as_str(), input);
+}
+
+// High-priority missing rules
+
+#[rstest]
+#[case("type MyType;")]
+#[case("abstract type MyType {}")]
+#[case("type MyType all {}")]
+#[case("type MyType ordered {}")]
+#[case("type MyType unions BaseType {}")]
+#[case("type MyType differs BaseType {}")]
+fn test_parse_type_def(#[case] input: &str) {
+    let pairs = KerMLParser::parse(syster::parser::kerml::Rule::type_def, input).unwrap();
+    let parsed = pairs.into_iter().next().unwrap();
+    assert_eq!(parsed.as_str(), input);
+}
+
+#[rstest]
+#[case("classifier MyClassifier;")]
+#[case("abstract classifier MyClassifier {}")]
+#[case("classifier MyClassifier all {}")]
+#[case("classifier MyClassifier unions BaseClassifier {}")]
+fn test_parse_classifier(#[case] input: &str) {
+    let pairs = KerMLParser::parse(syster::parser::kerml::Rule::classifier, input).unwrap();
+    let parsed = pairs.into_iter().next().unwrap();
+    assert_eq!(parsed.as_str(), input);
+}
+
+#[rstest]
+#[case("null")]
+#[case("true")]
+#[case("myFeature")]
+fn test_parse_operator_expression(#[case] input: &str) {
+    let pairs =
+        KerMLParser::parse(syster::parser::kerml::Rule::operator_expression, input).unwrap();
+    let parsed = pairs.into_iter().next().unwrap();
+    assert_eq!(parsed.as_str(), input);
+}
+
+#[rstest]
+#[case("obj.metadata")]
+#[case("Base::Feature.metadata")]
+fn test_parse_metadata_access_expression(#[case] input: &str) {
+    let pairs = KerMLParser::parse(
+        syster::parser::kerml::Rule::metadata_access_expression,
+        input,
+    )
+    .unwrap();
+    let parsed = pairs.into_iter().next().unwrap();
+    assert_eq!(parsed.as_str(), input);
+}
+
+#[test]
+fn test_parse_root_namespace_empty() {
+    let input = "";
+    let result = KerMLParser::parse(syster::parser::kerml::Rule::root_namespace, input);
+    assert!(
+        result.is_ok(),
+        "Failed to parse empty root namespace: {:?}",
+        result.err()
+    );
+}
+
+#[test]
+fn test_parse_root_namespace_with_package() {
+    let input = "package MyPackage;";
+    let pairs = KerMLParser::parse(syster::parser::kerml::Rule::root_namespace, input).unwrap();
+    let parsed = pairs.into_iter().next().unwrap();
+    assert_eq!(
+        parsed.as_rule(),
+        syster::parser::kerml::Rule::root_namespace
+    );
+    // Verify the input was fully consumed
+    assert_eq!(parsed.as_str(), input);
+}
+
+#[test]
+fn test_parse_root_namespace_with_multiple_elements() {
+    let input = "package Pkg1; package Pkg2;";
+    let pairs = KerMLParser::parse(syster::parser::kerml::Rule::root_namespace, input).unwrap();
+    let parsed = pairs.into_iter().next().unwrap();
+    assert_eq!(
+        parsed.as_rule(),
+        syster::parser::kerml::Rule::root_namespace
+    );
+    // Verify the entire input with multiple packages was parsed
+    assert_eq!(parsed.as_str(), input);
+}
+
+#[rstest]
+#[case("null")]
+#[case("123")]
+fn test_parse_invocation_expression(#[case] input: &str) {
+    let pairs =
+        KerMLParser::parse(syster::parser::kerml::Rule::invocation_expression, input).unwrap();
+    let parsed = pairs.into_iter().next().unwrap();
+    assert_eq!(parsed.as_str(), input);
+}
+
+#[rstest]
+#[case("\"hello\"")]
+#[case("\"hello\".toUpper")]
+fn test_parse_collect_expression(#[case] input: &str) {
+    // collect_expression is in inline_expression union
+    let pairs = KerMLParser::parse(syster::parser::kerml::Rule::inline_expression, input).unwrap();
+    let parsed = pairs.into_iter().next().unwrap();
+    assert_eq!(parsed.as_str(), input);
+}
+
+#[rstest]
+#[case("\"world\"")]
+#[case("myVar.property")]
+fn test_parse_select_expression(#[case] input: &str) {
+    // select_expression is in inline_expression union
+    let pairs = KerMLParser::parse(syster::parser::kerml::Rule::inline_expression, input).unwrap();
     let parsed = pairs.into_iter().next().unwrap();
     assert_eq!(parsed.as_str(), input);
 }

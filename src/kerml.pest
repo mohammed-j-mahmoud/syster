@@ -296,7 +296,7 @@ type_def = {
     "abstract"? ~
     "type" ~ identification? ~
     "all"? ~
-    (inheritance | type_relationship | feature_relationship)* ~
+    (type_relationship | feature_relationship)* ~
     multiplicity? ~
     ("ordered" | "nonunique")* ~
     namespace_body
@@ -308,7 +308,7 @@ classifier = {
     "abstract"? ~
     "classifier" ~ identification? ~
     "all"? ~
-    (inheritance | type_relationship | feature_relationship)* ~
+    (type_relationship | feature_relationship)* ~
     multiplicity? ~
     namespace_body
 }
@@ -427,14 +427,16 @@ interaction = {
 
 // Feature extends Type
 feature = {
+    prefix_metadata? ~
     feature_direction_kind? ~
     ("abstract" | "composite" | "portion")? ~
     ("readonly" | "derived" | "end")? ~
-    type_def ~
+    "feature" ~ identification? ~
+    (feature_typing | feature_relationship)* ~
+    multiplicity? ~
     ("ordered" | "nonunique")* ~
     feature_value? ~
-    membership? ~
-    owning_membership?
+    namespace_body
 }
 
 // MetadataFeature extends Feature and AnnotatingElement

@@ -198,3 +198,27 @@ fn test_parse_multiline_block_comment() {
     let comment = pairs.into_iter().next().unwrap();
     assert_eq!(comment.as_str(), "/* line 1\nline 2\nline 3 */");
 }
+
+#[test]
+fn test_parse_empty_file() {
+    let input = "";
+    let result = SysMLParser::parse(Rule::file, input);
+
+    assert!(
+        result.is_ok(),
+        "Failed to parse empty file: {:?}",
+        result.err()
+    );
+}
+
+#[test]
+fn test_parse_file_with_whitespace() {
+    let input = "   \n\t  \r\n  ";
+    let result = SysMLParser::parse(Rule::file, input);
+
+    assert!(
+        result.is_ok(),
+        "Failed to parse file with whitespace: {:?}",
+        result.err()
+    );
+}
