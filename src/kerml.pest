@@ -1,0 +1,1033 @@
+// KerML Grammar - Kernel Modeling Language (base for SysML v2)
+// This will be incrementally expanded following TDD
+
+WHITESPACE = _{ " " | "\t" | "\r" | "\n" }
+COMMENT = _{ line_comment }
+
+line_comment = { "//" ~ (!"\n" ~ ANY)* }
+block_comment = { "/*" ~ (!"*/" ~ ANY)* ~ "*/" }
+
+// Terminals
+
+decimal = @{ ASCII_DIGIT+ }
+fraction = @{ "." ~ decimal }
+float = @{ decimal ~ fraction? | fraction }
+exponent = @{ ^"e" ~ ("+" | "-")? ~ decimal }
+number = @{ float ~ exponent? }
+
+unrestricted_name = @{ "'" ~ (("\\" ~ ("'" | "\"" | "b" | "f" | "t" | "n" | "r" | "\\")) | (!"'" ~ !"\\" ~ ANY))* ~ "'" }
+name = @{ identifier | unrestricted_name }
+
+// Keywords - KerML specific, ordered by length (longest first)
+keyword = @{
+    "subclassifier" | "specialization" | "redefinition" | "multiplicty" | "interaction"
+    | "differences" | "conjugation" | "conjugates" | "classifier" | "dependency"
+    | "disjoining" | "intersects" | "inverting" | "namespace" | "nonunique"
+    | "specializes" | "succession" | "predicate" | "protected" | "reference"
+    | "redefines" | "standard" | "featuring" | "metaclass" | "connector"
+    | "datatype" | "disjoint" | "featured" | "function" | "language"
+    | "metadata" | "readonly" | "behavior" | "binding" | "comment"
+    | "crosses" | "default" | "derived" | "feature" | "hastype"
+    | "implies" | "inverse" | "istype" | "library" | "ordered"
+    | "package" | "portion" | "private" | "public" | "struct"
+    | "subsets" | "subtype" | "typing" | "abstract" | "about"
+    | "alias" | "assoc" | "chains" | "class" | "composite"
+    | "conjugate" | "differs" | "expr" | "false" | "filter"
+    | "first" | "import" | "inout" | "locale" | "member"
+    | "return" | "subset" | "unions" | "typed" | "bool"
+    | "else" | "flow" | "from" | "meta" | "null" | "step"
+    | "then" | "true" | "type" | "and" | "doc" | "end"
+    | "for" | "inv" | "not" | "out" | "rep" | "xor"
+    | "all" | "as" | "by" | "if" | "in" | "of" | "or" | "to"
+}
+
+// Identifiers  
+identifier = @{ !(keyword ~ !(ASCII_ALPHANUMERIC | "_")) ~ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
+
+// Identification fragments
+short_name = { "<" ~ name ~ ">" }
+regular_name = { name }
+identification = { (short_name ~ regular_name?) | regular_name }
+
+// Relationship Tokens (alternative syntax)
+specializes_token = @{ ":>" | "specializes" }
+subsets_token = @{ ":>" | "subsets" }
+references_token = @{ "::>" | "references" }
+crosses_token = @{ "=>" | "crosses" }
+redefines_token = @{ ":>>" | "redefines" }
+typed_by_token = @{ ":" | ("typed" ~ " " ~ "by") }
+conjugates_token = @{ "~" | "conjugates" }
+
+// Enum Types
+visibility_kind = @{ "protected" | "private" | "public" }
+feature_direction_kind = @{ "inout" | "in" | "out" }
+unary_operator = @{ "+" | "-" | "not" | "~" }
+classification_test_operator = @{ "@@" | "hastype" | "istype" | "@" }
+equality_operator = @{ "!==" | "!=" | "===" | "==" }
+import_kind = @{ "::*::**" | "::**" | "::*" }
+relational_operator = @{ "<=" | "<" | ">=" | ">" }
+
+// Common Fragments
+
+abstract_marker = { "abstract" }
+visibility = { visibility_kind }
+readonly = { "readonly" }
+derived = { "derived" }
+end_marker = { "end" }
+sufficient = { "all" }
+standard = { "standard" }
+import_all = { "all" }
+
+multiplicity_properties = {
+    ("ordered" ~ "nonunique"?)
+    | ("nonunique" ~ "ordered"?)
+}
+
+enum_type = {
+    visibility_kind
+    | feature_direction_kind
+    | unary_operator
+    | classification_test_operator
+    | equality_operator
+    | import_kind
+    | relational_operator
+}
+
+// Union Types
+
+// InlineExpression - union of expression types that can appear inline
+inline_expression = {
+    feature_chain_expression
+    | index_expression
+    | invocation_expression
+    | literal_expression
+    | metadata_access_expression
+    | null_expression
+    | operator_expression
+    | collect_expression
+    | select_expression
+    | feature_reference_expression
+}
+
+// NonOwnerType - union of non-owning relationship types
+// Note: annotation must come before membership since membership has all optional fields
+non_owner_type = {
+    annotation
+    | membership
+}
+
+// Annotations
+
+// Helper for string literals
+string_value = @{ "\"" ~ (!"\"" ~ ANY)* ~ "\"" }
+
+// Annotation - references another element
+annotation = {
+    element_reference
+}
+
+// Textual annotation body (block comment)
+textual_body = { block_comment }
+
+// Comment - can have 'about' annotations and locale
+comment = {
+    "comment" ~ identifier? ~
+    ("about" ~ annotation ~ ("," ~ annotation)*)? ~
+    ("locale" ~ string_value)? ~
+    textual_body
+}
+
+// Documentation
+documentation = {
+    "doc" ~ identifier? ~
+    ("locale" ~ string_value)? ~
+    textual_body
+}
+
+// Textual representation with language
+textual_representation = {
+    ("rep" ~ identification?)? ~
+    "language" ~ string_value ~
+    textual_body
+}
+
+// Owned Annotations
+
+owned_annotation = {
+    annotating_element
+}
+
+annotating_element = {
+    comment
+    | documentation
+    | textual_representation
+    | metadata_feature
+}
+
+// Prefix Metadata Annotation
+prefix_metadata_annotation = {
+    "#" ~ metadata_feature
+}
+
+// Elements
+
+// Base element with optional names
+element = {
+    ("<" ~ identifier ~ ">")? ~ identifier?
+}
+
+// Namespace contains other elements
+namespace = {
+    prefix_metadata? ~
+    "namespace" ~ identification? ~
+    namespace_body
+}
+
+// Namespace Body
+namespace_body = {
+    ";" | ("{" ~ namespace_body_elements ~ "}")
+}
+
+// Namespace body elements already defined below at line ~690
+
+// Non-Feature Member
+non_feature_member = {
+    visibility_kind? ~ non_feature_element
+}
+
+// Namespace Feature Member
+namespace_feature_member = {
+    visibility_kind? ~ feature_element
+}
+
+// Relationship Member
+relationship_member = {
+    visibility_kind? ~ relationship_element
+}
+
+// Annotating Member
+annotating_member = {
+    visibility_kind? ~ annotating_element
+}
+
+// Alias Member
+alias_member = {
+    visibility_kind? ~
+    "alias" ~ identification? ~
+    "for" ~ element_reference ~
+    relationship_body
+}
+
+// Prefix Metadata (shorthand for metadata annotations)
+prefix_metadata = {
+    prefix_metadata_annotation+
+}
+
+// Namespace Elements - Union Types
+
+// RelationshipElement - union of relationship types
+relationship_element = {
+    dependency
+    | specialization
+    | conjugation
+    | feature_typing
+    | subclassification
+    | disjoining
+    | feature_inverting
+    | subsetting
+    | redefinition
+    | type_featuring
+}
+
+// NonFeatureElement - union of namespace types
+non_feature_element = {
+    namespace
+    | package
+    | library_package
+    | multiplicity
+    | type_def
+    | classifier
+    | class
+    | structure
+    | metaclass
+    | data_type
+    | association
+    | association_structure
+    | interaction
+    | behavior
+    | function
+    | predicate
+}
+
+// FeatureElement - union of feature types
+feature_element = {
+    feature
+    | step
+    | expression
+    | boolean_expression
+    | invariant
+    | connector
+    | binding_connector
+    | succession
+    | item_flow
+    | succession_item_flow
+}
+
+// Type Relationships - relationships specific to types
+type_relationship = {
+    unioning
+    | differencing
+    | disjoining
+    | intersecting
+}
+
+// Feature Relationships - relationships specific to features
+feature_relationship = {
+    type_relationship
+    | feature_typing
+    | feature_chaining
+    | feature_inverting
+    | type_featuring
+}
+
+// Type extends Namespace
+type_def = {
+    prefix_metadata? ~
+    "abstract"? ~
+    "type" ~ identification? ~
+    "all"? ~
+    (inheritance | type_relationship | feature_relationship)* ~
+    multiplicity? ~
+    ("ordered" | "nonunique")* ~
+    namespace_body
+}
+
+// Classifier extends Type
+classifier = {
+    prefix_metadata? ~
+    "abstract"? ~
+    "classifier" ~ identification? ~
+    "all"? ~
+    (inheritance | type_relationship | feature_relationship)* ~
+    multiplicity? ~
+    namespace_body
+}
+
+// DataType extends Classifier
+data_type = {
+    prefix_metadata? ~
+    "abstract"? ~
+    "datatype" ~ identification? ~
+    "all"? ~
+    (inheritance | type_relationship | feature_relationship)* ~
+    multiplicity? ~
+    namespace_body
+}
+
+// Class extends Classifier
+class = {
+    prefix_metadata? ~
+    "abstract"? ~
+    "class" ~ identification? ~
+    "all"? ~
+    (inheritance | type_relationship | feature_relationship)* ~
+    multiplicity? ~
+    namespace_body
+}
+
+// Structure extends Class
+structure = {
+    prefix_metadata? ~
+    "abstract"? ~
+    "struct" ~ identification? ~
+    "all"? ~
+    (inheritance | type_relationship | feature_relationship)* ~
+    multiplicity? ~
+    namespace_body
+}
+
+// Behavior extends Class
+behavior = {
+    prefix_metadata? ~
+    "abstract"? ~
+    "behavior" ~ identification? ~
+    "all"? ~
+    (inheritance | type_relationship | feature_relationship)* ~
+    multiplicity? ~
+    namespace_body
+}
+
+// Association extends Classifier and Relationship
+association = {
+    prefix_metadata? ~
+    "abstract"? ~
+    "assoc" ~ identification? ~
+    "all"? ~
+    (inheritance | type_relationship | feature_relationship)* ~
+    multiplicity? ~
+    namespace_body
+}
+
+// AssociationStructure extends Association and Structure
+association_structure = {
+    prefix_metadata? ~
+    "abstract"? ~
+    "assoc" ~ "struct" ~ identification? ~
+    "all"? ~
+    (inheritance | type_relationship | feature_relationship)* ~
+    multiplicity? ~
+    namespace_body
+}
+
+// Metaclass extends Structure
+metaclass = {
+    prefix_metadata? ~
+    "abstract"? ~
+    "metaclass" ~ identification? ~
+    "all"? ~
+    (inheritance | type_relationship | feature_relationship)* ~
+    multiplicity? ~
+    namespace_body
+}
+
+// Function extends Behavior
+function = {
+    prefix_metadata? ~
+    "abstract"? ~
+    "function" ~ identification? ~
+    "all"? ~
+    (inheritance | type_relationship | feature_relationship)* ~
+    multiplicity? ~
+    result_expression_membership? ~
+    namespace_body
+}
+
+// Predicate extends Function
+predicate = {
+    prefix_metadata? ~
+    "abstract"? ~
+    "predicate" ~ identification? ~
+    "all"? ~
+    (inheritance | type_relationship | feature_relationship)* ~
+    multiplicity? ~
+    result_expression_membership? ~
+    namespace_body
+}
+
+// Interaction extends Association and Behavior
+interaction = {
+    prefix_metadata? ~
+    "abstract"? ~
+    "interaction" ~ identification? ~
+    "all"? ~
+    (inheritance | type_relationship | feature_relationship)* ~
+    multiplicity? ~
+    namespace_body
+}
+
+// Feature extends Type
+feature = {
+    feature_direction_kind? ~
+    ("abstract" | "composite" | "portion")? ~
+    ("readonly" | "derived" | "end")? ~
+    type_def ~
+    ("ordered" | "nonunique")* ~
+    feature_value? ~
+    membership? ~
+    owning_membership?
+}
+
+// MetadataFeature extends Feature and AnnotatingElement
+metadata_feature = {
+    "metadata" ~
+    feature_direction_kind? ~
+    ("abstract" | "composite" | "portion")? ~
+    ("readonly" | "derived" | "end")? ~
+    prefix_metadata? ~
+    "abstract"? ~
+    "type" ~ identification? ~
+    "all"? ~
+    (inheritance | type_relationship | feature_relationship)* ~
+    multiplicity? ~
+    ("about" ~ annotation ~ ("," ~ annotation)*)? ~
+    namespace_body
+}
+
+// Multiplicity extends Feature
+multiplicity = {
+    feature
+}
+
+// MultiplicityRange extends Multiplicity
+multiplicity_range = {
+    multiplicity ~
+    owning_membership?
+}
+
+// ItemFeature extends Feature
+item_feature = {
+    feature
+}
+
+// Step extends Feature
+step = {
+    prefix_metadata? ~
+    feature_direction_kind? ~
+    ("abstract" | "composite" | "portion")? ~
+    ("readonly" | "derived" | "end")? ~
+    "step" ~ identification? ~
+    ("ordered" | "nonunique")* ~
+    feature_value? ~
+    membership? ~
+    owning_membership? ~
+    namespace_body
+}
+
+// Connector extends Feature and Relationship
+connector = {
+    prefix_metadata? ~
+    feature_direction_kind? ~
+    ("abstract" | "composite" | "portion")? ~
+    ("readonly" | "derived" | "end")? ~
+    "connector" ~ identification? ~
+    ("ordered" | "nonunique")* ~
+    feature_value? ~
+    membership? ~
+    owning_membership? ~
+    end_feature_membership* ~
+    namespace_body
+}
+
+// ItemFlowEnd extends Feature
+item_flow_end = {
+    feature
+}
+
+// Succession extends Connector
+succession = {
+    prefix_metadata? ~
+    feature_direction_kind? ~
+    ("abstract" | "composite" | "portion")? ~
+    ("readonly" | "derived" | "end")? ~
+    "succession" ~ identification? ~
+    ("ordered" | "nonunique")* ~
+    feature_value? ~
+    membership? ~
+    owning_membership? ~
+    end_feature_membership* ~
+    namespace_body
+}
+
+// BindingConnector extends Connector
+binding_connector = {
+    prefix_metadata? ~
+    feature_direction_kind? ~
+    ("abstract" | "composite" | "portion")? ~
+    ("readonly" | "derived" | "end")? ~
+    "binding" ~ identification? ~
+    ("ordered" | "nonunique")* ~
+    feature_value? ~
+    membership? ~
+    owning_membership? ~
+    end_feature_membership* ~
+    namespace_body
+}
+
+// Expression extends Step
+expression = {
+    prefix_metadata? ~
+    feature_direction_kind? ~
+    ("abstract" | "composite" | "portion")? ~
+    ("readonly" | "derived" | "end")? ~
+    "expr" ~ identification? ~
+    ("ordered" | "nonunique")* ~
+    feature_value? ~
+    membership? ~
+    owning_membership? ~
+    result_expression_membership? ~
+    namespace_body
+}
+
+// ItemFlow extends Connector and Step
+item_flow = {
+    "flow" ~ connector ~
+    feature_membership?
+}
+
+// SuccessionItemFlow extends ItemFlow and Succession
+succession_item_flow = {
+    "succession" ~ "flow" ~ item_flow
+}
+
+// BooleanExpression extends Expression
+boolean_expression = {
+    expression
+}
+
+// Invariant extends BooleanExpression
+invariant = {
+    prefix_metadata? ~
+    "inv" ~ "not"? ~ identification? ~
+    namespace_body
+}
+
+// Package extends Namespace
+package = {
+    prefix_metadata? ~
+    "package" ~ identification? ~
+    namespace_body
+}
+
+// LibraryPackage extends Package
+library_package = {
+    prefix_metadata? ~
+    "library" ~ "standard"? ~ "package" ~ identification? ~
+    namespace_body
+}
+
+// Relationships
+
+// Base relationship with visibility and references
+relationship = {
+    visibility_kind? ~
+    element_reference ~
+    ("::" ~ element_reference)?
+}
+
+// Inheritance - base for inheriting relationships
+inheritance = {
+    relationship
+}
+
+// Unioning extends Relationship
+unioning = {
+    "unions" ~ relationship
+}
+
+// Differencing extends Relationship
+differencing = {
+    "differs" ~ relationship
+}
+
+// Intersecting extends Relationship
+intersecting = {
+    "intersects" ~ relationship
+}
+
+// FeatureChaining extends Relationship
+feature_chaining = {
+    "chains" ~ relationship
+}
+
+// Specialization extends Inheritance
+specialization = {
+    specializes_token ~ inheritance
+}
+
+// Disjoining extends Relationship
+disjoining = {
+    "disjoint" ~ relationship
+}
+
+// FeatureInverting extends Relationship
+feature_inverting = {
+    "inverse" ~ relationship
+}
+
+// Featuring extends Relationship
+featuring = {
+    "featured" ~ relationship
+}
+
+// TypeFeaturing extends Featuring
+type_featuring = {
+    "featuring" ~ featuring
+}
+
+// FeatureTyping extends Specialization
+feature_typing = {
+    typed_by_token ~ (specialization | (visibility_kind? ~ element_reference))
+}
+
+// Subclassification extends Specialization
+subclassification = {
+    "subclassifier" ~ specialization
+}
+
+// Subsetting extends Specialization
+subsetting = {
+    subsets_token ~ specialization
+}
+
+// Conjugation extends Inheritance
+conjugation = {
+    "conjugates" ~ inheritance
+}
+
+// Redefinition extends Subsetting
+redefinition = {
+    redefines_token ~ subsetting
+}
+
+// ReferenceSubsetting extends Subsetting
+reference_subsetting = {
+    references_token ~ subsetting
+}
+
+// CrossSubsetting extends Subsetting
+cross_subsetting = {
+    crosses_token ~ subsetting
+}
+
+// Dependency extends Relationship
+dependency = {
+    prefix_metadata_annotation* ~
+    "dependency" ~ (identification? ~ "from")? ~
+    element_reference ~ ("," ~ element_reference)* ~ "to" ~
+    element_reference ~ ("," ~ element_reference)* ~
+    relationship_body
+}
+
+// Import extends Relationship
+
+// Import prefix fragment
+import_prefix = {
+    visibility_kind? ~ "import" ~ import_all?
+}
+
+// Imported reference with namespace and recursive flags
+imported_reference = {
+    element_reference ~ import_kind?
+}
+
+// Import with optional filter package
+import = {
+    import_prefix ~
+    imported_reference ~
+    filter_package? ~
+    relationship_body
+}
+
+// Filter Package
+filter_package = {
+    filter_package_member+
+}
+
+// Filter Package Member
+filter_package_member = {
+    "[" ~ owned_expression ~ "]"
+}
+
+// Owned Expression (forward reference - define later with expressions)
+owned_expression = {
+    expression
+}
+
+// MembershipImport extends Import
+membership_import = {
+    import
+}
+
+// NamespaceImport extends Import
+namespace_import = {
+    import
+}
+
+// Membership extends Relationship
+membership = {
+    visibility_kind? ~
+    "alias"? ~
+    element_reference?
+}
+
+// OwningMembership extends Membership
+owning_membership = {
+    membership
+}
+
+// FeatureValue extends OwningMembership
+feature_value = {
+    ("=" | ":=") ~
+    owning_membership
+}
+
+// ElementFilterMembership extends OwningMembership
+element_filter_membership = {
+    "filter" ~ owning_membership
+}
+
+// FeatureMembership extends Featuring and OwningMembership
+feature_membership = {
+    featuring ~
+    owning_membership
+}
+
+// EndFeatureMembership extends FeatureMembership
+end_feature_membership = {
+    "end" ~ feature_membership
+}
+
+// ParameterMembership extends FeatureMembership
+parameter_membership = {
+    feature_membership
+}
+
+// ResultExpressionMembership extends FeatureMembership
+result_expression_membership = {
+    "return" ~ feature_membership
+}
+
+// ReturnParameterMembership extends ParameterMembership
+return_parameter_membership = {
+    parameter_membership
+}
+
+// References
+
+// QualifiedReferenceChain - name::name::name pattern
+qualified_reference_chain = {
+    identifier ~ ("::" ~ identifier)*
+}
+
+// ElementReference - base reference type
+element_reference = {
+    qualified_reference_chain
+}
+
+// NamespaceReference extends ElementReference
+namespace_reference = {
+    qualified_reference_chain
+}
+
+// TypeReference extends NamespaceReference
+type_reference = {
+    qualified_reference_chain
+}
+
+// ClassifierReference extends TypeReference
+classifier_reference = {
+    qualified_reference_chain
+}
+
+// FeatureReference extends TypeReference
+feature_reference = {
+    qualified_reference_chain
+}
+
+// MetaclassReference extends ClassifierReference
+metaclass_reference = {
+    qualified_reference_chain
+}
+
+// MembershipReference extends ElementReference
+membership_reference = {
+    qualified_reference_chain
+}
+
+// Literal Expressions
+
+literal_boolean = {
+    "false" | "true"
+}
+
+literal_string = {
+    string_value
+}
+
+literal_number = {
+    number
+}
+
+literal_infinity = {
+    "*"
+}
+
+literal_expression = {
+    literal_boolean
+    | literal_string
+    | literal_number
+    | literal_infinity
+}
+
+// Null Expression
+null_expression = {
+    "null" | ("(" ~ ")")
+}
+
+// Complex Expression Types (placeholders for full implementation)
+
+// OperatorExpression - base for operator-based expressions
+operator_expression = {
+    // Placeholder: Will be expanded with full operator precedence grammar
+    literal_expression | null_expression | feature_reference_expression
+}
+
+// InvocationExpression - function/feature invocation
+invocation_expression = {
+    // Placeholder: Will be expanded with invocation syntax
+    operator_expression
+}
+
+// FeatureChainExpression - chained feature access (e.g., a.b.c)
+feature_chain_expression = {
+    // Placeholder: Will be expanded with chaining syntax
+    operator_expression ~ ("." ~ identifier)*
+}
+
+// IndexExpression - array/collection indexing (e.g., arr[0])
+index_expression = {
+    // Placeholder: Will be expanded with indexing syntax
+    operator_expression ~ ("[" ~ operator_expression ~ "]")*
+}
+
+// CollectExpression - collection operation
+collect_expression = {
+    // Placeholder: Will be expanded with collection syntax
+    operator_expression
+}
+
+// SelectExpression - filtering operation
+select_expression = {
+    // Placeholder: Will be expanded with selection syntax
+    operator_expression
+}
+
+// Metadata and Feature Typing
+
+metadata_typing = {
+    metaclass_reference
+}
+
+owned_feature_typing = {
+    type_reference | owned_feature_chain
+}
+
+// Classification Expressions
+
+metadata_reference = {
+    element_reference
+}
+
+type_reference_member = {
+    type_reference_feature
+}
+
+type_result_member = {
+    type_reference_feature
+}
+
+type_reference_feature = {
+    reference_typing
+}
+
+reference_typing = {
+    type_reference
+}
+
+// Self Reference Expressions
+
+self_reference_expression = {
+    self_reference_member
+}
+
+self_reference_member = {
+    empty_feature
+}
+
+empty_feature = {
+    // Empty production - represents implicit self reference
+    ""
+}
+
+// Primary Expressions
+
+function_reference_expression = {
+    function_reference_member
+}
+
+function_reference_member = {
+    function_reference
+}
+
+function_reference = {
+    reference_typing
+}
+
+feature_chain_member = {
+    feature_reference | owned_feature_chain
+}
+
+// Invocation Expressions
+
+owned_feature_chain = {
+    feature_chaining_expr ~ ("." ~ feature_chaining_expr)+
+}
+
+feature_chaining_expr = {
+    feature_reference
+}
+
+feature_chain_prefix = {
+    (feature_chaining_expr ~ ".")+ ~ feature_chaining_expr ~ "."
+}
+
+owned_feature_chaining = {
+    feature_reference
+}
+
+// Feature Reference Expressions
+
+feature_reference_expression = {
+    feature_reference_member
+}
+
+feature_reference_member = {
+    feature_reference
+}
+
+// Metadata Access Expressions
+
+metadata_access_expression = {
+    element_reference ~ "." ~ "metadata"
+}
+
+// Relationship Body Fragments
+
+relationship_body = {
+    ";" | ("{" ~ relationship_owned_elements ~ "}")
+}
+
+relationship_owned_elements = {
+    relationship_owned_element*
+}
+
+relationship_owned_element = {
+    owned_annotation
+    | feature_element
+    | non_feature_element
+    | relationship_element
+}
+
+// Namespace Body Elements
+
+namespace_body_elements = {
+    namespace_body_element*
+}
+
+namespace_body_element = {
+    import
+    | alias_member
+    | annotating_member
+    | non_feature_member
+    | namespace_feature_member
+    | relationship_member
+}
+
+// Root Namespace Entry Point
+
+root_namespace = {
+    SOI ~ namespace_body_elements ~ EOI
+}
+
+// Entry point - will expand as we add rules
+file = { SOI ~ WHITESPACE* ~ EOI }

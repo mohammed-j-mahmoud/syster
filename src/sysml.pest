@@ -1,0 +1,42 @@
+// SysMLv2 Grammar - Minimal Starting Point
+// This will be incrementally expanded following TDD
+
+WHITESPACE = _{ " " | "\t" | "\r" | "\n" }
+COMMENT = _{ line_comment | block_comment }
+
+line_comment = { "//" ~ (!"\n" ~ ANY)* }
+block_comment = { "/*" ~ (!"*/" ~ ANY)* ~ "*/" }
+
+// Keywords - ordered by length (longest first) to avoid prefix matching issues
+keyword = @{
+    "verification" | "stakeholder" | "specializes" | "requirement" | "redefines" 
+    | "references" | "individual" | "constraint" | "connection" | "allocation"
+    | "dependency" | "occurrence" | "rendering" | "viewpoint" | "variation" 
+    | "attribute" | "interface" | "objective" | "nonunique" | "succession" 
+    | "terminate" | "transition" | "timeslice" | "protected" | "standard"
+    | "readonly" | "metadata" | "language" | "snapshot" | "parallel"
+    | "allocate" | "analysis" | "abstract" | "library" | "require" 
+    | "perform" | "exhibit" | "include" | "satisfy" | "binding" 
+    | "crosses" | "message" | "package" | "private" | "variant"
+    | "concern" | "connect" | "default" | "defined" | "derived" 
+    | "subject" | "ordered" | "hastype" | "istype" | "implies" 
+    | "comment" | "subsets" | "render" | "expose" | "decide" 
+    | "import" | "return" | "action" | "accept" | "assert" 
+    | "assign" | "assume" | "locale" | "verify" | "event" 
+    | "entry" | "false" | "frame" | "about" | "actor" 
+    | "after" | "alias" | "while" | "until" | "first" 
+    | "merge" | "inout" | "public" | "filter" | "state"
+    | "port" | "case" | "calc" | "send" | "then" | "flow" 
+    | "fork" | "from" | "join" | "loop" | "part" | "true" 
+    | "view" | "bind" | "else" | "enum" | "item" | "meta" 
+    | "null" | "when" | "exit"
+    | "def" | "doc" | "end" | "for" | "not" | "ref" | "rep" 
+    | "use" | "via" | "xor" | "all" | "and" | "out"
+    | "to" | "as" | "at" | "by" | "do" | "if" | "in" | "of" | "or"
+}
+
+// Identifiers
+identifier = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
+
+// Entry point - will expand as we add rules
+file = { SOI ~ WHITESPACE* ~ EOI }
