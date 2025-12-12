@@ -21,3 +21,12 @@ flycheck_*.rs
 # Environment files
 .env
 .env.local
+
+# Code coverage
+/coverage/
+*.profraw
+*.profdata
+tarpaulin-report.html
+tarpaulin-report.json
+cobertura.xml
+lcov.info
