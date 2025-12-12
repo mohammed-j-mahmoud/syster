@@ -74,6 +74,7 @@ visibility = { visibility_kind }
 readonly = { "readonly" }
 derived = { "derived" }
 end_marker = { "end" }
+feature_modifier = { readonly | derived | end_marker }
 sufficient = { "all" }
 standard = { "standard" }
 import_all = { "all" }
@@ -306,7 +307,7 @@ multiplicity_bounds = {
 // Type extends Namespace
 type_def = {
     prefix_metadata? ~
-    "abstract"? ~
+    abstract_marker? ~
     "type" ~ identification? ~
     "all"? ~
     (heritage | type_relationship | feature_relationship)* ~
@@ -318,7 +319,7 @@ type_def = {
 // Classifier extends Type
 classifier = {
     prefix_metadata? ~
-    "abstract"? ~
+    abstract_marker? ~
     "classifier" ~ identification? ~
     "all"? ~
     (heritage | type_relationship | feature_relationship)* ~
@@ -329,7 +330,7 @@ classifier = {
 // DataType extends Classifier
 data_type = {
     prefix_metadata? ~
-    "abstract"? ~
+    abstract_marker? ~
     "datatype" ~ identification? ~
     "all"? ~
     (inheritance | type_relationship | feature_relationship)* ~
@@ -340,7 +341,7 @@ data_type = {
 // Class extends Classifier
 class = {
     prefix_metadata? ~
-    "abstract"? ~
+    abstract_marker? ~
     "class" ~ identification? ~
     "all"? ~
     (inheritance | type_relationship | feature_relationship)* ~
@@ -351,7 +352,7 @@ class = {
 // Structure extends Class
 structure = {
     prefix_metadata? ~
-    "abstract"? ~
+    abstract_marker? ~
     "struct" ~ identification? ~
     "all"? ~
     (inheritance | type_relationship | feature_relationship)* ~
@@ -362,7 +363,7 @@ structure = {
 // Behavior extends Class
 behavior = {
     prefix_metadata? ~
-    "abstract"? ~
+    abstract_marker? ~
     "behavior" ~ identification? ~
     "all"? ~
     (inheritance | type_relationship | feature_relationship)* ~
@@ -373,7 +374,7 @@ behavior = {
 // Association extends Classifier and Relationship
 association = {
     prefix_metadata? ~
-    "abstract"? ~
+    abstract_marker? ~
     "assoc" ~ identification? ~
     "all"? ~
     (inheritance | type_relationship | feature_relationship)* ~
@@ -384,7 +385,7 @@ association = {
 // AssociationStructure extends Association and Structure
 association_structure = {
     prefix_metadata? ~
-    "abstract"? ~
+    abstract_marker? ~
     "assoc" ~ "struct" ~ identification? ~
     "all"? ~
     (inheritance | type_relationship | feature_relationship)* ~
@@ -395,7 +396,7 @@ association_structure = {
 // Metaclass extends Structure
 metaclass = {
     prefix_metadata? ~
-    "abstract"? ~
+    abstract_marker? ~
     "metaclass" ~ identification? ~
     "all"? ~
     (inheritance | type_relationship | feature_relationship)* ~
@@ -406,7 +407,7 @@ metaclass = {
 // Function extends Behavior
 function = {
     prefix_metadata? ~
-    "abstract"? ~
+    abstract_marker? ~
     "function" ~ identification? ~
     "all"? ~
     (inheritance | type_relationship | feature_relationship)* ~
@@ -418,7 +419,7 @@ function = {
 // Predicate extends Function
 predicate = {
     prefix_metadata? ~
-    "abstract"? ~
+    abstract_marker? ~
     "predicate" ~ identification? ~
     "all"? ~
     (inheritance | type_relationship | feature_relationship)* ~
@@ -430,7 +431,7 @@ predicate = {
 // Interaction extends Association and Behavior
 interaction = {
     prefix_metadata? ~
-    "abstract"? ~
+    abstract_marker? ~
     "interaction" ~ identification? ~
     "all"? ~
     (inheritance | type_relationship | feature_relationship)* ~
@@ -442,8 +443,8 @@ interaction = {
 feature = {
     prefix_metadata? ~
     feature_direction_kind? ~
-    ("abstract" | "composite" | "portion")? ~
-    ("readonly" | "derived" | "end")? ~
+    ("abstract"| "composite" | "portion")? ~
+    feature_modifier? ~
     "feature" ~ identification? ~
     multiplicity_bounds? ~
     (heritage | type_relationship | feature_relationship)* ~
@@ -457,9 +458,9 @@ metadata_feature = {
     "metadata" ~
     feature_direction_kind? ~
     ("abstract" | "composite" | "portion")? ~
-    ("readonly" | "derived" | "end")? ~
+    feature_modifier? ~
     prefix_metadata? ~
-    "abstract"? ~
+    abstract_marker? ~
     "type" ~ identification? ~
     "all"? ~
     (inheritance | type_relationship | feature_relationship)* ~
@@ -489,7 +490,7 @@ step = {
     prefix_metadata? ~
     feature_direction_kind? ~
     ("abstract" | "composite" | "portion")? ~
-    ("readonly" | "derived" | "end")? ~
+    feature_modifier? ~
     "step" ~ identification? ~
     ("ordered" | "nonunique")* ~
     feature_value? ~
@@ -503,7 +504,7 @@ connector = {
     prefix_metadata? ~
     feature_direction_kind? ~
     ("abstract" | "composite" | "portion")? ~
-    ("readonly" | "derived" | "end")? ~
+    feature_modifier? ~
     "connector" ~ identification? ~
     ("ordered" | "nonunique")* ~
     feature_value? ~
@@ -523,7 +524,7 @@ succession = {
     prefix_metadata? ~
     feature_direction_kind? ~
     ("abstract" | "composite" | "portion")? ~
-    ("readonly" | "derived" | "end")? ~
+    feature_modifier? ~
     "succession" ~ identification? ~
     ("ordered" | "nonunique")* ~
     feature_value? ~
@@ -538,7 +539,7 @@ binding_connector = {
     prefix_metadata? ~
     feature_direction_kind? ~
     ("abstract" | "composite" | "portion")? ~
-    ("readonly" | "derived" | "end")? ~
+    feature_modifier? ~
     "binding" ~ identification? ~
     ("ordered" | "nonunique")* ~
     feature_value? ~
@@ -553,7 +554,7 @@ expression = {
     prefix_metadata? ~
     feature_direction_kind? ~
     ("abstract" | "composite" | "portion")? ~
-    ("readonly" | "derived" | "end")? ~
+    feature_modifier? ~
     "expr" ~ identification? ~
     ("ordered" | "nonunique")* ~
     feature_value? ~

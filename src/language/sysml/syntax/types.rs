@@ -1,4 +1,4 @@
-use super::enums::*;
+use super::enums::{DefinitionKind, DefinitionMember, Element, UsageKind, UsageMember};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct SysMLFile {

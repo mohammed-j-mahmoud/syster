@@ -1,4 +1,4 @@
-use super::enums::*;
+use super::enums::{FeatureDirectionKind, VisibilityKind};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Element {

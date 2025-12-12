@@ -1,4 +1,4 @@
-use crate::language::sysml::ast::{
+use crate::language::sysml::syntax::{
     Comment, Definition, Element, Import, NamespaceDeclaration, Package, SysMLFile, Usage,
 };
 
