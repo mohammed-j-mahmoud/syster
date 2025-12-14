@@ -61,6 +61,29 @@ pub struct Definition {
     pub name: Option<String>,
     pub relationships: Relationships,
     pub body: Vec<DefinitionMember>,
+    // Property modifiers
+    #[doc(hidden)]
+    pub is_abstract: bool,
+    #[doc(hidden)]
+    pub is_variation: bool,
+}
+
+impl Definition {
+    pub fn new(
+        kind: DefinitionKind,
+        name: Option<String>,
+        relationships: Relationships,
+        body: Vec<DefinitionMember>,
+    ) -> Self {
+        Self {
+            kind,
+            name,
+            relationships,
+            body,
+            is_abstract: false,
+            is_variation: false,
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -69,6 +92,30 @@ pub struct Usage {
     pub name: Option<String>,
     pub relationships: Relationships,
     pub body: Vec<UsageMember>,
+    // Property modifiers
+    #[doc(hidden)]
+    pub is_derived: bool,
+    #[doc(hidden)]
+    pub is_readonly: bool,
+}
+
+impl Usage {
+    /// Create a new Usage with default property flags
+    pub fn new(
+        kind: UsageKind,
+        name: Option<String>,
+        relationships: Relationships,
+        body: Vec<UsageMember>,
+    ) -> Self {
+        Self {
+            kind,
+            name,
+            relationships,
+            body,
+            is_derived: false,
+            is_readonly: false,
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]

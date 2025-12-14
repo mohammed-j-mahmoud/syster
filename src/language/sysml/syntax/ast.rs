@@ -15,17 +15,32 @@ fn extract_usages_from_body<'a>(
         Rule::exhibit_state_usage
         | Rule::perform_action_usage
         | Rule::satisfy_requirement_usage
-        | Rule::include_use_case_usage => {
+        | Rule::include_use_case_usage
+        | Rule::part_usage
+        | Rule::action_usage
+        | Rule::requirement_usage
+        | Rule::port_usage
+        | Rule::item_usage
+        | Rule::attribute_usage
+        | Rule::concern_usage
+        | Rule::case_usage
+        | Rule::view_usage => {
             // Manually build the Usage instead of using from_pest
-            let kind = rule_to_usage_kind(pair.as_rule()).unwrap();
+            let kind = match rule_to_usage_kind(pair.as_rule()) {
+                Ok(k) => k,
+                Err(_) => return,
+            };
             let name = find_name(pair.clone().into_inner());
-            let relationships = extract_relationships(&pair);
-            body.push(DefinitionMember::Usage(Usage {
+            let relationships = extract_relationships(pair);
+            let (is_derived, is_readonly) = extract_property_flags(pair);
+            body.push(DefinitionMember::Usage(Box::new(Usage {
                 kind,
                 name,
                 relationships,
                 body: vec![],
-            }));
+                is_derived,
+                is_readonly,
+            })));
         }
         // Recursively search children
         _ => {
@@ -34,6 +49,30 @@ fn extract_usages_from_body<'a>(
             }
         }
     }
+}
+
+// Helper to extract property flags (derived, readonly)
+fn extract_property_flags(pair: &pest::iterators::Pair<Rule>) -> (bool, bool) {
+    let mut is_derived = false;
+    let mut is_readonly = false;
+
+    for inner in pair.clone().into_inner() {
+        match inner.as_rule() {
+            Rule::derived => is_derived = true,
+            Rule::readonly => is_readonly = true,
+            Rule::ref_prefix
+            | Rule::basic_usage_prefix
+            | Rule::occurrence_usage_prefix
+            | Rule::usage_prefix => {
+                let (d, r) = extract_property_flags(&inner);
+                is_derived = is_derived || d;
+                is_readonly = is_readonly || r;
+            }
+            _ => {}
+        }
+    }
+
+    (is_derived, is_readonly)
 }
 
 fn find_reference(pair: &pest::iterators::Pair<Rule>) -> Option<String> {
@@ -285,27 +324,24 @@ impl_from_pest!(Definition, |pest| {
         name,
         relationships,
         body,
+        is_abstract: false,
+        is_variation: false,
     })
 });
 impl_from_pest!(Usage, |pest| {
     let pair = pest.next().ok_or(ConversionError::NoMatch)?;
-    eprintln!("Usage::from_pest got rule: {:?}", pair.as_rule());
     let kind = rule_to_usage_kind(pair.as_rule())?;
     let name = find_name(pair.clone().into_inner());
     let relationships = extract_relationships(&pair);
-    eprintln!(
-        "Usage relationships after extract: satisfies={:?}, performs={:?}, exhibits={:?}, includes={:?}",
-        relationships.satisfies,
-        relationships.performs,
-        relationships.exhibits,
-        relationships.includes
-    );
+    let (is_derived, is_readonly) = extract_property_flags(&pair);
 
     Ok(Usage {
         kind,
         name,
         relationships,
         body: vec![],
+        is_derived,
+        is_readonly,
     })
 });
 impl_from_pest!(Comment, |pest| {
@@ -388,6 +424,8 @@ impl_from_pest!(Element, |pest| {
                 name,
                 relationships,
                 body,
+                is_abstract: false,  // TODO: extract from definition_prefix
+                is_variation: false, // TODO: extract from definition_prefix
             })
         }
         Rule::part_usage
@@ -402,12 +440,15 @@ impl_from_pest!(Element, |pest| {
             let kind = rule_to_usage_kind(pair.as_rule())?;
             let name = find_name(pair.clone().into_inner());
             let relationships = extract_relationships(&pair);
+            let (is_derived, is_readonly) = extract_property_flags(&pair);
 
             Element::Usage(Usage {
                 kind,
                 name,
                 relationships,
                 body: vec![],
+                is_derived,
+                is_readonly,
             })
         }
         Rule::comment_annotation => Element::Comment(Comment::from_pest(&mut pair.into_inner())?),

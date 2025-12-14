@@ -7,7 +7,6 @@ use syster::language::sysml::populator::{
     REL_EXHIBIT, REL_INCLUDE, REL_PERFORM, REL_REDEFINITION, REL_SATISFY, REL_SPECIALIZATION,
     REL_SUBSETTING, REL_TYPING,
 };
-use syster::language::sysml::syntax::Element;
 use syster::language::sysml::syntax::SysMLFile;
 use syster::parser::{SysMLParser, sysml::Rule};
 use syster::semantic::RelationshipGraph;
@@ -568,5 +567,186 @@ fn test_mixed_domain_and_structural_relationships() {
     assert_eq!(
         relationship_graph.get_one_to_many(REL_SPECIALIZATION, "SpecializedPart"),
         Some(&["BasePart".to_string()][..])
+    );
+}
+
+#[test]
+fn test_derive_requirement_relationship() {
+    // Test requirement definition specialization hierarchy using :>
+    // (Note: This is about requirement inheritance, not the 'derived' keyword)
+    let source = r#"
+        requirement def Configuration;
+        requirement def DerivedReq :> Configuration;
+    "#;
+
+    let mut pairs = SysMLParser::parse(Rule::model, source).unwrap();
+    let file = SysMLFile::from_pest(&mut pairs).unwrap();
+
+    let mut symbol_table = SymbolTable::new();
+    let mut relationship_graph = RelationshipGraph::new();
+    let mut populator =
+        SymbolTablePopulator::with_relationships(&mut symbol_table, &mut relationship_graph);
+
+    populator.populate(&file).unwrap();
+
+    // DerivedReq specializes (derives from) Configuration
+    assert_eq!(
+        relationship_graph.get_one_to_many(REL_SPECIALIZATION, "DerivedReq"),
+        Some(&["Configuration".to_string()][..])
+    );
+}
+
+#[test]
+fn test_derive_requirement_keyword_syntax() {
+    // Test requirement specialization with explicit "specializes" keyword
+    let source = r#"
+        requirement def Configuration;
+        requirement def DerivedReq specializes Configuration;
+    "#;
+
+    let mut pairs = SysMLParser::parse(Rule::model, source).unwrap();
+    let file = SysMLFile::from_pest(&mut pairs).unwrap();
+
+    let mut symbol_table = SymbolTable::new();
+    let mut relationship_graph = RelationshipGraph::new();
+    let mut populator =
+        SymbolTablePopulator::with_relationships(&mut symbol_table, &mut relationship_graph);
+
+    populator.populate(&file).unwrap();
+
+    // DerivedReq specializes (derives from) Configuration
+    assert_eq!(
+        relationship_graph.get_one_to_many(REL_SPECIALIZATION, "DerivedReq"),
+        Some(&["Configuration".to_string()][..])
+    );
+}
+
+#[test]
+fn test_derived_requirement_in_body() {
+    // Test 'derived' keyword with subsetting in nested requirement usage
+    // 'derived' = marks as computed; ':>' = creates subsetting relationship
+    let source = r#"
+        requirement def ParentReq;
+        requirement def ContainerReq {
+            derived requirement Configuration :> ParentReq;
+        }
+    "#;
+
+    let mut pairs = SysMLParser::parse(Rule::model, source).unwrap();
+    let file = SysMLFile::from_pest(&mut pairs).unwrap();
+
+    let mut symbol_table = SymbolTable::new();
+    let mut relationship_graph = RelationshipGraph::new();
+    let mut populator =
+        SymbolTablePopulator::with_relationships(&mut symbol_table, &mut relationship_graph);
+
+    populator.populate(&file).unwrap();
+
+    // The nested requirement has a qualified name
+    let qualified_name = "ContainerReq::Configuration";
+
+    // Configuration subsets ParentReq (usages use subsetting, not specialization)
+    assert_eq!(
+        relationship_graph.get_one_to_many(REL_SUBSETTING, qualified_name),
+        Some(&["ParentReq".to_string()][..])
+    );
+}
+
+#[test]
+fn test_derived_requirement_modifier() {
+    // Test that "derived" keyword marks a feature as computed (per SysML spec 7.13.3)
+    // It does NOT create a subsetting/specialization relationship
+    let source = r#"
+        requirement def BaseReq {
+            derived requirement childReq;
+        }
+        requirement childReq;
+    "#;
+
+    let mut pairs = SysMLParser::parse(Rule::model, source).unwrap();
+    let file = SysMLFile::from_pest(&mut pairs).unwrap();
+
+    let mut symbol_table = SymbolTable::new();
+    let mut relationship_graph = RelationshipGraph::new();
+    let mut populator =
+        SymbolTablePopulator::with_relationships(&mut symbol_table, &mut relationship_graph);
+
+    populator.populate(&file).unwrap();
+
+    // Both requirements exist (nested and top-level with same name)
+    assert!(symbol_table.lookup("BaseReq").is_some());
+    assert!(symbol_table.lookup("childReq").is_some());
+
+    // No subsetting relationship since there's no :> clause
+    assert_eq!(
+        relationship_graph.get_one_to_many(REL_SUBSETTING, "BaseReq::childReq"),
+        None
+    );
+    assert_eq!(
+        relationship_graph.get_one_to_many(REL_SUBSETTING, "childReq"),
+        None
+    );
+}
+
+#[test]
+fn test_derived_keyword_with_subsetting() {
+    // Test "derived requirement X :> Y"
+    // - 'derived' = property modifier (marks feature as computed per SysML spec)
+    // - ':>' = creates the subsetting relationship (actual derivation hierarchy)
+    let source = r#"
+        requirement def ParentReq;
+        requirement def Container {
+            derived requirement DerivedReq :> ParentReq;
+        }
+    "#;
+
+    let mut pairs = SysMLParser::parse(Rule::model, source).unwrap();
+    let file = SysMLFile::from_pest(&mut pairs).unwrap();
+
+    let mut symbol_table = SymbolTable::new();
+    let mut relationship_graph = RelationshipGraph::new();
+    let mut populator =
+        SymbolTablePopulator::with_relationships(&mut symbol_table, &mut relationship_graph);
+
+    populator.populate(&file).unwrap();
+
+    // The derived requirement (with subsetting) should have the relationship
+    let qualified_name = "Container::DerivedReq";
+    assert_eq!(
+        relationship_graph.get_one_to_many(REL_SUBSETTING, qualified_name),
+        Some(&["ParentReq".to_string()][..])
+    );
+}
+
+#[test]
+fn test_multiple_derived_requirements_in_body() {
+    // Test multiple requirements marked as 'derived' with subsetting relationships
+    let source = r#"
+        requirement def Req1;
+        requirement def Req2;
+        requirement def Container {
+            derived requirement DerivedReq1 :> Req1;
+            derived requirement DerivedReq2 :> Req2;
+        }
+    "#;
+
+    let mut pairs = SysMLParser::parse(Rule::model, source).unwrap();
+    let file = SysMLFile::from_pest(&mut pairs).unwrap();
+
+    let mut symbol_table = SymbolTable::new();
+    let mut relationship_graph = RelationshipGraph::new();
+    let mut populator =
+        SymbolTablePopulator::with_relationships(&mut symbol_table, &mut relationship_graph);
+
+    populator.populate(&file).unwrap();
+
+    // Each derived requirement should have its subsetting relationship
+    assert_eq!(
+        relationship_graph.get_one_to_many(REL_SUBSETTING, "Container::DerivedReq1"),
+        Some(&["Req1".to_string()][..])
+    );
+    assert_eq!(
+        relationship_graph.get_one_to_many(REL_SUBSETTING, "Container::DerivedReq2"),
+        Some(&["Req2".to_string()][..])
     );
 }

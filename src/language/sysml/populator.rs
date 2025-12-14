@@ -240,6 +240,17 @@ impl<'a> AstVisitor for SymbolTablePopulator<'a> {
                     }
                 }
             }
+
+            // Visit nested members in the body (add them to symbol table)
+            self.enter_namespace(name.clone());
+            for member in &definition.body {
+                if let crate::language::sysml::syntax::enums::DefinitionMember::Usage(usage) =
+                    member
+                {
+                    self.visit_usage(usage);
+                }
+            }
+            self.exit_namespace();
         }
     }
 
