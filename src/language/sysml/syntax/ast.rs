@@ -300,11 +300,10 @@ impl_from_pest!(Package, |pest| {
                 for inner in pair.into_inner() {
                     if inner.as_rule() == Rule::package_body_items {
                         for body_item in inner.into_inner() {
-                            if body_item.as_rule() == Rule::package_body_element {
-                                if let Ok(element) = Element::from_pest(&mut body_item.into_inner())
-                                {
-                                    elements.push(element);
-                                }
+                            if body_item.as_rule() == Rule::package_body_element
+                                && let Ok(element) = Element::from_pest(&mut body_item.into_inner())
+                            {
+                                elements.push(element);
                             }
                         }
                     }
@@ -378,17 +377,14 @@ impl_from_pest!(Import, |pest| {
     let mut path = String::new();
 
     for pair in pest {
-        match pair.as_rule() {
-            Rule::imported_reference => {
-                path = pair.as_str().to_string();
-                // Check for recursive marker
-                for inner in pair.into_inner() {
-                    if inner.as_rule() == Rule::recursive_marker {
-                        is_recursive = true;
-                    }
+        if pair.as_rule() == Rule::imported_reference {
+            path = pair.as_str().to_string();
+            // Check for recursive marker
+            for inner in pair.into_inner() {
+                if inner.as_rule() == Rule::recursive_marker {
+                    is_recursive = true;
                 }
             }
-            _ => {}
         }
     }
 
@@ -518,10 +514,10 @@ impl_from_pest!(SysMLFile, |pest| {
     }
 
     for pair in model_pair.into_inner() {
-        if pair.as_rule() == Rule::namespace_element {
-            if let Ok(element) = Element::from_pest(&mut pair.into_inner()) {
-                elements.push(element);
-            }
+        if pair.as_rule() == Rule::namespace_element
+            && let Ok(element) = Element::from_pest(&mut pair.into_inner())
+        {
+            elements.push(element);
         }
     }
     Ok(SysMLFile {

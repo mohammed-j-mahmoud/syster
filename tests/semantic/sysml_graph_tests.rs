@@ -535,11 +535,7 @@ fn test_multiple_satisfy_relationships() {
     let satisfies = relationship_graph.get_one_to_many(REL_SATISFY, "TestCase");
     assert!(satisfies.is_some());
     let satisfies = satisfies.unwrap();
-    println!(
-        "Found {} satisfy relationships: {:?}",
-        satisfies.len(),
-        satisfies
-    );
+    // Found satisfy relationships
     assert_eq!(satisfies.len(), 2);
     assert!(satisfies.contains(&"Req1".to_string()));
     assert!(satisfies.contains(&"Req2".to_string()));

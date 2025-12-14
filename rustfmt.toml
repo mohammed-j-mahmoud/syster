@@ -7,21 +7,11 @@ tab_spaces = 4
 newline_style = "Unix"
 
 # Imports
-imports_granularity = "Crate"
-group_imports = "StdExternalCrate"
 reorder_imports = true
 
 # Code style
 use_small_heuristics = "Default"
-fn_single_line = false
-where_single_line = false
 force_explicit_abi = true
-format_strings = true
-normalize_comments = true
-wrap_comments = true
-comment_width = 80
 
 # Trailing items
-trailing_comma = "Vertical"
-trailing_semicolon = true
 match_block_trailing_comma = false

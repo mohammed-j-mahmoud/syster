@@ -245,10 +245,10 @@ impl SymbolTable {
                 }
 
                 // If recursive, also check nested namespaces
-                if import.is_recursive {
-                    if let Some(symbol) = self.lookup_recursive_import(name, namespace) {
-                        return Some(symbol);
-                    }
+                if import.is_recursive
+                    && let Some(symbol) = self.lookup_recursive_import(name, namespace)
+                {
+                    return Some(symbol);
                 }
             } else {
                 // For member imports, look for the exact path
