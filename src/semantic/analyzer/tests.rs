@@ -27,6 +27,7 @@ fn test_analyze_with_valid_symbols() {
             "MyPackage".to_string(),
             Symbol::Package {
                 scope_id: 0,
+                source_file: None,
                 name: "MyPackage".to_string(),
                 qualified_name: "MyPackage".to_string(),
             },
@@ -104,6 +105,7 @@ fn test_analyzer_with_multiple_symbols() {
             "Pkg".to_string(),
             Symbol::Package {
                 scope_id: 0,
+                source_file: None,
                 name: "Pkg".to_string(),
                 qualified_name: "Pkg".to_string(),
             },
@@ -115,6 +117,7 @@ fn test_analyzer_with_multiple_symbols() {
             "MyClass".to_string(),
             Symbol::Classifier {
                 scope_id: 0,
+                source_file: None,
                 name: "MyClass".to_string(),
                 qualified_name: "MyClass".to_string(),
                 kind: "Class".to_string(),
@@ -128,6 +131,7 @@ fn test_analyzer_with_multiple_symbols() {
             "MyDef".to_string(),
             Symbol::Definition {
                 scope_id: 0,
+                source_file: None,
                 name: "MyDef".to_string(),
                 qualified_name: "MyDef".to_string(),
                 kind: "Part".to_string(),
@@ -149,6 +153,7 @@ fn test_analyzer_with_nested_scopes() {
             "Root".to_string(),
             Symbol::Package {
                 scope_id: 0,
+                source_file: None,
                 name: "Root".to_string(),
                 qualified_name: "Root".to_string(),
             },
@@ -161,6 +166,7 @@ fn test_analyzer_with_nested_scopes() {
             "Child".to_string(),
             Symbol::Package {
                 scope_id: 0,
+                source_file: None,
                 name: "Child".to_string(),
                 qualified_name: "Root::Child".to_string(),
             },
@@ -173,6 +179,7 @@ fn test_analyzer_with_nested_scopes() {
             "GrandChild".to_string(),
             Symbol::Classifier {
                 scope_id: 0,
+                source_file: None,
                 name: "GrandChild".to_string(),
                 qualified_name: "Root::Child::GrandChild".to_string(),
                 kind: "Class".to_string(),
@@ -194,6 +201,7 @@ fn test_context_resolver_access() {
             "Test".to_string(),
             Symbol::Package {
                 scope_id: 0,
+                source_file: None,
                 name: "Test".to_string(),
                 qualified_name: "Test".to_string(),
             },
@@ -227,6 +235,7 @@ fn test_analyzer_symbol_table_access() {
             "NewSymbol".to_string(),
             Symbol::Package {
                 scope_id: 0,
+                source_file: None,
                 name: "NewSymbol".to_string(),
                 qualified_name: "NewSymbol".to_string(),
             },
@@ -245,6 +254,7 @@ fn test_analyze_with_all_symbol_types() {
             "Pkg".to_string(),
             Symbol::Package {
                 scope_id: 0,
+                source_file: None,
                 name: "Pkg".to_string(),
                 qualified_name: "Pkg".to_string(),
             },
@@ -256,6 +266,7 @@ fn test_analyze_with_all_symbol_types() {
             "MyClass".to_string(),
             Symbol::Classifier {
                 scope_id: 0,
+                source_file: None,
                 name: "MyClass".to_string(),
                 qualified_name: "MyClass".to_string(),
                 kind: "Behavior".to_string(),
@@ -270,6 +281,7 @@ fn test_analyze_with_all_symbol_types() {
             "Integer".to_string(),
             Symbol::Definition {
                 scope_id: 0,
+                source_file: None,
                 name: "Integer".to_string(),
                 qualified_name: "Integer".to_string(),
                 kind: "Part".to_string(),
@@ -282,6 +294,7 @@ fn test_analyze_with_all_symbol_types() {
             "myFeature".to_string(),
             Symbol::Feature {
                 scope_id: 0,
+                source_file: None,
                 name: "myFeature".to_string(),
                 qualified_name: "MyClass::myFeature".to_string(),
                 feature_type: Some("Integer".to_string()),
@@ -294,6 +307,7 @@ fn test_analyze_with_all_symbol_types() {
             "MyDef".to_string(),
             Symbol::Definition {
                 scope_id: 0,
+                source_file: None,
                 name: "MyDef".to_string(),
                 qualified_name: "MyDef".to_string(),
                 kind: "Requirement".to_string(),
@@ -306,6 +320,7 @@ fn test_analyze_with_all_symbol_types() {
             "MyUsage".to_string(),
             Symbol::Usage {
                 scope_id: 0,
+                source_file: None,
                 name: "MyUsage".to_string(),
                 qualified_name: "MyUsage".to_string(),
                 kind: "Action".to_string(),
@@ -352,6 +367,7 @@ fn test_analyzer_immutable_access() {
             "Test".to_string(),
             Symbol::Package {
                 scope_id: 0,
+                source_file: None,
                 name: "Test".to_string(),
                 qualified_name: "Test".to_string(),
             },
@@ -371,6 +387,7 @@ fn test_analyze_idempotent() {
             "Test".to_string(),
             Symbol::Package {
                 scope_id: 0,
+                source_file: None,
                 name: "Test".to_string(),
                 qualified_name: "Test".to_string(),
             },
@@ -406,6 +423,7 @@ fn test_analyzer_with_features() {
             "String".to_string(),
             Symbol::Definition {
                 scope_id: 0,
+                source_file: None,
                 name: "String".to_string(),
                 qualified_name: "String".to_string(),
                 kind: "Part".to_string(),
@@ -418,6 +436,7 @@ fn test_analyzer_with_features() {
             "feature1".to_string(),
             Symbol::Feature {
                 scope_id: 0,
+                source_file: None,
                 name: "feature1".to_string(),
                 qualified_name: "feature1".to_string(),
                 feature_type: None,
@@ -430,6 +449,7 @@ fn test_analyzer_with_features() {
             "feature2".to_string(),
             Symbol::Feature {
                 scope_id: 0,
+                source_file: None,
                 name: "feature2".to_string(),
                 qualified_name: "feature2".to_string(),
                 feature_type: Some("String".to_string()),
@@ -463,6 +483,7 @@ fn test_analyzer_with_different_classifier_kinds() {
                 format!("Classifier{}", idx),
                 Symbol::Classifier {
                     scope_id: 0,
+                    source_file: None,
                     name: format!("Classifier{}", idx),
                     qualified_name: format!("Classifier{}", idx),
                     kind: (*kind).to_string(),
@@ -490,6 +511,7 @@ fn test_analyzer_with_different_definition_kinds() {
                 format!("Def{}", idx),
                 Symbol::Definition {
                     scope_id: 0,
+                    source_file: None,
                     name: format!("Def{}", idx),
                     qualified_name: format!("Def{}", idx),
                     kind: (*kind).to_string(),
@@ -516,6 +538,7 @@ fn test_analyzer_with_different_usage_kinds() {
                 format!("Usage{}", idx),
                 Symbol::Usage {
                     scope_id: 0,
+                    source_file: None,
                     name: format!("Usage{}", idx),
                     qualified_name: format!("Usage{}", idx),
                     kind: (*kind).to_string(),
@@ -538,6 +561,7 @@ fn test_context_with_qualified_name_resolution() {
             "A".to_string(),
             Symbol::Package {
                 scope_id: 0,
+                source_file: None,
                 name: "A".to_string(),
                 qualified_name: "A".to_string(),
             },
@@ -550,6 +574,7 @@ fn test_context_with_qualified_name_resolution() {
             "B".to_string(),
             Symbol::Package {
                 scope_id: 0,
+                source_file: None,
                 name: "B".to_string(),
                 qualified_name: "A::B".to_string(),
             },
@@ -571,6 +596,7 @@ fn test_analyzer_with_abstract_classifiers() {
             "Abstract1".to_string(),
             Symbol::Classifier {
                 scope_id: 0,
+                source_file: None,
                 name: "Abstract1".to_string(),
                 qualified_name: "Abstract1".to_string(),
                 kind: "Class".to_string(),
@@ -584,6 +610,7 @@ fn test_analyzer_with_abstract_classifiers() {
             "Concrete1".to_string(),
             Symbol::Classifier {
                 scope_id: 0,
+                source_file: None,
                 name: "Concrete1".to_string(),
                 qualified_name: "Concrete1".to_string(),
                 kind: "Class".to_string(),
@@ -618,6 +645,7 @@ fn test_context_symbol_table_reference() {
             "Test".to_string(),
             Symbol::Package {
                 scope_id: 0,
+                source_file: None,
                 name: "Test".to_string(),
                 qualified_name: "Test".to_string(),
             },
@@ -639,6 +667,7 @@ fn test_analyzer_with_deeply_nested_structure() {
             "L0".to_string(),
             Symbol::Package {
                 scope_id: 0,
+                source_file: None,
                 name: "L0".to_string(),
                 qualified_name: "L0".to_string(),
             },
@@ -663,6 +692,7 @@ fn test_analyzer_with_deeply_nested_structure() {
                 format!("L{}", i),
                 Symbol::Package {
                     scope_id: 0,
+                    source_file: None,
                     name: format!("L{}", i),
                     qualified_name: format!("{}::L{}", parent, i),
                 },
@@ -710,6 +740,7 @@ fn test_analyzer_table_mutation_after_creation() {
             "Added".to_string(),
             Symbol::Package {
                 scope_id: 0,
+                source_file: None,
                 name: "Added".to_string(),
                 qualified_name: "Added".to_string(),
             },
@@ -732,6 +763,7 @@ fn test_type_validation_valid_type_reference() {
             "Vehicle".to_string(),
             Symbol::Definition {
                 scope_id: 0,
+                source_file: None,
                 name: "Vehicle".to_string(),
                 qualified_name: "Vehicle".to_string(),
                 kind: "Part".to_string(),
@@ -745,6 +777,7 @@ fn test_type_validation_valid_type_reference() {
             "myVehicle".to_string(),
             Symbol::Feature {
                 scope_id: 0,
+                source_file: None,
                 name: "myVehicle".to_string(),
                 qualified_name: "myVehicle".to_string(),
                 feature_type: Some("Vehicle".to_string()),
@@ -767,6 +800,7 @@ fn test_type_validation_undefined_type_reference() {
             "myFeature".to_string(),
             Symbol::Feature {
                 scope_id: 0,
+                source_file: None,
                 name: "myFeature".to_string(),
                 qualified_name: "myFeature".to_string(),
                 feature_type: Some("UndefinedType".to_string()),
@@ -796,6 +830,7 @@ fn test_type_validation_invalid_type_reference() {
             "NotAType".to_string(),
             Symbol::Package {
                 scope_id: 0,
+                source_file: None,
                 name: "NotAType".to_string(),
                 qualified_name: "NotAType".to_string(),
             },
@@ -808,6 +843,7 @@ fn test_type_validation_invalid_type_reference() {
             "myFeature".to_string(),
             Symbol::Feature {
                 scope_id: 0,
+                source_file: None,
                 name: "myFeature".to_string(),
                 qualified_name: "myFeature".to_string(),
                 feature_type: Some("NotAType".to_string()),
@@ -837,6 +873,7 @@ fn test_type_validation_classifier_as_type() {
             "MyClassifier".to_string(),
             Symbol::Classifier {
                 scope_id: 0,
+                source_file: None,
                 name: "MyClassifier".to_string(),
                 qualified_name: "MyClassifier".to_string(),
                 kind: "Type".to_string(),
@@ -851,6 +888,7 @@ fn test_type_validation_classifier_as_type() {
             "myFeature".to_string(),
             Symbol::Feature {
                 scope_id: 0,
+                source_file: None,
                 name: "myFeature".to_string(),
                 qualified_name: "myFeature".to_string(),
                 feature_type: Some("MyClassifier".to_string()),
@@ -873,6 +911,7 @@ fn test_type_validation_multiple_features() {
             "Type1".to_string(),
             Symbol::Definition {
                 scope_id: 0,
+                source_file: None,
                 name: "Type1".to_string(),
                 qualified_name: "Type1".to_string(),
                 kind: "Part".to_string(),
@@ -885,6 +924,7 @@ fn test_type_validation_multiple_features() {
             "Type2".to_string(),
             Symbol::Definition {
                 scope_id: 0,
+                source_file: None,
                 name: "Type2".to_string(),
                 qualified_name: "Type2".to_string(),
                 kind: "Port".to_string(),
@@ -898,6 +938,7 @@ fn test_type_validation_multiple_features() {
             "feature1".to_string(),
             Symbol::Feature {
                 scope_id: 0,
+                source_file: None,
                 name: "feature1".to_string(),
                 qualified_name: "feature1".to_string(),
                 feature_type: Some("Type1".to_string()),
@@ -910,6 +951,7 @@ fn test_type_validation_multiple_features() {
             "feature2".to_string(),
             Symbol::Feature {
                 scope_id: 0,
+                source_file: None,
                 name: "feature2".to_string(),
                 qualified_name: "feature2".to_string(),
                 feature_type: Some("Type2".to_string()),
@@ -923,6 +965,7 @@ fn test_type_validation_multiple_features() {
             "feature3".to_string(),
             Symbol::Feature {
                 scope_id: 0,
+                source_file: None,
                 name: "feature3".to_string(),
                 qualified_name: "feature3".to_string(),
                 feature_type: None,
@@ -945,6 +988,7 @@ fn test_type_validation_qualified_type_reference() {
             "SubType".to_string(),
             Symbol::Definition {
                 scope_id: 0,
+                source_file: None,
                 name: "SubType".to_string(),
                 qualified_name: "Package::SubType".to_string(),
                 kind: "Part".to_string(),
@@ -958,6 +1002,7 @@ fn test_type_validation_qualified_type_reference() {
             "myFeature".to_string(),
             Symbol::Feature {
                 scope_id: 0,
+                source_file: None,
                 name: "myFeature".to_string(),
                 qualified_name: "myFeature".to_string(),
                 feature_type: Some("SubType".to_string()),
@@ -980,6 +1025,7 @@ fn test_type_validation_multiple_errors() {
             "feature1".to_string(),
             Symbol::Feature {
                 scope_id: 0,
+                source_file: None,
                 name: "feature1".to_string(),
                 qualified_name: "feature1".to_string(),
                 feature_type: Some("Undefined1".to_string()),
@@ -992,6 +1038,7 @@ fn test_type_validation_multiple_errors() {
             "feature2".to_string(),
             Symbol::Feature {
                 scope_id: 0,
+                source_file: None,
                 name: "feature2".to_string(),
                 qualified_name: "feature2".to_string(),
                 feature_type: Some("Undefined2".to_string()),
@@ -1017,6 +1064,7 @@ fn test_type_validation_mixed_errors() {
             "SomePackage".to_string(),
             Symbol::Package {
                 scope_id: 0,
+                source_file: None,
                 name: "SomePackage".to_string(),
                 qualified_name: "SomePackage".to_string(),
             },
@@ -1029,6 +1077,7 @@ fn test_type_validation_mixed_errors() {
             "feature1".to_string(),
             Symbol::Feature {
                 scope_id: 0,
+                source_file: None,
                 name: "feature1".to_string(),
                 qualified_name: "feature1".to_string(),
                 feature_type: Some("UndefinedType".to_string()),
@@ -1042,6 +1091,7 @@ fn test_type_validation_mixed_errors() {
             "feature2".to_string(),
             Symbol::Feature {
                 scope_id: 0,
+                source_file: None,
                 name: "feature2".to_string(),
                 qualified_name: "feature2".to_string(),
                 feature_type: Some("SomePackage".to_string()),
@@ -1081,6 +1131,7 @@ fn test_type_validation_scope_aware_resolution() {
                 qualified_name: "Pkg1::Vehicle".to_string(),
                 kind: "Part".to_string(),
                 scope_id: pkg1_scope,
+                source_file: None,
             },
         )
         .unwrap();
@@ -1094,6 +1145,7 @@ fn test_type_validation_scope_aware_resolution() {
                 qualified_name: "Pkg1::myFeature".to_string(),
                 feature_type: Some("Vehicle".to_string()),
                 scope_id: pkg1_scope,
+                source_file: None,
             },
         )
         .unwrap();
@@ -1113,6 +1165,7 @@ fn test_type_validation_scope_aware_resolution() {
                 qualified_name: "Pkg2::Vehicle".to_string(),
                 kind: "Part".to_string(),
                 scope_id: pkg2_scope,
+                source_file: None,
             },
         )
         .unwrap();
@@ -1149,6 +1202,7 @@ fn test_type_validation_scope_aware_undefined() {
                 qualified_name: "Pkg1::myFeature".to_string(),
                 feature_type: Some("Vehicle".to_string()),
                 scope_id: pkg1_scope,
+                source_file: None,
             },
         )
         .unwrap();
@@ -1168,6 +1222,7 @@ fn test_type_validation_scope_aware_undefined() {
                 qualified_name: "Pkg2::Vehicle".to_string(),
                 kind: "Part".to_string(),
                 scope_id: pkg2_scope,
+                source_file: None,
             },
         )
         .unwrap();
@@ -1205,6 +1260,7 @@ fn test_type_validation_feature_without_type() {
                 qualified_name: "untyped".to_string(),
                 feature_type: None,
                 scope_id: 0,
+                source_file: None,
             },
         )
         .unwrap();
@@ -1232,6 +1288,7 @@ fn test_type_validation_usage_not_valid_type() {
                 qualified_name: "myUsage".to_string(),
                 kind: "Part".to_string(),
                 scope_id: 0,
+                source_file: None,
             },
         )
         .unwrap();
@@ -1245,6 +1302,7 @@ fn test_type_validation_usage_not_valid_type() {
                 qualified_name: "myFeature".to_string(),
                 feature_type: Some("myUsage".to_string()),
                 scope_id: 0,
+                source_file: None,
             },
         )
         .unwrap();
@@ -1276,6 +1334,7 @@ fn test_type_validation_shadowing() {
                 qualified_name: "Vehicle".to_string(),
                 kind: "Part".to_string(),
                 scope_id: 0,
+                source_file: None,
             },
         )
         .unwrap();
@@ -1292,6 +1351,7 @@ fn test_type_validation_shadowing() {
                 qualified_name: "Nested::Vehicle".to_string(),
                 kind: "Port".to_string(),
                 scope_id: nested_scope,
+                source_file: None,
             },
         )
         .unwrap();
@@ -1305,6 +1365,7 @@ fn test_type_validation_shadowing() {
                 qualified_name: "Nested::myFeature".to_string(),
                 feature_type: Some("Vehicle".to_string()),
                 scope_id: nested_scope,
+                source_file: None,
             },
         )
         .unwrap();
@@ -1321,6 +1382,7 @@ fn test_type_validation_shadowing() {
                 qualified_name: "rootFeature".to_string(),
                 feature_type: Some("Vehicle".to_string()),
                 scope_id: 0,
+                source_file: None,
             },
         )
         .unwrap();
@@ -1345,6 +1407,7 @@ fn test_relationship_validation_undefined_target() {
             "Vehicle".to_string(),
             Symbol::Definition {
                 scope_id: 0,
+                source_file: None,
                 name: "Vehicle".to_string(),
                 qualified_name: "Vehicle".to_string(),
                 kind: "Part".to_string(),
@@ -1383,6 +1446,7 @@ fn test_relationship_validation_typing_undefined_target() {
             "myPart".to_string(),
             Symbol::Usage {
                 scope_id: 0,
+                source_file: None,
                 name: "myPart".to_string(),
                 qualified_name: "myPart".to_string(),
                 kind: "Part".to_string(),
@@ -1416,6 +1480,7 @@ fn test_circular_specialization_detection() {
             "A".to_string(),
             Symbol::Definition {
                 scope_id: 0,
+                source_file: None,
                 name: "A".to_string(),
                 qualified_name: "A".to_string(),
                 kind: "Part".to_string(),
@@ -1428,6 +1493,7 @@ fn test_circular_specialization_detection() {
             "B".to_string(),
             Symbol::Definition {
                 scope_id: 0,
+                source_file: None,
                 name: "B".to_string(),
                 qualified_name: "B".to_string(),
                 kind: "Part".to_string(),
@@ -1440,6 +1506,7 @@ fn test_circular_specialization_detection() {
             "C".to_string(),
             Symbol::Definition {
                 scope_id: 0,
+                source_file: None,
                 name: "C".to_string(),
                 qualified_name: "C".to_string(),
                 kind: "Part".to_string(),
@@ -1478,6 +1545,7 @@ fn test_self_specialization_detection() {
             "Vehicle".to_string(),
             Symbol::Definition {
                 scope_id: 0,
+                source_file: None,
                 name: "Vehicle".to_string(),
                 qualified_name: "Vehicle".to_string(),
                 kind: "Part".to_string(),
@@ -1517,6 +1585,7 @@ fn test_valid_specialization_chain() {
             "Vehicle".to_string(),
             Symbol::Definition {
                 scope_id: 0,
+                source_file: None,
                 name: "Vehicle".to_string(),
                 qualified_name: "Vehicle".to_string(),
                 kind: "Part".to_string(),
@@ -1529,6 +1598,7 @@ fn test_valid_specialization_chain() {
             "Car".to_string(),
             Symbol::Definition {
                 scope_id: 0,
+                source_file: None,
                 name: "Car".to_string(),
                 qualified_name: "Car".to_string(),
                 kind: "Part".to_string(),
@@ -1541,6 +1611,7 @@ fn test_valid_specialization_chain() {
             "SportsCar".to_string(),
             Symbol::Definition {
                 scope_id: 0,
+                source_file: None,
                 name: "SportsCar".to_string(),
                 qualified_name: "SportsCar".to_string(),
                 kind: "Part".to_string(),
@@ -1572,6 +1643,7 @@ fn test_multiple_relationship_types_validation() {
             "VehicleDef".to_string(),
             Symbol::Definition {
                 scope_id: 0,
+                source_file: None,
                 name: "VehicleDef".to_string(),
                 qualified_name: "VehicleDef".to_string(),
                 kind: "Part".to_string(),
@@ -1584,6 +1656,7 @@ fn test_multiple_relationship_types_validation() {
             "myVehicle".to_string(),
             Symbol::Usage {
                 scope_id: 0,
+                source_file: None,
                 name: "myVehicle".to_string(),
                 qualified_name: "myVehicle".to_string(),
                 kind: "Part".to_string(),
@@ -1624,6 +1697,7 @@ fn test_relationship_validation_with_qualified_names() {
             "Vehicles".to_string(),
             Symbol::Package {
                 scope_id: 0,
+                source_file: None,
                 name: "Vehicles".to_string(),
                 qualified_name: "Vehicles".to_string(),
             },
@@ -1638,6 +1712,7 @@ fn test_relationship_validation_with_qualified_names() {
             "Vehicles::Car".to_string(),
             Symbol::Definition {
                 scope_id: 1,
+                source_file: None,
                 name: "Car".to_string(),
                 qualified_name: "Vehicles::Car".to_string(),
                 kind: "Part".to_string(),
@@ -1650,6 +1725,7 @@ fn test_relationship_validation_with_qualified_names() {
             "Vehicles::SportsCar".to_string(),
             Symbol::Definition {
                 scope_id: 1,
+                source_file: None,
                 name: "SportsCar".to_string(),
                 qualified_name: "Vehicles::SportsCar".to_string(),
                 kind: "Part".to_string(),
@@ -1684,6 +1760,7 @@ fn test_satisfy_relationship_validation_valid() {
             "SafetyCase".to_string(),
             Symbol::Definition {
                 scope_id: 0,
+                source_file: None,
                 name: "SafetyCase".to_string(),
                 qualified_name: "SafetyCase".to_string(),
                 kind: "Case".to_string(),
@@ -1697,6 +1774,7 @@ fn test_satisfy_relationship_validation_valid() {
             "SafetyReq".to_string(),
             Symbol::Definition {
                 scope_id: 0,
+                source_file: None,
                 name: "SafetyReq".to_string(),
                 qualified_name: "SafetyReq".to_string(),
                 kind: "Requirement".to_string(),
@@ -1727,6 +1805,7 @@ fn test_satisfy_relationship_validation_invalid_target() {
             "MyCase".to_string(),
             Symbol::Definition {
                 scope_id: 0,
+                source_file: None,
                 name: "MyCase".to_string(),
                 qualified_name: "MyCase".to_string(),
                 kind: "Case".to_string(),
@@ -1740,6 +1819,7 @@ fn test_satisfy_relationship_validation_invalid_target() {
             "Vehicle".to_string(),
             Symbol::Definition {
                 scope_id: 0,
+                source_file: None,
                 name: "Vehicle".to_string(),
                 qualified_name: "Vehicle".to_string(),
                 kind: "Part".to_string(),
@@ -1774,6 +1854,7 @@ fn test_perform_relationship_validation() {
             "Robot".to_string(),
             Symbol::Definition {
                 scope_id: 0,
+                source_file: None,
                 name: "Robot".to_string(),
                 qualified_name: "Robot".to_string(),
                 kind: "Part".to_string(),
@@ -1787,6 +1868,7 @@ fn test_perform_relationship_validation() {
             "Move".to_string(),
             Symbol::Definition {
                 scope_id: 0,
+                source_file: None,
                 name: "Move".to_string(),
                 qualified_name: "Move".to_string(),
                 kind: "Action".to_string(),
@@ -1817,6 +1899,7 @@ fn test_perform_relationship_invalid_target() {
             "Robot".to_string(),
             Symbol::Definition {
                 scope_id: 0,
+                source_file: None,
                 name: "Robot".to_string(),
                 qualified_name: "Robot".to_string(),
                 kind: "Part".to_string(),
@@ -1830,6 +1913,7 @@ fn test_perform_relationship_invalid_target() {
             "Tool".to_string(),
             Symbol::Definition {
                 scope_id: 0,
+                source_file: None,
                 name: "Tool".to_string(),
                 qualified_name: "Tool".to_string(),
                 kind: "Part".to_string(),
@@ -1864,6 +1948,7 @@ fn test_exhibit_relationship_validation() {
             "Vehicle".to_string(),
             Symbol::Definition {
                 scope_id: 0,
+                source_file: None,
                 name: "Vehicle".to_string(),
                 qualified_name: "Vehicle".to_string(),
                 kind: "Part".to_string(),
@@ -1877,6 +1962,7 @@ fn test_exhibit_relationship_validation() {
             "Moving".to_string(),
             Symbol::Definition {
                 scope_id: 0,
+                source_file: None,
                 name: "Moving".to_string(),
                 qualified_name: "Moving".to_string(),
                 kind: "State".to_string(),
@@ -1907,6 +1993,7 @@ fn test_include_relationship_validation() {
             "ManageAccount".to_string(),
             Symbol::Definition {
                 scope_id: 0,
+                source_file: None,
                 name: "ManageAccount".to_string(),
                 qualified_name: "ManageAccount".to_string(),
                 kind: "UseCase".to_string(),
@@ -1919,6 +2006,7 @@ fn test_include_relationship_validation() {
             "Login".to_string(),
             Symbol::Definition {
                 scope_id: 0,
+                source_file: None,
                 name: "Login".to_string(),
                 qualified_name: "Login".to_string(),
                 kind: "UseCase".to_string(),

@@ -50,6 +50,7 @@ impl<'a> NameResolver<'a> {
                 Symbol::Feature { qualified_name, .. } => qualified_name,
                 Symbol::Definition { qualified_name, .. } => qualified_name,
                 Symbol::Usage { qualified_name, .. } => qualified_name,
+                Symbol::Alias { qualified_name, .. } => qualified_name,
             };
             if symbol_qname == qualified_name {
                 return Some(symbol);

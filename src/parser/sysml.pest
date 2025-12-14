@@ -2203,10 +2203,12 @@ import_prefix = { visibility? ~ "import" ~ import_all? }
 import_all = { "all" }
 
 imported_reference = {
-    element_reference
+    qualified_name
     ~ namespace_marker?
     ~ recursive_marker?
 }
+
+qualified_name = { (identifier | quoted_name) ~ ("::" ~ (identifier | quoted_name))* }
 
 namespace_marker = { "::*" }
 recursive_marker = { "::**" }

@@ -1,5 +1,7 @@
 use crate::core::visitor::AstVisitor;
-use crate::language::sysml::syntax::{Definition, Element, Package, SysMLFile, Usage};
+use crate::language::sysml::syntax::{
+    Alias, Comment, Definition, Element, Import, Package, SysMLFile, Usage,
+};
 use crate::semantic::error::SemanticError;
 use crate::semantic::graph::RelationshipGraph;
 use crate::semantic::symbol_table::{Symbol, SymbolTable};
@@ -85,6 +87,7 @@ impl<'a> SymbolTablePopulator<'a> {
             Element::Usage(u) => self.visit_usage(u),
             Element::Comment(c) => self.visit_comment(c),
             Element::Import(i) => self.visit_import(i),
+            Element::Alias(a) => self.visit_alias(a),
         }
     }
 
@@ -172,6 +175,7 @@ impl<'a> AstVisitor for SymbolTablePopulator<'a> {
                 name: name.clone(),
                 qualified_name,
                 scope_id,
+                source_file: self.symbol_table.current_file().map(String::from),
             };
             self.insert_symbol(name.clone(), symbol);
             self.enter_namespace(name.clone());
@@ -188,6 +192,7 @@ impl<'a> AstVisitor for SymbolTablePopulator<'a> {
                 qualified_name: qualified_name.clone(),
                 kind,
                 scope_id,
+                source_file: self.symbol_table.current_file().map(String::from),
             };
             self.insert_symbol(name.clone(), symbol);
 
@@ -264,6 +269,7 @@ impl<'a> AstVisitor for SymbolTablePopulator<'a> {
                 qualified_name: qualified_name.clone(),
                 kind,
                 scope_id,
+                source_file: self.symbol_table.current_file().map(String::from),
             };
             self.insert_symbol(name.clone(), symbol);
 
@@ -297,6 +303,31 @@ impl<'a> AstVisitor for SymbolTablePopulator<'a> {
                     );
                 }
             }
+        }
+    }
+
+    fn visit_import(&mut self, import: &Import) {
+        // Record the import in the current scope
+        self.symbol_table
+            .add_import(import.path.clone(), import.is_recursive);
+    }
+
+    fn visit_comment(&mut self, _comment: &Comment) {
+        // Comments don't affect symbol table
+    }
+
+    fn visit_alias(&mut self, alias: &Alias) {
+        if let Some(name) = &alias.name {
+            let qualified_name = self.qualified_name(name);
+            let scope_id = self.symbol_table.current_scope_id();
+            let symbol = Symbol::Alias {
+                name: name.clone(),
+                qualified_name,
+                target: alias.target.clone(),
+                scope_id,
+                source_file: self.symbol_table.current_file().map(String::from),
+            };
+            self.insert_symbol(name.clone(), symbol);
         }
     }
 }

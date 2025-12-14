@@ -2,7 +2,7 @@ use super::{
     enums::{DefinitionKind, DefinitionMember, Element, UsageKind},
     types::{Comment, Definition, Import, Package, Relationships, SysMLFile, Usage},
 };
-use crate::parser::sysml::Rule;
+use crate::{language::sysml::syntax::Alias, parser::sysml::Rule};
 use from_pest::{ConversionError, FromPest, Void};
 
 // Helper function to recursively extract usages from body items
@@ -284,18 +284,37 @@ macro_rules! impl_from_pest {
 }
 
 impl_from_pest!(Package, |pest| {
-    let pair = pest.next().ok_or(ConversionError::NoMatch)?;
-    if pair.as_rule() != Rule::package_declaration {
-        return Err(ConversionError::NoMatch);
+    let mut name = None;
+    let mut elements = Vec::new();
+
+    for pair in pest {
+        match pair.as_rule() {
+            Rule::package_declaration => {
+                name = pair
+                    .into_inner()
+                    .find(|p| p.as_rule() == Rule::identification)
+                    .map(|id| id.as_str().to_string());
+            }
+            Rule::package_body => {
+                // Parse package body elements
+                for inner in pair.into_inner() {
+                    if inner.as_rule() == Rule::package_body_items {
+                        for body_item in inner.into_inner() {
+                            if body_item.as_rule() == Rule::package_body_element {
+                                if let Ok(element) = Element::from_pest(&mut body_item.into_inner())
+                                {
+                                    elements.push(element);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            _ => {}
+        }
     }
-    let name = pair
-        .into_inner()
-        .find(|p| p.as_rule() == Rule::identification)
-        .map(|id| id.as_str().to_string());
-    Ok(Package {
-        name,
-        elements: vec![],
-    })
+
+    Ok(Package { name, elements })
 });
 
 impl_from_pest!(Definition, |pest| {
@@ -354,19 +373,46 @@ impl_from_pest!(Comment, |pest| {
 });
 
 impl_from_pest!(Import, |pest| {
-    let pair = pest.next().ok_or(ConversionError::NoMatch)?;
-    if pair.as_rule() != Rule::import {
-        return Err(ConversionError::NoMatch);
+    // We receive the children of Rule::import (import_prefix, imported_reference, etc.)
+    let mut is_recursive = false;
+    let mut path = String::new();
+
+    for pair in pest {
+        match pair.as_rule() {
+            Rule::imported_reference => {
+                path = pair.as_str().to_string();
+                // Check for recursive marker
+                for inner in pair.into_inner() {
+                    if inner.as_rule() == Rule::recursive_marker {
+                        is_recursive = true;
+                    }
+                }
+            }
+            _ => {}
+        }
     }
-    let path = pair
-        .into_inner()
-        .find(|p| p.as_rule() == Rule::imported_reference || p.as_rule() == Rule::identification)
-        .map(|p| p.as_str().to_string())
-        .unwrap_or_default();
-    Ok(Import {
-        path,
-        is_recursive: false,
-    })
+
+    Ok(Import { path, is_recursive })
+});
+
+impl_from_pest!(Alias, |pest| {
+    // We receive the children of Rule::alias_member_element
+    let mut name = None;
+    let mut target = String::new();
+
+    for pair in pest {
+        match pair.as_rule() {
+            Rule::identification => {
+                name = Some(pair.as_str().to_string());
+            }
+            Rule::element_reference => {
+                target = pair.as_str().to_string();
+            }
+            _ => {}
+        }
+    }
+
+    Ok(Alias { name, target })
 });
 
 impl_from_pest!(Element, |pest| {
@@ -377,7 +423,12 @@ impl_from_pest!(Element, |pest| {
     }
 
     Ok(match pair.as_rule() {
+        Rule::package | Rule::library_package => {
+            Element::Package(Package::from_pest(&mut pair.into_inner())?)
+        }
         Rule::package_declaration => Element::Package(Package::from_pest(&mut pair.into_inner())?),
+        Rule::definition_member_element => Element::from_pest(&mut pair.into_inner())?,
+        Rule::usage_member => Element::from_pest(&mut pair.into_inner())?,
         Rule::definition_element => Element::from_pest(&mut pair.into_inner())?,
         Rule::usage_element
         | Rule::occurrence_usage_element
@@ -453,6 +504,7 @@ impl_from_pest!(Element, |pest| {
         }
         Rule::comment_annotation => Element::Comment(Comment::from_pest(&mut pair.into_inner())?),
         Rule::import => Element::Import(Import::from_pest(&mut pair.into_inner())?),
+        Rule::alias_member_element => Element::Alias(Alias::from_pest(&mut pair.into_inner())?),
         _ => return Err(ConversionError::NoMatch),
     })
 });
@@ -467,20 +519,8 @@ impl_from_pest!(SysMLFile, |pest| {
 
     for pair in model_pair.into_inner() {
         if pair.as_rule() == Rule::namespace_element {
-            for inner in pair.into_inner() {
-                match inner.as_rule() {
-                    Rule::definition_member_element | Rule::usage_member => {
-                        if let Ok(element) = Element::from_pest(&mut inner.into_inner()) {
-                            elements.push(element);
-                        }
-                    }
-                    Rule::package | Rule::library_package => {
-                        if let Ok(element) = Element::from_pest(&mut inner.into_inner()) {
-                            elements.push(element);
-                        }
-                    }
-                    _ => {}
-                }
+            if let Ok(element) = Element::from_pest(&mut pair.into_inner()) {
+                elements.push(element);
             }
         }
     }

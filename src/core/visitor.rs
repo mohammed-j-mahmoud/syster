@@ -1,5 +1,5 @@
 use crate::language::sysml::syntax::{
-    Comment, Definition, Element, Import, NamespaceDeclaration, Package, SysMLFile, Usage,
+    Alias, Comment, Definition, Element, Import, NamespaceDeclaration, Package, SysMLFile, Usage,
 };
 
 pub trait AstVisitor {
@@ -11,6 +11,7 @@ pub trait AstVisitor {
     fn visit_usage(&mut self, _usage: &Usage) {}
     fn visit_comment(&mut self, _comment: &Comment) {}
     fn visit_import(&mut self, _import: &Import) {}
+    fn visit_alias(&mut self, _alias: &Alias) {}
 }
 
 pub trait Visitable {
@@ -55,6 +56,7 @@ impl Visitable for Element {
             Element::Usage(u) => u.accept(visitor),
             Element::Comment(c) => c.accept(visitor),
             Element::Import(i) => i.accept(visitor),
+            Element::Alias(a) => a.accept(visitor),
         }
     }
 }
@@ -69,3 +71,4 @@ impl_visitable!(Definition, visit_definition);
 impl_visitable!(Usage, visit_usage);
 impl_visitable!(Comment, visit_comment);
 impl_visitable!(Import, visit_import);
+impl_visitable!(Alias, visit_alias);

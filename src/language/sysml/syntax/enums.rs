@@ -1,4 +1,4 @@
-use super::types::{Comment, Definition, Import, Package, Usage};
+use super::types::{Alias, Comment, Definition, Import, Package, Usage};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Element {
@@ -7,6 +7,7 @@ pub enum Element {
     Usage(Usage),
     Comment(Comment),
     Import(Import),
+    Alias(Alias),
 }
 
 #[derive(Debug, Clone, PartialEq)]

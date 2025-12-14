@@ -290,7 +290,9 @@ fn test_import_from_pest() {
     let source = "import SomePackage::*;";
     let mut pairs = SysMLParser::parse(Rule::import, source).unwrap();
 
-    let import = Import::from_pest(&mut pairs).unwrap();
+    // Import::from_pest expects the children of the import rule
+    let import_pair = pairs.next().unwrap();
+    let import = Import::from_pest(&mut import_pair.into_inner()).unwrap();
 
     assert!(!import.path.is_empty());
 }
@@ -379,8 +381,8 @@ fn test_visitor_pattern() {
                 name: Some("TestDef".to_string()),
                 body: vec![],
                 relationships: crate::language::sysml::syntax::Relationships::none(),
-        is_abstract: false,
-        is_variation: false,
+                is_abstract: false,
+                is_variation: false,
             }),
         ],
     };

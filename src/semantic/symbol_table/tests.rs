@@ -13,6 +13,7 @@ fn test_insert_and_lookup() {
     let mut table = SymbolTable::new();
     let symbol = Symbol::Package {
         scope_id: 0,
+        source_file: None,
         name: "MyPackage".to_string(),
         qualified_name: "MyPackage".to_string(),
     };
@@ -30,6 +31,7 @@ fn test_duplicate_symbol_error() {
     let mut table = SymbolTable::new();
     let symbol = Symbol::Package {
         scope_id: 0,
+        source_file: None,
         name: "MyPackage".to_string(),
         qualified_name: "MyPackage".to_string(),
     };
@@ -47,6 +49,7 @@ fn test_scope_hierarchy() {
 
     let pkg_symbol = Symbol::Package {
         scope_id: 0,
+        source_file: None,
         name: "Root".to_string(),
         qualified_name: "Root".to_string(),
     };
@@ -55,6 +58,7 @@ fn test_scope_hierarchy() {
     table.enter_scope();
     let class_symbol = Symbol::Classifier {
         scope_id: 0,
+        source_file: None,
         name: "MyClass".to_string(),
         qualified_name: "Root::MyClass".to_string(),
         kind: "Class".to_string(),
@@ -77,6 +81,7 @@ fn test_local_lookup() {
 
     let root_symbol = Symbol::Package {
         scope_id: 0,
+        source_file: None,
         name: "Root".to_string(),
         qualified_name: "Root".to_string(),
     };
@@ -85,6 +90,7 @@ fn test_local_lookup() {
     table.enter_scope();
     let nested_symbol = Symbol::Classifier {
         scope_id: 0,
+        source_file: None,
         name: "Nested".to_string(),
         qualified_name: "Root::Nested".to_string(),
         kind: "Class".to_string(),
@@ -104,6 +110,7 @@ fn test_symbols_in_scope() {
 
     let pkg = Symbol::Package {
         scope_id: 0,
+        source_file: None,
         name: "Pkg".to_string(),
         qualified_name: "Pkg".to_string(),
     };
@@ -116,6 +123,7 @@ fn test_symbols_in_scope() {
     table.enter_scope();
     let class = Symbol::Classifier {
         scope_id: 0,
+        source_file: None,
         name: "Class".to_string(),
         qualified_name: "Pkg::Class".to_string(),
         kind: "Class".to_string(),
@@ -134,6 +142,7 @@ fn test_all_symbols() {
 
     let pkg = Symbol::Package {
         scope_id: 0,
+        source_file: None,
         name: "Pkg".to_string(),
         qualified_name: "Pkg".to_string(),
     };
@@ -142,6 +151,7 @@ fn test_all_symbols() {
     table.enter_scope();
     let class = Symbol::Classifier {
         scope_id: 0,
+        source_file: None,
         name: "Class".to_string(),
         qualified_name: "Pkg::Class".to_string(),
         kind: "Class".to_string(),
@@ -162,6 +172,7 @@ fn test_multiple_nested_scopes() {
             "Level0".to_string(),
             Symbol::Package {
                 scope_id: 0,
+                source_file: None,
                 name: "Level0".to_string(),
                 qualified_name: "Level0".to_string(),
             },
@@ -174,6 +185,7 @@ fn test_multiple_nested_scopes() {
             "Level1".to_string(),
             Symbol::Package {
                 scope_id: 0,
+                source_file: None,
                 name: "Level1".to_string(),
                 qualified_name: "Level0::Level1".to_string(),
             },
@@ -186,6 +198,7 @@ fn test_multiple_nested_scopes() {
             "Level2".to_string(),
             Symbol::Package {
                 scope_id: 0,
+                source_file: None,
                 name: "Level2".to_string(),
                 qualified_name: "Level0::Level1::Level2".to_string(),
             },
@@ -214,6 +227,7 @@ fn test_different_symbol_types() {
             "MyPackage".to_string(),
             Symbol::Package {
                 scope_id: 0,
+                source_file: None,
                 name: "MyPackage".to_string(),
                 qualified_name: "MyPackage".to_string(),
             },
@@ -225,6 +239,7 @@ fn test_different_symbol_types() {
             "MyClass".to_string(),
             Symbol::Classifier {
                 scope_id: 0,
+                source_file: None,
                 name: "MyClass".to_string(),
                 qualified_name: "MyClass".to_string(),
                 kind: "Class".to_string(),
@@ -238,6 +253,7 @@ fn test_different_symbol_types() {
             "MyFeature".to_string(),
             Symbol::Feature {
                 scope_id: 0,
+                source_file: None,
                 name: "MyFeature".to_string(),
                 qualified_name: "MyClass::MyFeature".to_string(),
                 feature_type: Some("String".to_string()),
@@ -250,6 +266,7 @@ fn test_different_symbol_types() {
             "MyDef".to_string(),
             Symbol::Definition {
                 scope_id: 0,
+                source_file: None,
                 name: "MyDef".to_string(),
                 qualified_name: "MyDef".to_string(),
                 kind: "Part".to_string(),
@@ -262,6 +279,7 @@ fn test_different_symbol_types() {
             "MyUsage".to_string(),
             Symbol::Usage {
                 scope_id: 0,
+                source_file: None,
                 name: "MyUsage".to_string(),
                 qualified_name: "MyUsage".to_string(),
                 kind: "Part".to_string(),

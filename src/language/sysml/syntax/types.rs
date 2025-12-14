@@ -128,3 +128,9 @@ pub struct Import {
     pub path: String,
     pub is_recursive: bool,
 }
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct Alias {
+    pub name: Option<String>,
+    pub target: String,
+}
