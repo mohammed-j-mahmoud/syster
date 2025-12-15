@@ -1,4 +1,5 @@
 use crate::core::events::EventEmitter;
+use crate::core::operation::{EventBus, OperationResult};
 use crate::semantic::events::DependencyEvent;
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
@@ -11,7 +12,7 @@ pub struct DependencyGraph {
     // Map from file -> files that depend on it (reverse index)
     dependents: HashMap<PathBuf, HashSet<PathBuf>>,
     // Event emitter for dependency changes
-    events: EventEmitter<DependencyEvent, DependencyGraph>,
+    pub events: EventEmitter<DependencyEvent, DependencyGraph>,
 }
 
 impl Default for DependencyGraph {
@@ -29,35 +30,26 @@ impl DependencyGraph {
         }
     }
 
-    /// Subscribes a listener to dependency graph events
-    pub fn subscribe<F>(&mut self, listener: F)
-    where
-        F: Fn(&DependencyEvent, &mut DependencyGraph) + Send + Sync + 'static,
-    {
-        self.events.subscribe(listener);
-    }
-
     /// Adds a dependency: `from` imports `to`
     pub fn add_dependency(&mut self, from: &Path, to: &Path) {
-        self.dependencies
-            .entry(from.to_path_buf())
-            .or_default()
-            .insert(to.to_path_buf());
+        let _ = {
+            self.dependencies
+                .entry(from.to_path_buf())
+                .or_default()
+                .insert(to.to_path_buf());
 
-        self.dependents
-            .entry(to.to_path_buf())
-            .or_default()
-            .insert(from.to_path_buf());
+            self.dependents
+                .entry(to.to_path_buf())
+                .or_default()
+                .insert(from.to_path_buf());
 
-        // Emit event
-        let events = std::mem::take(&mut self.events);
-        self.events = events.emit(
-            DependencyEvent::DependencyAdded {
+            let event = DependencyEvent::DependencyAdded {
                 from: from.to_path_buf(),
                 to: to.to_path_buf(),
-            },
-            self,
-        );
+            };
+            OperationResult::<(), String, DependencyEvent>::success((), Some(event))
+        }
+        .publish(self);
     }
 
     /// Returns all files that `file` directly depends on
@@ -143,32 +135,41 @@ impl DependencyGraph {
 
     /// Removes all dependencies for a file (e.g., when file is deleted)
     pub fn remove_file(&mut self, file: &PathBuf) {
-        // Remove file's dependencies
-        if let Some(deps) = self.dependencies.remove(file) {
-            for dep in deps {
-                if let Some(dep_set) = self.dependents.get_mut(&dep) {
-                    dep_set.remove(file);
+        let _ = {
+            // Remove file's dependencies
+            if let Some(deps) = self.dependencies.remove(file) {
+                for dep in deps {
+                    if let Some(dep_set) = self.dependents.get_mut(&dep) {
+                        dep_set.remove(file);
+                    }
                 }
             }
-        }
 
-        // Remove file from dependents
-        if let Some(deps) = self.dependents.remove(file) {
-            for dep in deps {
-                if let Some(dep_set) = self.dependencies.get_mut(&dep) {
-                    dep_set.remove(file);
+            // Remove file from dependents
+            if let Some(deps) = self.dependents.remove(file) {
+                for dep in deps {
+                    if let Some(dep_set) = self.dependencies.get_mut(&dep) {
+                        dep_set.remove(file);
+                    }
                 }
             }
-        }
 
-        // Emit event
-        let events = std::mem::take(&mut self.events);
-        self.events = events.emit(DependencyEvent::FileRemoved { path: file.clone() }, self);
+            let event = DependencyEvent::FileRemoved { path: file.clone() };
+            OperationResult::<(), String, DependencyEvent>::success((), Some(event))
+        }
+        .publish(self);
     }
 
     /// Returns the total number of tracked dependencies
     pub fn dependencies_count(&self) -> usize {
         self.dependencies.values().map(|set| set.len()).sum()
+    }
+}
+
+impl EventBus<DependencyEvent> for DependencyGraph {
+    fn publish(&mut self, event: &DependencyEvent) {
+        let emitter = std::mem::take(&mut self.events);
+        self.events = emitter.emit(event.clone(), self);
     }
 }
 

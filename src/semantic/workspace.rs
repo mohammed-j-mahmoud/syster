@@ -161,6 +161,7 @@
 //! See [Workspace Management](../../docs/SEMANTIC_ANALYSIS.md#workspace-management) for details.
 
 use crate::core::events::EventEmitter;
+use crate::core::operation::{EventBus, OperationResult};
 use crate::language::sysml::SymbolTablePopulator;
 use crate::language::sysml::syntax::SysMLFile;
 use crate::semantic::dependency_graph::DependencyGraph;
@@ -226,7 +227,7 @@ pub struct Workspace {
     file_imports: HashMap<PathBuf, Vec<String>>,
     stdlib_loaded: bool,
     symbol_index: HashMap<String, Vec<usize>>,
-    events: EventEmitter<WorkspaceEvent, Workspace>,
+    pub events: EventEmitter<WorkspaceEvent, Workspace>,
 }
 
 impl Workspace {
@@ -267,16 +268,18 @@ impl Workspace {
 
     /// Adds a file to the workspace
     pub fn add_file(&mut self, path: PathBuf, content: SysMLFile) {
-        // Extract imports from the file
-        let imports = extract_imports(&content);
-        self.file_imports.insert(path.clone(), imports);
+        let _ = {
+            // Extract imports from the file
+            let imports = extract_imports(&content);
+            self.file_imports.insert(path.clone(), imports);
 
-        let file = WorkspaceFile::new(path.clone(), content);
-        self.files.insert(path.clone(), file);
+            let file = WorkspaceFile::new(path.clone(), content);
+            self.files.insert(path.clone(), file);
 
-        // Emit event
-        let events = std::mem::take(&mut self.events);
-        self.events = events.emit(WorkspaceEvent::FileAdded { path }, self);
+            let event = WorkspaceEvent::FileAdded { path };
+            OperationResult::<(), String, WorkspaceEvent>::success((), Some(event))
+        }
+        .publish(self);
     }
 
     /// Gets a reference to a file in the workspace
@@ -295,8 +298,11 @@ impl Workspace {
         }
 
         // Emit event BEFORE clearing dependencies so listeners can query the graph
-        let events = std::mem::take(&mut self.events);
-        self.events = events.emit(WorkspaceEvent::FileUpdated { path: path.clone() }, self);
+        let _ = {
+            let event = WorkspaceEvent::FileUpdated { path: path.clone() };
+            OperationResult::<(), String, WorkspaceEvent>::success((), Some(event))
+        }
+        .publish(self);
 
         // Now update the file
         if let Some(file) = self.files.get_mut(path) {
@@ -324,9 +330,11 @@ impl Workspace {
             self.dependency_graph.remove_file(path);
             self.file_imports.remove(path);
 
-            // Emit event
-            let events = std::mem::take(&mut self.events);
-            self.events = events.emit(WorkspaceEvent::FileRemoved { path: path.clone() }, self);
+            let _ = {
+                let event = WorkspaceEvent::FileRemoved { path: path.clone() };
+                OperationResult::<(), String, WorkspaceEvent>::success((), Some(event))
+            }
+            .publish(self);
         }
         existed
     }
@@ -537,6 +545,13 @@ impl Workspace {
 impl Default for Workspace {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+impl EventBus<WorkspaceEvent> for Workspace {
+    fn publish(&mut self, event: &WorkspaceEvent) {
+        let emitter = std::mem::take(&mut self.events);
+        self.events = emitter.emit(event.clone(), self);
     }
 }
 
