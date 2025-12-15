@@ -1,0 +1,239 @@
+use std::fs;
+use std::io::Write;
+use std::path::PathBuf;
+use syster_cli::run_analysis;
+use tempfile::TempDir;
+
+#[test]
+fn test_analyze_single_file() {
+    let temp_dir = TempDir::new().unwrap();
+    let file_path = temp_dir.path().join("test.sysml");
+
+    let mut file = fs::File::create(&file_path).unwrap();
+    writeln!(file, "part def Vehicle;").unwrap();
+
+    let result = run_analysis(&file_path, false, false, None).unwrap();
+
+    assert_eq!(result.file_count, 1);
+    assert!(result.symbol_count > 0);
+}
+
+#[test]
+fn test_analyze_directory() {
+    let temp_dir = TempDir::new().unwrap();
+
+    let file1 = temp_dir.path().join("file1.sysml");
+    let mut f1 = fs::File::create(&file1).unwrap();
+    writeln!(f1, "part def Car;").unwrap();
+
+    let file2 = temp_dir.path().join("file2.sysml");
+    let mut f2 = fs::File::create(&file2).unwrap();
+    writeln!(f2, "part def Bike;").unwrap();
+
+    let result = run_analysis(&temp_dir.path().to_path_buf(), false, false, None).unwrap();
+
+    assert_eq!(result.file_count, 2);
+    assert!(result.symbol_count >= 2);
+}
+
+#[test]
+fn test_nonexistent_path() {
+    let result = run_analysis(&PathBuf::from("/nonexistent/path"), false, false, None);
+    assert!(result.is_err());
+    assert!(result.unwrap_err().contains("does not exist"));
+}
+
+#[test]
+fn test_invalid_sysml() {
+    let temp_dir = TempDir::new().unwrap();
+    let file_path = temp_dir.path().join("invalid.sysml");
+
+    let mut file = fs::File::create(&file_path).unwrap();
+    writeln!(file, "this is not valid sysml !@#$%").unwrap();
+
+    let result = run_analysis(&file_path, false, false, None);
+    assert!(result.is_err());
+}
+
+#[test]
+fn test_with_stdlib() {
+    let temp_dir = TempDir::new().unwrap();
+    let file_path = temp_dir.path().join("test.sysml");
+
+    let mut file = fs::File::create(&file_path).unwrap();
+    writeln!(file, "part def Vehicle;").unwrap();
+
+    let result_with_stdlib = run_analysis(&file_path, false, true, None).unwrap();
+    let result_without_stdlib = run_analysis(&file_path, false, false, None).unwrap();
+
+    assert_eq!(result_with_stdlib.file_count, 1);
+    assert_eq!(result_without_stdlib.file_count, 1);
+    // Both should have at least 1 symbol from our file
+    assert!(result_with_stdlib.symbol_count >= 1);
+    assert!(result_without_stdlib.symbol_count >= 1);
+}
+
+#[test]
+fn test_without_stdlib() {
+    let temp_dir = TempDir::new().unwrap();
+    let file_path = temp_dir.path().join("test.sysml");
+
+    let mut file = fs::File::create(&file_path).unwrap();
+    writeln!(file, "part def Vehicle;").unwrap();
+
+    let result = run_analysis(&file_path, false, false, None).unwrap();
+
+    assert_eq!(result.file_count, 1);
+    assert_eq!(result.symbol_count, 1);
+}
+
+#[test]
+fn test_kerml_file() {
+    // TODO: KerML symbol population not yet fully supported
+    let temp_dir = TempDir::new().unwrap();
+    let file_path = temp_dir.path().join("test.kerml");
+
+    let mut file = fs::File::create(&file_path).unwrap();
+    writeln!(file, "classifier Vehicle;").unwrap();
+
+    let result = run_analysis(&file_path, false, false, None).unwrap();
+
+    assert_eq!(result.file_count, 1);
+    // KerML files may have different symbol population behavior
+    // assert!(result.symbol_count >= 0);
+}
+
+#[test]
+fn test_mixed_directory() {
+    // TODO: KerML symbol population not yet fully supported
+    let temp_dir = TempDir::new().unwrap();
+
+    let sysml_file = temp_dir.path().join("file1.sysml");
+    let mut f1 = fs::File::create(&sysml_file).unwrap();
+    writeln!(f1, "part def Car;").unwrap();
+
+    let kerml_file = temp_dir.path().join("file2.kerml");
+    let mut f2 = fs::File::create(&kerml_file).unwrap();
+    writeln!(f2, "classifier Vehicle;").unwrap();
+
+    let result = run_analysis(&temp_dir.path().to_path_buf(), false, false, None).unwrap();
+
+    assert_eq!(result.file_count, 2);
+    // At least the SysML file should contribute a symbol
+    assert!(result.symbol_count >= 1);
+}
+
+#[test]
+fn test_verbose_mode() {
+    let temp_dir = TempDir::new().unwrap();
+    let file_path = temp_dir.path().join("test.sysml");
+
+    let mut file = fs::File::create(&file_path).unwrap();
+    writeln!(file, "part def Vehicle;").unwrap();
+
+    // Verbose mode should still succeed, just with more output
+    let result = run_analysis(&file_path, true, false, None).unwrap();
+
+    assert_eq!(result.file_count, 1);
+    assert!(result.symbol_count > 0);
+}
+
+#[test]
+fn test_empty_directory() {
+    let temp_dir = TempDir::new().unwrap();
+
+    let result = run_analysis(&temp_dir.path().to_path_buf(), false, false, None).unwrap();
+
+    assert_eq!(result.file_count, 0);
+}
+
+#[test]
+fn test_nested_directory_structure() {
+    let temp_dir = TempDir::new().unwrap();
+
+    // Create nested directory structure mimicking a workspace
+    let subdir1 = temp_dir.path().join("models");
+    let subdir2 = temp_dir.path().join("models/vehicles");
+    fs::create_dir_all(&subdir2).unwrap();
+
+    // Create files in different directories
+    let file1 = temp_dir.path().join("root.sysml");
+    let mut f1 = fs::File::create(&file1).unwrap();
+    writeln!(f1, "package RootPackage;").unwrap();
+
+    let file2 = subdir1.join("model.sysml");
+    let mut f2 = fs::File::create(&file2).unwrap();
+    writeln!(f2, "part def Component;").unwrap();
+
+    let file3 = subdir2.join("vehicle.sysml");
+    let mut f3 = fs::File::create(&file3).unwrap();
+    writeln!(f3, "part def Car;").unwrap();
+
+    let result = run_analysis(&temp_dir.path().to_path_buf(), false, false, None).unwrap();
+
+    // Should load all 3 files recursively
+    assert_eq!(result.file_count, 3);
+    assert!(result.symbol_count >= 3);
+}
+
+#[test]
+fn test_workspace_with_mixed_extensions() {
+    // TODO: KerML symbol population not yet fully supported
+    let temp_dir = TempDir::new().unwrap();
+
+    // Create files with different extensions
+    let sysml = temp_dir.path().join("file.sysml");
+    let mut f1 = fs::File::create(&sysml).unwrap();
+    writeln!(f1, "part def Vehicle;").unwrap();
+
+    let kerml = temp_dir.path().join("base.kerml");
+    let mut f2 = fs::File::create(&kerml).unwrap();
+    writeln!(f2, "classifier Base;").unwrap();
+
+    // Add a non-model file that should be ignored
+    let txt = temp_dir.path().join("readme.txt");
+    let mut f3 = fs::File::create(&txt).unwrap();
+    writeln!(f3, "This is not a model file").unwrap();
+
+    let result = run_analysis(&temp_dir.path().to_path_buf(), false, false, None).unwrap();
+
+    // Should only count .sysml and .kerml files
+    assert_eq!(result.file_count, 2);
+}
+
+#[test]
+fn test_stdlib_path_resolution() {
+    let temp_dir = TempDir::new().unwrap();
+    let file_path = temp_dir.path().join("test.sysml");
+
+    let mut file = fs::File::create(&file_path).unwrap();
+    writeln!(file, "part def Vehicle;").unwrap();
+
+    let result = run_analysis(&file_path, false, true, None).unwrap();
+
+    assert_eq!(result.file_count, 1);
+    assert!(result.symbol_count >= 1);
+}
+
+#[test]
+fn test_custom_stdlib_path() {
+    let temp_dir = TempDir::new().unwrap();
+    let file_path = temp_dir.path().join("test.sysml");
+
+    let mut file = fs::File::create(&file_path).unwrap();
+    writeln!(file, "part def Vehicle;").unwrap();
+
+    // Create a custom stdlib directory
+    let custom_stdlib = temp_dir.path().join("custom_stdlib");
+    fs::create_dir_all(&custom_stdlib).unwrap();
+
+    let stdlib_file = custom_stdlib.join("Base.sysml");
+    let mut sf = fs::File::create(&stdlib_file).unwrap();
+    writeln!(sf, "package Base {{ }}").unwrap();
+
+    let result = run_analysis(&file_path, false, true, Some(&custom_stdlib)).unwrap();
+
+    // File count includes both the input file AND custom stdlib files loaded
+    assert!(result.file_count >= 1);
+    assert!(result.symbol_count >= 1);
+}

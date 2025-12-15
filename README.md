@@ -4,6 +4,14 @@
 
 A Rust-based parser and tooling for SysML v2 (Systems Modeling Language) and KerML (Kernel Modeling Language).
 
+## Project Structure
+
+Syster is organized as a Cargo workspace with three crates:
+
+- **syster-base** - Core library with parser, AST, and semantic analysis
+- **syster-cli** - Command-line tool for analyzing SysML/KerML files
+- **syster-lsp** - Language Server Protocol implementation (in progress)
+
 ## Documentation
 
 - **[ARCHITECTURE.md](ARCHITECTURE.md)** ⭐ Core patterns and rules (start here)
@@ -56,37 +64,82 @@ Syster provides a comprehensive implementation of parsers and Abstract Syntax Tr
 ## Architecture
 
 ```
-src/
-├── core/                    # Shared infrastructure
-│   ├── traits.rs           # AstNode, Named, ToSource traits
-│   └── visitor.rs          # Visitor pattern implementation
-├── language/
-│   ├── kerml/
-│   │   ├── syntax/         # KerML-specific AST
-│   │   │   ├── ast.rs      # FromPest implementations
-│   │   │   ├── types.rs    # Type definitions
-│   │   │   ├── enums.rs    # Enum types
-│   │   │   └── tests.rs    # Unit tests
-│   │   └── model/          # Semantic model (planned)
-│   └── sysml/
-│       ├── syntax/         # SysML-specific AST
-│       │   ├── ast.rs      # FromPest implementations
-│       │   ├── types.rs    # Type definitions
-│       │   ├── enums.rs    # Enum types
-│       │   └── tests.rs    # Unit tests
-│       └── model/          # Semantic model (planned)
-└── parser/
-    ├── kerml.pest          # KerML grammar
-    └── sysml.pest          # SysML grammar
+crates/
+├── syster-base/             # Core library
+│   ├── src/
+│   │   ├── core/           # Shared infrastructure
+│   │   │   ├── traits.rs   # AstNode, Named, ToSource traits
+│   │   │   └── visitor.rs  # Visitor pattern implementation
+│   │   ├── language/
+│   │   │   ├── kerml/
+│   │   │   │   ├── syntax/ # KerML-specific AST
+│   │   │   │   └── model/  # Semantic model (planned)
+│   │   │   └── sysml/
+│   │   │       ├── syntax/ # SysML-specific AST
+│   │   │       └── model/  # Semantic model (planned)
+│   │   ├── parser/
+│   │   │   ├── kerml.pest  # KerML grammar
+│   │   │   └── sysml.pest  # SysML grammar
+│   │   ├── semantic/       # Cross-file analysis
+│   │   │   ├── symbol_table.rs
+│   │   │   ├── graph.rs
+│   │   │   ├── resolver.rs
+│   │   │   └── workspace.rs
+│   │   └── project/        # Workspace loading
+│   │       ├── workspace_loader.rs
+│   │       └── stdlib_loader.rs
+│   └── sysml.library/      # Standard library
+├── syster-cli/              # Command-line tool
+│   ├── src/
+│   │   ├── main.rs         # CLI entry point
+│   │   └── lib.rs          # Testable analysis logic
+│   └── tests/
+│       └── cli_tests.rs    # Integration tests
+└── syster-lsp/              # LSP server (in progress)
+    └── src/
+        └── main.rs
 ```
 
 ## Building
 
 ```bash
+# Build all crates
 cargo build
+
+# Build specific crate
+cargo build -p syster-base
+cargo build -p syster-cli
+cargo build -p syster-lsp
 ```
 
-## Usage
+## Command-Line Usage
+
+The `syster` CLI tool analyzes SysML and KerML files:
+
+```bash
+# Analyze a single file
+syster my_model.sysml
+
+# Analyze a directory (recursive)
+syster src/models/
+
+# Verbose output
+syster --verbose my_model.sysml
+
+# Skip standard library
+syster --no-stdlib my_model.sysml
+
+# Use custom standard library
+syster --stdlib-path ./custom_stdlib my_model.sysml
+```
+
+### CLI Options
+
+- `--verbose, -v` - Enable verbose output
+- `--no-stdlib` - Skip loading the standard library
+- `--stdlib-path <PATH>` - Path to custom standard library (default: `sysml.library`)
+
+## Library Usage
 
 ### Basic Usage
 
@@ -175,13 +228,28 @@ Run all tests:
 cargo test
 ```
 
-Run tests for specific language:
+Run tests for specific crate:
 ```bash
-cargo test language::kerml::syntax::tests
-cargo test language::sysml::syntax::tests
+cargo test -p syster-base
+cargo test -p syster-cli
+cargo test -p syster-lsp
 ```
 
-## Development
+Run tests for specific module:
+```bash
+cargo test -p syster-base language::kerml::syntax::tests
+cargo test -p syster-base language::sysml::syntax::tests
+cargo test -p syster-base semantic
+```
+
+## Development Guidelines
+
+See [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) for full guidelines. Key points:
+
+- **Test-Driven Development**: Write tests first, then implement
+- **One function at a time**: Complete full TDD cycle before moving to next function
+- **Format & Lint**: Run `make run-guidelines` before committing
+- **Small commits**: Commit after each completed todo with descriptive messages
 
 ### Key Design Patterns
 

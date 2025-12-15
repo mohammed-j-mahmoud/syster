@@ -2,6 +2,16 @@
 
 **Three-Phase Pipeline:** Parse (Pest) → Syntax (AST) → Semantic (Symbols + Graphs)
 
+## Project Structure
+
+Syster is a Cargo workspace with three crates:
+
+- **syster-base** (`crates/syster-base/`) - Core library with parser, AST, semantic analysis
+- **syster-cli** (`crates/syster-cli/`) - Command-line tool for file analysis
+- **syster-lsp** (`crates/syster-lsp/`) - Language Server Protocol implementation (in progress)
+
+All development work happens in `syster-base`. CLI and LSP are thin wrappers around the core library.
+
 ## Critical Rules
 
 ### NEVER Mix Phases
@@ -30,19 +40,34 @@
 ## Module Organization
 
 ```
-src/
-├── parser/          # Pest grammars (kerml.pest, sysml.pest)
-├── language/        # AST definitions (KerML, SysML)
-│   ├── kerml/syntax/
-│   └── sysml/
-│       ├── syntax/      # AST nodes
-│       └── populator.rs # Symbol table population
-└── semantic/        # Cross-file analysis
-    ├── symbol_table.rs  # Global symbol registry
-    ├── graph.rs         # Relationship graphs
-    ├── resolver.rs      # Name resolution (qualified names)
-    ├── analyzer.rs      # Validation passes
-    └── workspace.rs     # Multi-file coordination
+crates/
+├── syster-base/         # Core library
+│   ├── src/
+│   │   ├── parser/      # Pest grammars (kerml.pest, sysml.pest)
+│   │   ├── language/    # AST definitions (KerML, SysML)
+│   │   │   ├── kerml/syntax/
+│   │   │   └── sysml/
+│   │   │       ├── syntax/      # AST nodes
+│   │   │       └── populator.rs # Symbol table population
+│   │   ├── semantic/    # Cross-file analysis
+│   │   │   ├── symbol_table.rs  # Global symbol registry
+│   │   │   ├── graph.rs         # Relationship graphs
+│   │   │   ├── resolver.rs      # Name resolution (qualified names)
+│   │   │   ├── analyzer.rs      # Validation passes
+│   │   │   └── workspace.rs     # Multi-file coordination
+│   │   └── project/     # File loading
+│   │       ├── workspace_loader.rs  # Load user files on demand
+│   │       └── stdlib_loader.rs     # Load standard library
+│   └── sysml.library/   # Standard library files
+├── syster-cli/          # Command-line tool
+│   ├── src/
+│   │   ├── main.rs      # CLI argument parsing
+│   │   └── lib.rs       # Testable analysis logic
+│   └── tests/
+│       └── cli_tests.rs # Integration tests (14 tests)
+└── syster-lsp/          # LSP server (in progress)
+    └── src/
+        └── main.rs      # Server stub
 ```
 
 ## Adding Features

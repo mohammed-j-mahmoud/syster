@@ -1,0 +1,22 @@
+[package]
+name = "syster-base"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[lib]
+name = "syster"
+path = "src/lib.rs"
+
+[dependencies]
+pest = "2.7"
+pest_derive = "2.7"
+from-pest = "0.3"
+pest-ast = "0.3"
+rayon = "1.10"
+
+[dev-dependencies]
+rstest = "0.23"
+tempfile = "3.13"
