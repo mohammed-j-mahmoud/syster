@@ -2,7 +2,6 @@
 
 ## Event System
 - [ ] Event batching for bulk operations
-- [ ] Event filtering/middleware for targeted subscriptions
 - [ ] Event replay/history for debugging
 - [ ] Async event handlers (tokio/async-std)
 - [ ] Priority-based listener ordering
@@ -24,3 +23,10 @@
 - [ ] Property-based testing with proptest
 - [ ] Benchmark suite with criterion
 - [ ] 100% public API documentation coverage
+
+## Code Cleanup
+- [ ] Replace hardcoded strings in `language/sysml/populator.rs` with SYSML_KIND_* constants
+- [ ] Create relationship type constants (RELATIONSHIP_SATISFY, RELATIONSHIP_PERFORM, etc.)
+- [ ] Extract `is_abstract` and `is_variation` from definition_prefix in AST
+- [ ] Add KerML parser support in file_loader
+- [ ] Add annotation properties to KerML types
