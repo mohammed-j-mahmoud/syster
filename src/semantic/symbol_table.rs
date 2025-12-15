@@ -1,3 +1,99 @@
+//! # Symbol Table
+//!
+//! Central registry of all named elements in a SysML/KerML model, providing fast lookup
+//! and cross-file symbol resolution.
+//!
+//! ## Design Principles
+//!
+//! 1. **Qualified Names**: Every symbol has a unique qualified name (e.g., `Package::Class::Feature`)
+//! 2. **Scope Hierarchy**: Symbols track their parent scope via `scope_id`
+//! 3. **Source Tracking**: Each symbol records which file it came from
+//! 4. **Import Support**: Symbol visibility affected by import statements
+//!
+//! ## Symbol Types
+//!
+//! The `Symbol` enum represents all named elements:
+//!
+//! - **Package**: Namespace container (e.g., `package Automotive { }`)
+//! - **Classifier**: KerML types (class, struct, datatype, association, etc.)
+//! - **Feature**: Properties and operations of classifiers
+//! - **Definition**: SysML type definitions (part def, port def, action def, etc.)
+//! - **Usage**: SysML instances (part, port, action, etc.)
+//! - **Alias**: Import aliases (`import X as Y`)
+//!
+//! ## Qualified Names
+//!
+//! Qualified names uniquely identify symbols across files:
+//!
+//! ```text
+//! package Automotive {
+//!     package Engine {
+//!         part def V8 {
+//!             feature cylinders: Integer;
+//!         }
+//!     }
+//! }
+//!
+//! Qualified names:
+//! - "Automotive"                        (Package)
+//! - "Automotive::Engine"                (Package)
+//! - "Automotive::Engine::V8"            (Definition)
+//! - "Automotive::Engine::V8::cylinders" (Feature)
+//! ```
+//!
+//! ## Scope Hierarchy
+//!
+//! Scopes represent nested contexts (packages, classifiers):
+//!
+//! ```text
+//! Scope 0 (root)
+//!   └─ Scope 1 (package A)
+//!       └─ Scope 2 (classifier B)
+//!           └─ Scope 3 (feature c)
+//! ```
+//!
+//! Name lookup walks the scope chain from innermost to outermost.
+//!
+//! ## Import System
+//!
+//! The `Import` struct tracks import statements, which are resolved in three passes:
+//!
+//! 1. **Namespace imports** (`Package::*`) - Import all members
+//! 2. **Member imports** (`Package::Member`) - Import specific member
+//! 3. **Recursive imports** (`Package::*::**`) - Import all nested members
+//!
+//! See [Import Resolution](../../docs/SEMANTIC_ANALYSIS.md#import-resolution) for algorithm.
+//!
+//! ## Usage Example
+//!
+//! ```rust
+//! use syster::semantic::symbol_table::{Symbol, SymbolTable};
+//!
+//! let mut table = SymbolTable::new();
+//!
+//! // Insert a symbol
+//! table.insert(Symbol::Package {
+//!     name: "Automotive".to_string(),
+//!     qualified_name: "Automotive".to_string(),
+//!     scope_id: 0,
+//!     source_file: Some("auto.sysml".to_string()),
+//! });
+//!
+//! // Lookup by qualified name
+//! let symbol = table.lookup("Automotive");
+//! ```
+//!
+//! ## Performance
+//!
+//! - **Insert**: O(1) amortized (HashMap-backed)
+//! - **Lookup**: O(1) average case
+//! - **Scope lookup**: O(d) where d = scope depth
+//!
+//! ## Thread Safety
+//!
+//! `SymbolTable` is not `Send` or `Sync` by default. For concurrent access,
+//! wrap in `Arc<RwLock<SymbolTable>>`.
+
 use std::collections::HashMap;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -323,6 +419,21 @@ impl SymbolTable {
             }
         }
         None
+    }
+
+    /// Returns all qualified names with their scope IDs for indexing
+    pub fn all_qualified_names(&self) -> HashMap<String, Vec<usize>> {
+        let mut index = HashMap::new();
+        for (scope_id, scope) in self.scopes.iter().enumerate() {
+            for symbol in scope.symbols.values() {
+                let qualified = symbol.qualified_name().to_string();
+                index
+                    .entry(qualified)
+                    .or_insert_with(Vec::new)
+                    .push(scope_id);
+            }
+        }
+        index
     }
 }
 

@@ -1,6 +1,7 @@
 use super::enums::{
     ClassifierKind, ClassifierMember, Element, FeatureDirection, FeatureMember, ImportKind,
 };
+pub use crate::language::kerml::model::types::Comment;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct KerMLFile {
@@ -34,13 +35,6 @@ pub struct Feature {
     pub is_readonly: bool,
     pub is_derived: bool,
     pub body: Vec<FeatureMember>,
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct Comment {
-    pub content: String,
-    pub about: Vec<String>,
-    pub locale: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq)]

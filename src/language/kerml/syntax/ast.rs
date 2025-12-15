@@ -1,5 +1,6 @@
 use super::enums::{ClassifierKind, Element, FeatureDirection, ImportKind};
 use super::types::{Annotation, Classifier, Comment, Feature, Import, Package};
+use crate::language::kerml::model::types::Documentation;
 use crate::parser::kerml::Rule;
 use from_pest::{ConversionError, FromPest, Void};
 
@@ -55,6 +56,25 @@ impl_from_pest!(Comment, |pest| {
         content,
         about: Vec::new(),
         locale: None,
+    })
+});
+
+impl_from_pest!(Documentation, |pest| {
+    let pair = pest.next().ok_or(ConversionError::NoMatch)?;
+    if pair.as_rule() != Rule::documentation {
+        return Err(ConversionError::NoMatch);
+    }
+    let content = pair
+        .into_inner()
+        .find(|p| p.as_rule() == Rule::textual_body)
+        .map(|p| p.as_str().to_string())
+        .unwrap_or_default();
+    Ok(Documentation {
+        comment: Comment {
+            content,
+            about: Vec::new(),
+            locale: None,
+        },
     })
 });
 

@@ -264,7 +264,8 @@ pub struct TextualAnnotatingElement {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Comment {
-    pub textual_annotating_element: TextualAnnotatingElement,
+    pub content: String,
+    pub about: Vec<Annotation>,
     pub locale: Option<String>,
 }
 

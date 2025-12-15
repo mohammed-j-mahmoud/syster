@@ -1,3 +1,72 @@
+//! # Relationship Graphs
+//!
+//! Tracks semantic relationships between symbols (specialization, typing, subsetting, etc.)
+//! using directed graph structures.
+//!
+//! ## Graph Types
+//!
+//! - **Specialization**: Type → Subtypes (inheritance/IS-A)
+//! - **Typing**: Usage → Definition (instance-of)
+//! - **Subsetting**: Feature → Subsetted Feature (refinement)
+//! - **Redefinition**: Feature → Redefined Feature (override)
+//! - **Satisfaction**: Element → Requirement (fulfills)
+//!
+//! ## OneToManyGraph Structure
+//!
+//! A `OneToManyGraph` represents a one-to-many relationship where each source can have
+//! multiple targets:
+//!
+//! ```text
+//! Vehicle ──┬─→ Car
+//!           ├─→ Truck  
+//!           └─→ Motorcycle
+//! ```
+//!
+//! Internally stored as: `HashMap<String, Vec<String>>`
+//!
+//! ## Key Operations
+//!
+//! ```rust
+//! use syster::semantic::graph::OneToManyGraph;
+//!
+//! let mut graph = OneToManyGraph::new();
+//!
+//! // Add relationships
+//! graph.add("Vehicle".to_string(), "Car".to_string());
+//! graph.add("Vehicle".to_string(), "Truck".to_string());
+//!
+//! // Query forward (one-to-many)
+//! let subtypes = graph.get_targets("Vehicle");  // ["Car", "Truck"]
+//!
+//! // Query backward (many-to-one)
+//! let supertypes = graph.get_sources("Car");    // ["Vehicle"]
+//!
+//! // Check transitive paths
+//! let is_related = graph.has_path("SportsCar", "Vehicle");  // true
+//!
+//! // Detect cycles
+//! let cycles = graph.find_cycles();
+//! ```
+//!
+//! ## Cycle Detection
+//!
+//! The `find_cycles()` method detects circular relationships using depth-first search.
+//! This is critical for detecting illegal circular specialization:
+//!
+//! ```text
+//! A → B → C → A  (cycle detected!)
+//! ```
+//!
+//! ## Performance
+//!
+//! - **Add relationship**: O(1) amortized
+//! - **Get targets**: O(1) average
+//! - **Get sources**: O(n) where n = total relationships
+//! - **Has path**: O(V + E) where V = vertices, E = edges (DFS)
+//! - **Find cycles**: O(V + E) (DFS)
+//!
+//! See [Relationship Graphs](../../docs/SEMANTIC_ANALYSIS.md#relationship-graphs) for more.
+
 use std::collections::{HashMap, HashSet};
 
 #[derive(Debug, Clone, Default)]

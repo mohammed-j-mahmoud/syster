@@ -1,3 +1,109 @@
+//! # Semantic Analyzer
+//!
+//! Orchestrates semantic validation passes over the symbol table and relationship graphs,
+//! detecting errors and enforcing SysML/KerML semantic rules.
+//!
+//! ## Analysis Phases
+//!
+//! The analyzer runs multiple validation passes:
+//!
+//! 1. **Type Reference Validation**: Ensure all type references resolve to valid types
+//! 2. **Relationship Validation**: Check specialization cycles, redefinition correctness
+//! 3. **Multiplicity Validation**: Enforce cardinality constraints (future)
+//! 4. **Constraint Evaluation**: Evaluate OCL-like constraints (future)
+//!
+//! ## Architecture
+//!
+//! ```text
+//! ┌──────────────────┐
+//! │ AnalysisContext  │ ← Holds references and collects errors
+//! └────────┬─────────┘
+//!          │
+//!          ├─→ SymbolTable
+//!          ├─→ RelationshipGraph
+//!          ├─→ NameResolver
+//!          └─→ Vec<SemanticError>
+//!
+//! ┌──────────────────┐
+//! │ SemanticAnalyzer │ ← Runs validation passes
+//! └────────┬─────────┘
+//!          │
+//!          ├─→ validate_type_references()
+//!          ├─→ validate_specializations()
+//!          ├─→ validate_redefinitions()
+//!          └─→ (more passes...)
+//! ```
+//!
+//! ## Usage Example
+//!
+//! ```rust
+//! use syster::semantic::{SemanticAnalyzer, SymbolTable, RelationshipGraph};
+//!
+//! let symbol_table = SymbolTable::new();
+//! let relationship_graph = RelationshipGraph::new();
+//!
+//! // Create analyzer with populated model
+//! let analyzer = SemanticAnalyzer::with_symbol_table_and_relationships(
+//!     symbol_table,
+//!     relationship_graph,
+//! );
+//!
+//! // Run all validation passes
+//! match analyzer.analyze() {
+//!     Ok(()) => println!("No errors found"),
+//!     Err(errors) => {
+//!         for error in errors {
+//!             eprintln!("Error: {:?}", error);
+//!         }
+//!     }
+//! }
+//! ```
+//!
+//! ## Analysis Context
+//!
+//! The `AnalysisContext` provides:
+//! - Immutable access to symbol table and graphs
+//! - Name resolution via `NameResolver`
+//! - Error collection via `add_error()`
+//!
+//! **Key pattern**: Validation passes mutate the context by adding errors,
+//! but don't modify the model.
+//!
+//! ## Error Handling
+//!
+//! Errors are collected (not thrown) to report multiple issues at once:
+//!
+//! ```rust
+//! fn validate_something(&self, ctx: &mut AnalysisContext) {
+//!     if condition_violated {
+//!         ctx.add_error(SemanticError::new(
+//!             SemanticErrorKind::SomeViolation,
+//!             location,
+//!         ));
+//!     }
+//!     // Continue checking (don't return early)
+//! }
+//! ```
+//!
+//! ## Extensibility
+//!
+//! To add a new validation pass:
+//!
+//! 1. Add error kind to `SemanticErrorKind` enum
+//! 2. Implement validation method on `SemanticAnalyzer`
+//! 3. Call from `analyze()` method
+//! 4. Add tests in `analyzer/tests.rs`
+//!
+//! See [Adding Semantic Checks](../../docs/CONTRIBUTING.md#adding-new-features) for guide.
+//!
+//! ## Performance
+//!
+//! - **Validation passes**: O(n) where n = symbols (each symbol checked once)
+//! - **Cycle detection**: O(V + E) where V = vertices, E = edges (DFS)
+//! - **Name resolution**: O(1) average per lookup (HashMap-backed)
+//!
+//! For large models (10,000+ symbols), validation typically completes in milliseconds.
+
 use crate::semantic::RelationshipGraph;
 use crate::semantic::error::{SemanticError, SemanticResult};
 use crate::semantic::resolver::NameResolver;

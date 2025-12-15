@@ -1,3 +1,126 @@
+//! # Workspace
+//!
+//! Manages multi-file SysML/KerML projects with shared symbol table and relationship graphs.
+//!
+//! ## Purpose
+//!
+//! A `Workspace` coordinates:
+//! - Multiple source files (`.sysml`, `.kerml`)
+//! - Shared symbol table (cross-file symbol resolution)
+//! - Shared relationship graphs (cross-file relationships)
+//! - Optional standard library loading
+//!
+//! ## Workflow
+//!
+//! ```text
+//! 1. Create workspace
+//! 2. Add files (parsed ASTs)
+//! 3. Populate all files → builds symbol table + graphs
+//! 4. Query the model
+//! ```
+//!
+//! ## Usage Example
+//!
+//! ```rust
+//! use syster::semantic::Workspace;
+//! use std::path::PathBuf;
+//!
+//! let mut workspace = Workspace::new();
+//!
+//! // Add files
+//! workspace.add_file(PathBuf::from("base.sysml"), parsed_base);
+//! workspace.add_file(PathBuf::from("app.sysml"), parsed_app);
+//!
+//! // Populate symbol table and resolve imports
+//! workspace.populate_all().unwrap();
+//!
+//! // Query the model
+//! let symbol = workspace.symbol_table().lookup("App::myCar");
+//! ```
+//!
+//! ## Standard Library Support
+//!
+//! The workspace can optionally load the SysML standard library:
+//!
+//! ```rust
+//! // Create workspace with stdlib
+//! let mut workspace = Workspace::with_stdlib();
+//!
+//! // Or mark stdlib as loaded after manual loading
+//! workspace.mark_stdlib_loaded();
+//!
+//! // Check if stdlib is available
+//! if workspace.has_stdlib() {
+//!     // Can reference stdlib types
+//! }
+//! ```
+//!
+//! The standard library includes:
+//! - `sysml.library/Kernel Libraries/` - Core KerML types
+//! - `sysml.library/Systems Library/` - SysML v2 types (Parts, Ports, etc.)
+//! - `sysml.library/Domain Libraries/` - Domain-specific libraries
+//!
+//! ## File Management
+//!
+//! Files are indexed by `PathBuf` and stored as `WorkspaceFile` entries:
+//!
+//! ```rust
+//! pub struct WorkspaceFile {
+//!     path: PathBuf,         // File path
+//!     content: SysMLFile,    // Parsed AST
+//! }
+//! ```
+//!
+//! ## Symbol Table Population
+//!
+//! `populate_all()` processes files in deterministic order (sorted by path):
+//!
+//! 1. For each file:
+//!    - Walk AST with `SymbolTablePopulator`
+//!    - Add symbols to shared symbol table
+//!    - Track relationships in shared graphs
+//! 2. Resolve imports (three-pass algorithm)
+//! 3. Validate semantic rules
+//!
+//! **Key invariant**: All symbols from all files visible in global symbol table.
+//!
+//! ## Cross-File References
+//!
+//! The workspace enables cross-file references via imports:
+//!
+//! **File: base.sysml**
+//! ```sysml
+//! package Base {
+//!     part def Vehicle;
+//! }
+//! ```
+//!
+//! **File: app.sysml**
+//! ```sysml
+//! package App {
+//!     import Base::*;
+//!     part myCar: Vehicle;  // References Base::Vehicle
+//! }
+//! ```
+//!
+//! After `populate_all()`, `Vehicle` is visible in `App` scope.
+//!
+//! ## Incremental Updates (Future)
+//!
+//! Currently, the entire workspace is re-populated when files change.
+//! Future work will support incremental updates:
+//! - Re-populate only changed files
+//! - Invalidate dependent imports
+//! - Preserve unchanged symbols
+//!
+//! ## Performance Considerations
+//!
+//! - **File ordering**: Sorted by path for deterministic builds
+//! - **Parallel parsing**: Files can be parsed independently (not yet implemented)
+//! - **Symbol indexing**: Pre-computed indexes for fast lookup (partial implementation)
+//!
+//! See [Workspace Management](../../docs/SEMANTIC_ANALYSIS.md#workspace-management) for details.
+
 use crate::language::sysml::SymbolTablePopulator;
 use crate::language::sysml::syntax::SysMLFile;
 use crate::semantic::RelationshipGraph;
@@ -32,6 +155,8 @@ pub struct Workspace {
     files: HashMap<PathBuf, WorkspaceFile>,
     symbol_table: SymbolTable,
     relationship_graph: RelationshipGraph,
+    stdlib_loaded: bool,
+    symbol_index: HashMap<String, Vec<usize>>,
 }
 
 impl Workspace {
@@ -41,7 +166,30 @@ impl Workspace {
             files: HashMap::new(),
             symbol_table: SymbolTable::new(),
             relationship_graph: RelationshipGraph::new(),
+            stdlib_loaded: false,
+            symbol_index: HashMap::new(),
         }
+    }
+
+    /// Creates a new workspace with the standard library pre-loaded
+    ///
+    /// Note: This is a placeholder. In a complete implementation, use a separate
+    /// `LibraryLoader` or `WorkspaceBuilder` to load standard library files from
+    /// `/sysml.lib/` before creating the workspace.
+    pub fn with_stdlib() -> Self {
+        let mut workspace = Self::new();
+        workspace.stdlib_loaded = true;
+        workspace
+    }
+
+    /// Marks the standard library as loaded (used by library loaders)
+    pub fn mark_stdlib_loaded(&mut self) {
+        self.stdlib_loaded = true;
+    }
+
+    /// Returns whether the standard library has been loaded
+    pub fn has_stdlib(&self) -> bool {
+        self.stdlib_loaded
     }
 
     /// Adds a file to the workspace
@@ -94,6 +242,9 @@ impl Workspace {
             .populate(file.content())
             .map_err(|e| format!("Failed to populate {}: {:?}", path.display(), e))?;
 
+        // Rebuild symbol index after population
+        self.rebuild_symbol_index();
+
         Ok(())
     }
 
@@ -130,6 +281,19 @@ impl Workspace {
     /// Checks if a file exists in the workspace
     pub fn contains_file(&self, path: &PathBuf) -> bool {
         self.files.contains_key(path)
+    }
+
+    /// Rebuilds the symbol index from the symbol table
+    pub fn rebuild_symbol_index(&mut self) {
+        self.symbol_index.clear();
+        for (qualified_name, scope_ids) in self.symbol_table.all_qualified_names() {
+            self.symbol_index.insert(qualified_name, scope_ids);
+        }
+    }
+
+    /// Looks up a symbol by qualified name using the index (O(1))
+    pub fn lookup_qualified(&self, qualified_name: &str) -> Option<Vec<usize>> {
+        self.symbol_index.get(qualified_name).cloned()
     }
 }
 

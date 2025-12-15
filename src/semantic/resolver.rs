@@ -1,3 +1,47 @@
+//! # Name Resolver
+//!
+//! Resolves symbol names to their definitions in the symbol table, supporting both
+//! simple names and qualified (multi-part) names.
+//!
+//! ## Resolution Algorithm
+//!
+//! ### Simple Names
+//! Simple names (e.g., `Vehicle`) are looked up directly in the symbol table:
+//! 1. Check current scope
+//! 2. Walk up scope chain to parent scopes
+//! 3. Check imported symbols
+//!
+//! ### Qualified Names
+//! Qualified names (e.g., `Automotive::Engine::V8`) are resolved step-by-step:
+//! 1. Look up first component (`Automotive`)
+//! 2. Enter that symbol's scope
+//! 3. Look up next component (`Engine`) within that scope
+//! 4. Repeat until all components resolved
+//!
+//! ## Example
+//!
+//! ```rust
+//! use syster::semantic::{NameResolver, SymbolTable};
+//!
+//! let symbol_table = SymbolTable::new();
+//! let resolver = NameResolver::new(&symbol_table);
+//!
+//! // Simple lookup
+//! let symbol = resolver.resolve("Vehicle");
+//!
+//! // Qualified lookup
+//! let symbol = resolver.resolve_qualified("Automotive::Engine::V8");
+//! ```
+//!
+//! ## Relationship to Import System
+//!
+//! Name resolution is affected by import statements:
+//! - `import Package::*` makes all members of Package visible
+//! - `import Package::Member` makes specific member visible
+//! - Aliases (`import X as Y`) are resolved during lookup
+//!
+//! See [Import Resolution](../../docs/SEMANTIC_ANALYSIS.md#import-resolution) for details.
+
 use crate::semantic::symbol_table::{Symbol, SymbolTable};
 
 pub struct NameResolver<'a> {

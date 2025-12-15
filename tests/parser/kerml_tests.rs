@@ -340,49 +340,35 @@ fn test_textual_annotating_element() {
 
 #[test]
 fn test_comment_without_locale() {
-    let textual = TextualAnnotatingElement {
-        annotating_element: AnnotatingElement { about: vec![] },
-        body: "This is a comment".to_string(),
-    };
     let comment = Comment {
-        textual_annotating_element: textual,
+        content: "This is a comment".to_string(),
+        about: vec![],
         locale: None,
     };
     assert!(comment.locale.is_none());
-    assert_eq!(comment.textual_annotating_element.body, "This is a comment");
+    assert_eq!(comment.content, "This is a comment");
 }
 
 #[test]
 fn test_comment_with_locale() {
-    let textual = TextualAnnotatingElement {
-        annotating_element: AnnotatingElement { about: vec![] },
-        body: "Ceci est un commentaire".to_string(),
-    };
     let comment = Comment {
-        textual_annotating_element: textual,
+        content: "Ceci est un commentaire".to_string(),
+        about: vec![],
         locale: Some("fr-FR".to_string()),
     };
     assert_eq!(comment.locale, Some("fr-FR".to_string()));
-    assert_eq!(
-        comment.textual_annotating_element.body,
-        "Ceci est un commentaire"
-    );
+    assert_eq!(comment.content, "Ceci est un commentaire");
 }
 
 #[test]
 fn test_documentation() {
     let comment = Comment {
-        textual_annotating_element: TextualAnnotatingElement {
-            annotating_element: AnnotatingElement { about: vec![] },
-            body: "Documentation text".to_string(),
-        },
+        content: "Documentation text".to_string(),
+        about: vec![],
         locale: Some("en-US".to_string()),
     };
     let doc = Documentation { comment };
-    assert_eq!(
-        doc.comment.textual_annotating_element.body,
-        "Documentation text"
-    );
+    assert_eq!(doc.comment.content, "Documentation text");
     assert_eq!(doc.comment.locale, Some("en-US".to_string()));
 }
 

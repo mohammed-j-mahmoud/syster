@@ -4,6 +4,107 @@ applyTo: '**/*.rs'
 
 # Rust Development Instructions
 
+## Project-Specific Guidance
+
+### Architecture Understanding - READ FIRST
+
+Before making changes, familiarize yourself with the project architecture:
+
+- **[ARCHITECTURE.md](../../ARCHITECTURE.md)** - System design, three-phase pipeline, design decisions
+- **[docs/CONTRIBUTING.md](../../docs/CONTRIBUTING.md)** - Development workflow, code conventions
+- **[docs/SYSML_PRIMER.md](../../docs/SYSML_PRIMER.md)** - SysML v2 and KerML concepts
+- **[docs/SEMANTIC_ANALYSIS.md](../../docs/SEMANTIC_ANALYSIS.md)** - Deep dive on semantic analysis
+
+### Key Project Patterns
+
+1. **Three-Phase Pipeline**: Parse (Pest) → Syntax (AST) → Semantic (Symbols + Graphs)
+   - **Never mix phases**: Don't add semantic logic to parser, don't parse in semantic analyzer
+   - Each phase has clear inputs and outputs (see ARCHITECTURE.md)
+
+2. **Symbol Table is Global**: AST nodes don't contain resolved references
+   - Symbols are stored in centralized `SymbolTable`
+   - Use qualified names (`QualifiedName`) for cross-file references
+   - Don't add back-references to AST nodes
+
+3. **Relationship Graphs**: Use separate graphs for relationships
+   - Don't store specialization/typing in Symbol enum
+   - Use `RelationshipGraph` methods for queries
+   - Graph operations are in `src/semantic/graph.rs`
+
+4. **Import Resolution**: Three-pass algorithm (see SEMANTIC_ANALYSIS.md)
+   - Pass 1: Namespace imports (`Package::*`)
+   - Pass 2: Member imports (`Package::Member`)
+   - Pass 3: Recursive imports (`Package::*::**`)
+   - Don't try to resolve imports in a single pass
+
+5. **Type Aliases**: Use documented type aliases for clarity
+   - `QualifiedName` for fully qualified names
+   - `SimpleName` for unqualified names
+   - `ScopeId` for scope identifiers
+   - `SourceFilePath` for file paths
+
+### Adding New Features
+
+**Adding a new SysML element type** (e.g., `concern def`):
+1. Update grammar: `src/parser/sysml.pest`
+2. Define AST struct: `src/language/sysml/syntax/types.rs`
+3. Add to parent enum: `src/language/sysml/syntax/enums.rs`
+4. Update populator: `src/language/sysml/populator.rs`
+5. Add tests: `tests/semantic/sysml_parsing_tests.rs`
+
+**Adding a new semantic check**:
+1. Add error kind: `src/semantic/error.rs`
+2. Implement check: `src/semantic/analyzer.rs`
+3. Call from `analyze()` method
+4. Add tests: `tests/semantic/mod.rs`
+
+See ARCHITECTURE.md "Common Operations Guide" for detailed examples.
+
+### Module Organization
+
+```
+src/
+├── parser/          # Pest grammar files (kerml.pest, sysml.pest)
+├── language/        # Language-specific AST and populators
+│   ├── kerml/       # KerML foundation language
+│   └── sysml/       # SysML v2 systems language
+├── semantic/        # Semantic analysis (YOU ARE HERE most of the time)
+│   ├── symbol_table.rs  # Global symbol registry
+│   ├── graph.rs         # Relationship graphs
+│   ├── resolver.rs      # Name resolution
+│   ├── analyzer.rs      # Validation passes
+│   └── workspace.rs     # Multi-file coordination
+└── project/         # Workspace loading (stdlib, user projects)
+```
+
+### Common Pitfalls
+
+❌ **Don't**: Add semantic logic to AST nodes
+✅ **Do**: Keep AST immutable, use SymbolTable for semantic info
+
+❌ **Don't**: Resolve imports while building symbol table
+✅ **Do**: Build symbol table first, then run three-pass import resolution
+
+❌ **Don't**: Store relationships in Symbol enum
+✅ **Do**: Use RelationshipGraph for all relationships
+
+❌ **Don't**: Create circular dependencies between modules
+✅ **Do**: Follow dependency flow: parser → language → semantic
+
+### Terminology (SysML/KerML Specific)
+
+- **Qualified Name**: Full path like `Package::Class::Feature`
+- **Classifier**: KerML type that can have features (class, struct, etc.)
+- **Definition**: SysML type (part def, port def, action def, etc.)
+- **Usage**: SysML instance (part, port, action, etc.)
+- **Feature**: Property or operation of a classifier
+- **Specialization**: IS-A relationship (inheritance)
+- **Typing**: INSTANCE-OF relationship
+- **Subsetting**: REFINES relationship
+- **Redefinition**: OVERRIDES relationship
+
+See SYSML_PRIMER.md for full glossary.
+
 ## Test-Driven Development (TDD) - MANDATORY
 
 1. **Always write tests first** before implementing functionality

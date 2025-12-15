@@ -2138,7 +2138,7 @@ annotating_element = {
 
 comment_annotation = { "comment" ~ identifier ~ ("about" ~ element_reference)? ~ ";" }
 
-documentation = { "doc" ~ identifier ~ ";" }
+documentation = { "doc" ~ (identifier ~ ";")? }
 
 textual_representation = { "rep" ~ "language" ~ quoted_name ~ block_comment? }
 

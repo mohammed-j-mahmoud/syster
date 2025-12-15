@@ -260,3 +260,48 @@ fn test_import_alias() {
 
     // TODO: Verify that BaseVehicle resolves to Vehicle
 }
+
+#[test]
+fn test_workspace_with_stdlib() {
+    // Test that workspace can be created with standard library
+    let workspace_without = Workspace::new();
+    assert!(
+        !workspace_without.has_stdlib(),
+        "New workspace should not have stdlib loaded"
+    );
+
+    let workspace_with = Workspace::with_stdlib();
+    assert!(
+        workspace_with.has_stdlib(),
+        "Workspace created with_stdlib should have stdlib loaded"
+    );
+}
+
+#[test]
+fn test_stdlib_usage_pattern() {
+    // Demonstrates the pattern for using stdlib in a real project
+    // In practice, you'd use Workspace::with_stdlib() to get standard types automatically
+
+    let source = r#"
+        package MyProject {
+            // In a real implementation, ScalarValues::Boolean would come from stdlib
+            // and be automatically available without explicit import
+            part def Switch {
+                attribute isOn : Boolean;  // Boolean from stdlib
+            }
+        }
+    "#;
+
+    let mut pairs = SysMLParser::parse(Rule::model, source).unwrap();
+    let file = SysMLFile::from_pest(&mut pairs).unwrap();
+
+    // For user projects, use with_stdlib()
+    let mut workspace = Workspace::with_stdlib();
+    workspace.add_file(PathBuf::from("project.sysml"), file);
+
+    let result = workspace.populate_all();
+    assert!(result.is_ok(), "Failed to populate: {:?}", result.err());
+
+    // Verify the workspace has stdlib loaded
+    assert!(workspace.has_stdlib());
+}
