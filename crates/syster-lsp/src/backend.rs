@@ -347,33 +347,8 @@ impl Backend {
 fn extract_word_at_cursor(text: &str, position: Position) -> Option<String> {
     let lines: Vec<&str> = text.lines().collect();
     let line = lines.get(position.line as usize)?;
-    let chars: Vec<char> = line.chars().collect();
 
-    let pos = position.character as usize;
-    if pos >= chars.len() {
-        return None;
-    }
-
-    // Find word boundaries - identifiers are alphanumeric + underscore
-    let is_word_char = |c: char| c.is_alphanumeric() || c == '_';
-
-    // Find start of word
-    let mut start = pos;
-    while start > 0 && is_word_char(chars[start - 1]) {
-        start -= 1;
-    }
-
-    // Find end of word
-    let mut end = pos;
-    while end < chars.len() && is_word_char(chars[end]) {
-        end += 1;
-    }
-
-    if start == end {
-        return None;
-    }
-
-    Some(chars[start..end].iter().collect())
+    syster::core::text_utils::extract_word_at_cursor(line, position.character as usize)
 }
 
 /// Find text-based references to a symbol
@@ -383,6 +358,8 @@ fn find_text_references(
     file_uri: &Url,
     locations: &mut Vec<Location>,
 ) {
+    use syster::core::text_utils::is_word_character;
+
     // Search for the symbol name in the text
     for (line_num, line) in text.lines().enumerate() {
         let mut col = 0;
@@ -390,14 +367,15 @@ fn find_text_references(
             let actual_col = col + pos;
 
             // Check if this is a complete word (not part of another identifier)
-            let is_word_char = |c: char| c.is_alphanumeric() || c == '_';
-
-            let before_ok =
-                actual_col == 0 || !line.chars().nth(actual_col - 1).is_some_and(is_word_char);
+            let before_ok = actual_col == 0
+                || !line
+                    .chars()
+                    .nth(actual_col - 1)
+                    .is_some_and(is_word_character);
 
             let after_pos = actual_col + symbol_name.len();
-            let after_ok =
-                after_pos >= line.len() || !line.chars().nth(after_pos).is_some_and(is_word_char);
+            let after_ok = after_pos >= line.len()
+                || !line.chars().nth(after_pos).is_some_and(is_word_character);
 
             if before_ok && after_ok {
                 locations.push(Location {

@@ -2,12 +2,6 @@
 
 ## LSP Feature Implementation (Priority Order)
 
-### Completed ✓
-- [x] Task 8: AST span tracking for all elements
-- [x] Task 9: Rich hover with relationships
-- [x] Task 10: Go-to-definition
-- [x] Task 11: Find References (text-based search)
-
 ### In Progress / Next Tasks
   - [ ] Add `get_document_symbols()` method to Backend
   - [ ] Extract all symbols from a file with hierarchy

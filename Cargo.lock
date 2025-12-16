@@ -1106,6 +1106,7 @@ dependencies = [
  "rayon",
  "rstest",
  "tempfile",
+ "unicode-ident",
 ]
 
 [[package]]
