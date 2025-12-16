@@ -20,7 +20,7 @@
 //!
 //! ```rust
 //! use syster::core::error_codes::SEMANTIC_DUPLICATE_DEFINITION;
-//! use syster::semantic::error::SemanticError;
+//! use syster::semantic::SemanticError;
 //!
 //! let error = SemanticError::duplicate_definition(
 //!     "Vehicle".to_string(),

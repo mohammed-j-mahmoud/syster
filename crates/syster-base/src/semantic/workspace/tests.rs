@@ -347,7 +347,7 @@ fn test_remove_file_clears_dependencies() {
 
 #[test]
 fn test_subscribe_to_file_added() {
-    use crate::semantic::events::WorkspaceEvent;
+    use crate::semantic::types::WorkspaceEvent;
     use std::sync::{Arc, Mutex};
 
     let mut workspace = Workspace::new();
@@ -373,7 +373,7 @@ fn test_subscribe_to_file_added() {
 
 #[test]
 fn test_subscribe_to_file_updated() {
-    use crate::semantic::events::WorkspaceEvent;
+    use crate::semantic::types::WorkspaceEvent;
     use std::sync::{Arc, Mutex};
 
     let mut workspace = Workspace::new();

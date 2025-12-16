@@ -1,6 +1,6 @@
 use crate::core::events::EventEmitter;
 use crate::core::operation::{EventBus, OperationResult};
-use crate::semantic::events::DependencyEvent;
+use crate::semantic::types::DependencyEvent;
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 
@@ -172,6 +172,3 @@ impl EventBus<DependencyEvent> for DependencyGraph {
         self.events = emitter.emit(event.clone(), self);
     }
 }
-
-#[cfg(test)]
-mod tests;

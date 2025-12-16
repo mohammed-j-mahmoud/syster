@@ -2,9 +2,9 @@ use crate::core::visitor::AstVisitor;
 use crate::language::sysml::syntax::{
     Alias, Comment, Definition, Element, Import, NamespaceDeclaration, Package, SysMLFile, Usage,
 };
-use crate::semantic::error::SemanticError;
-use crate::semantic::graph::RelationshipGraph;
+use crate::semantic::graphs::RelationshipGraph;
 use crate::semantic::symbol_table::{Symbol, SymbolTable};
+use crate::semantic::types::SemanticError;
 
 // SysML relationship type constants
 pub const REL_SPECIALIZATION: &str = "specialization";

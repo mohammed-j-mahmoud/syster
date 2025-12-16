@@ -13,5 +13,5 @@ pub use relationship_graph::RelationshipGraph;
 pub use symmetric::SymmetricGraph;
 
 #[cfg(test)]
-#[path = "graph/tests.rs"]
+#[path = "graphs/tests.rs"]
 mod tests;

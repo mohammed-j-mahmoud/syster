@@ -188,7 +188,3 @@ impl std::error::Error for SemanticError {}
 
 /// Result type for semantic analysis operations
 pub type SemanticResult<T> = Result<T, Vec<SemanticError>>;
-
-#[cfg(test)]
-#[path = "error/tests.rs"]
-mod tests;

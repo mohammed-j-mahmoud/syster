@@ -423,4 +423,156 @@ fn test_error_kind_variants_coverage() {
     let _circular = SemanticErrorKind::CircularDependency {
         cycle: vec!["A".to_string()],
     };
+
+    #[test]
+    fn test_workspace_event_creation() {
+        let path = PathBuf::from("test.sysml");
+
+        let added = WorkspaceEvent::FileAdded { path: path.clone() };
+        let updated = WorkspaceEvent::FileUpdated { path: path.clone() };
+        let removed = WorkspaceEvent::FileRemoved { path: path.clone() };
+
+        assert!(matches!(added, WorkspaceEvent::FileAdded { .. }));
+        assert!(matches!(updated, WorkspaceEvent::FileUpdated { .. }));
+        assert!(matches!(removed, WorkspaceEvent::FileRemoved { .. }));
+    }
+
+    #[test]
+    fn test_workspace_event_equality() {
+        let path = PathBuf::from("test.sysml");
+
+        let event1 = WorkspaceEvent::FileUpdated { path: path.clone() };
+        let event2 = WorkspaceEvent::FileUpdated { path: path.clone() };
+
+        assert_eq!(event1, event2);
+    }
+
+    #[test]
+    fn test_dependency_event_creation() {
+        let from = PathBuf::from("app.sysml");
+        let to = PathBuf::from("base.sysml");
+
+        let added = DependencyEvent::DependencyAdded {
+            from: from.clone(),
+            to: to.clone(),
+        };
+        let removed = DependencyEvent::FileRemoved { path: from.clone() };
+
+        assert!(matches!(added, DependencyEvent::DependencyAdded { .. }));
+        assert!(matches!(removed, DependencyEvent::FileRemoved { .. }));
+    }
+
+    #[test]
+    fn test_dependency_event_equality() {
+        let from = PathBuf::from("app.sysml");
+        let to = PathBuf::from("base.sysml");
+
+        let event1 = DependencyEvent::DependencyAdded {
+            from: from.clone(),
+            to: to.clone(),
+        };
+        let event2 = DependencyEvent::DependencyAdded {
+            from: from.clone(),
+            to: to.clone(),
+        };
+
+        assert_eq!(event1, event2);
+    }
+
+    #[test]
+    fn test_symbol_table_event_creation() {
+        let inserted = SymbolTableEvent::SymbolInserted {
+            qualified_name: "Package::Vehicle".to_string(),
+            symbol_id: 42,
+        };
+        let import_added = SymbolTableEvent::ImportAdded {
+            import_path: "Base::*".to_string(),
+        };
+        let file_changed = SymbolTableEvent::FileChanged {
+            file_path: "test.sysml".to_string(),
+        };
+
+        assert!(matches!(inserted, SymbolTableEvent::SymbolInserted { .. }));
+        assert!(matches!(import_added, SymbolTableEvent::ImportAdded { .. }));
+        assert!(matches!(file_changed, SymbolTableEvent::FileChanged { .. }));
+    }
+
+    #[test]
+    fn test_symbol_table_event_equality() {
+        let event1 = SymbolTableEvent::SymbolInserted {
+            qualified_name: "Package::Vehicle".to_string(),
+            symbol_id: 42,
+        };
+        let event2 = SymbolTableEvent::SymbolInserted {
+            qualified_name: "Package::Vehicle".to_string(),
+            symbol_id: 42,
+        };
+
+        assert_eq!(event1, event2);
+    }
+}
+
+#[test]
+fn test_diagnostic_creation() {
+    let location = Location::new(
+        "test.sysml",
+        Range::new(Position::new(0, 5), Position::new(0, 10)),
+    );
+
+    let diag = Diagnostic::error("Undefined symbol", location.clone());
+
+    assert_eq!(diag.severity, Severity::Error);
+    assert_eq!(diag.message, "Undefined symbol");
+    assert_eq!(diag.location.file, "test.sysml");
+    assert_eq!(diag.location.range.start.line, 0);
+    assert_eq!(diag.location.range.start.column, 5);
+    assert_eq!(diag.code, None);
+}
+
+#[test]
+fn test_diagnostic_with_code() {
+    let location = Location::new("test.sysml", Range::single(0, 5));
+
+    let diag = Diagnostic::error("Parse error", location).with_code("E001");
+
+    assert_eq!(diag.code, Some("E001".to_string()));
+}
+
+#[test]
+fn test_warning_diagnostic() {
+    let location = Location::new("test.sysml", Range::single(2, 10));
+
+    let diag = Diagnostic::warning("Unused variable", location);
+
+    assert_eq!(diag.severity, Severity::Warning);
+}
+
+#[test]
+fn test_single_char_range() {
+    let range = Range::single(5, 10);
+
+    assert_eq!(range.start.line, 5);
+    assert_eq!(range.start.column, 10);
+    assert_eq!(range.end.line, 5);
+    assert_eq!(range.end.column, 11);
+}
+
+#[test]
+fn test_diagnostic_display() {
+    let location = Location::new("test.sysml", Range::single(0, 5));
+    let diag = Diagnostic::error("Test error", location);
+
+    let display = format!("{}", diag);
+
+    assert!(display.contains("test.sysml:1:6")); // 1-indexed display
+    assert!(display.contains("Error"));
+    assert!(display.contains("Test error"));
+}
+
+#[test]
+fn test_multiline_range() {
+    let range = Range::new(Position::new(0, 5), Position::new(2, 10));
+
+    assert_eq!(range.start.line, 0);
+    assert_eq!(range.end.line, 2);
 }

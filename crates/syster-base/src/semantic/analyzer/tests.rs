@@ -6,6 +6,7 @@ use crate::language::sysml::validator::SysMLRelationshipValidator;
 use crate::semantic::RelationshipGraph;
 use crate::semantic::SemanticErrorKind;
 use crate::semantic::symbol_table::Symbol;
+use crate::semantic::types::SemanticError;
 use std::sync::Arc;
 
 #[test]

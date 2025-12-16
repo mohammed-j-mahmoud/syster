@@ -1,8 +1,8 @@
 //! Trait for language-specific relationship validation.
 #![allow(clippy::result_large_err)]
 
-use crate::semantic::error::SemanticError;
 use crate::semantic::symbol_table::Symbol;
+use crate::semantic::types::SemanticError;
 
 pub trait RelationshipValidator: Send + Sync {
     /// # Errors
@@ -26,7 +26,3 @@ impl RelationshipValidator for NoOpValidator {
         Ok(())
     }
 }
-
-#[cfg(test)]
-#[path = "relationship_validator/tests.rs"]
-mod tests;

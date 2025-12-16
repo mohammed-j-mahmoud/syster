@@ -1,5 +1,5 @@
 use crate::project::{ParseError, ParseErrorKind, ParseResult};
-use crate::semantic::diagnostic::{Diagnostic, Location, Position, Range};
+use crate::semantic::types::diagnostic::{Diagnostic, Location, Position, Range};
 
 /// Converts parse results into LSP-compatible diagnostics
 pub struct DiagnosticPublisher;

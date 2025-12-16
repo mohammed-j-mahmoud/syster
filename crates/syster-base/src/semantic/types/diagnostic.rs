@@ -108,6 +108,3 @@ impl fmt::Display for Diagnostic {
         )
     }
 }
-
-#[cfg(test)]
-mod tests;

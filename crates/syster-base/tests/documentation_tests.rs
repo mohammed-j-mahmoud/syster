@@ -67,7 +67,7 @@ fn test_documented_modules_exist() {
     // If these imports fail, module organization has changed
     use syster::semantic;
     use syster::semantic::analyzer;
-    use syster::semantic::graph;
+    use syster::semantic::graphs;
     use syster::semantic::resolver;
     use syster::semantic::symbol_table;
     use syster::semantic::workspace;
@@ -122,7 +122,7 @@ fn test_symbol_enum_variants_documented() {
 /// Verify relationship graph methods documented in ARCHITECTURE.md exist
 #[test]
 fn test_relationship_graph_api_matches_docs() {
-    use syster::semantic::graph::OneToManyGraph;
+    use syster::semantic::graphs::OneToManyGraph;
 
     let mut graph = OneToManyGraph::new();
 
