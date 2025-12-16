@@ -24,13 +24,16 @@ Target: ~100 line backend.rs, separate feature modules.
 - [x] All 1866 tests passing
 
 ### 1.2 Create text search module  
-- [ ] Create `crates/syster-base/src/core/text_search.rs`
-- [ ] Move `find_text_references()` logic (without LSP types)
-- [ ] Define `TextMatch { line: usize, col: usize, length: usize }`
-- [ ] Function: `find_text_occurrences(text: &str, search: &str) -> Vec<TextMatch>`
-- [ ] Export from `crates/syster-base/src/core/mod.rs`
-- [ ] Update backend.rs to use core text search + convert to LSP Location
-- [ ] Run tests: `cargo test`
+- [x] ~~Create `crates/syster-base/src/core/text_search.rs`~~ **SKIPPED**
+- [x] ~~Move `find_text_references()` logic (without LSP types)~~ **SKIPPED**
+- [x] ~~Define `TextMatch { line: usize, col: usize, length: usize }`~~ **SKIPPED**
+- [x] ~~Function: `find_text_occurrences(text: &str, search: &str) -> Vec<TextMatch>`~~ **SKIPPED**
+- [x] ~~Export from `crates/syster-base/src/core/mod.rs`~~ **SKIPPED**
+- [x] ~~Update backend.rs to use core text search + convert to LSP Location~~ **SKIPPED**
+- [x] ~~Run tests: `cargo test`~~ **SKIPPED**
+
+**Decision**: Keep text search in backend.rs as-is. LSP features only work on valid syntax.
+This is simpler and more accurate. Can revisit if error-resilient parsing is needed later.
 
 ---
 
