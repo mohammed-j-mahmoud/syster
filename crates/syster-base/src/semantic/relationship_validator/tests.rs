@@ -10,7 +10,7 @@ fn test_noop_validator_accepts_all_relationships() {
         scope_id: 0,
         source_file: None,
         span: None,
-    references: Vec::new(),
+        references: Vec::new(),
     };
     let target = Symbol::Package {
         name: "Target".to_string(),
@@ -18,7 +18,7 @@ fn test_noop_validator_accepts_all_relationships() {
         scope_id: 0,
         source_file: None,
         span: None,
-    references: Vec::new(),
+        references: Vec::new(),
     };
 
     let result = validator.validate_relationship("any_type", &source, &target);

@@ -239,7 +239,11 @@ fn test_multiple_references_to_same_symbol() {
     let integer = table.lookup("Integer").unwrap();
     assert_eq!(integer.references().len(), 3);
 
-    let lines: Vec<_> = integer.references().iter().map(|r| r.span.start.line).collect();
+    let lines: Vec<_> = integer
+        .references()
+        .iter()
+        .map(|r| r.span.start.line)
+        .collect();
     assert!(lines.contains(&5));
     assert!(lines.contains(&6));
     assert!(lines.contains(&7));
@@ -627,7 +631,11 @@ fn test_mixed_relationships() {
     let base = table.lookup("Base").unwrap();
     assert_eq!(base.references().len(), 2);
 
-    let lines: Vec<_> = base.references().iter().map(|r| r.span.start.line).collect();
+    let lines: Vec<_> = base
+        .references()
+        .iter()
+        .map(|r| r.span.start.line)
+        .collect();
     assert!(lines.contains(&3)); // from Derived
     assert!(lines.contains(&5)); // from instance
 }

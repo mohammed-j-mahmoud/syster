@@ -15,7 +15,7 @@ fn test_open_sysml_document() {
     backend.open_document(&uri, text).unwrap();
 
     assert_eq!(backend.workspace().file_count(), 1);
-    assert!(backend.workspace().symbol_table().all_symbols().len() > 0);
+    assert!(!backend.workspace().symbol_table().all_symbols().is_empty());
 }
 
 #[test]
@@ -34,7 +34,7 @@ fn test_open_invalid_sysml() {
     // Should have diagnostics
     let diagnostics = backend.get_diagnostics(&uri);
     assert!(!diagnostics.is_empty());
-    assert!(diagnostics[0].message.len() > 0);
+    assert!(!diagnostics[0].message.is_empty());
 }
 
 #[test]
@@ -154,7 +154,7 @@ fn test_get_diagnostics_for_parse_error() {
         "Should have parse error diagnostic"
     );
     assert_eq!(diagnostics[0].severity, Some(DiagnosticSeverity::ERROR));
-    assert!(diagnostics[0].message.len() > 0);
+    assert!(!diagnostics[0].message.is_empty());
 }
 
 #[test]

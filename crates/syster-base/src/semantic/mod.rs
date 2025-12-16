@@ -44,7 +44,6 @@
 //! See [SEMANTIC_ANALYSIS.md](../../docs/SEMANTIC_ANALYSIS.md) for detailed documentation.
 
 pub mod analyzer;
-pub mod dependency_graph;
 pub mod diagnostic;
 pub mod error;
 pub mod events;
@@ -57,11 +56,10 @@ pub mod symbol_table;
 pub mod workspace;
 
 pub use analyzer::{AnalysisContext, SemanticAnalyzer};
-pub use dependency_graph::DependencyGraph;
 pub use diagnostic::{Diagnostic, Location as DiagnosticLocation, Position, Range, Severity};
 pub use error::{Location, SemanticError, SemanticErrorKind, SemanticResult};
 pub use events::{DependencyEvent, SymbolTableEvent, WorkspaceEvent};
-pub use graph::RelationshipGraph;
+pub use graph::{DependencyGraph, RelationshipGraph};
 pub use import_extractor::{extract_imports, is_wildcard_import, parse_import_path};
 pub use relationship_validator::{NoOpValidator, RelationshipValidator};
 pub use resolver::NameResolver;

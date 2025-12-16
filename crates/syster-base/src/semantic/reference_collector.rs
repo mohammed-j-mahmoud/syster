@@ -55,7 +55,7 @@ impl<'a> ReferenceCollector<'a> {
                 let file = symbol.source_file()?;
                 let reference = SymbolReference {
                     file: file.to_string(),
-                    span: span.clone(),
+                    span,
                 };
                 Some((symbol.qualified_name().to_string(), reference))
             })
@@ -78,11 +78,11 @@ impl<'a> ReferenceCollector<'a> {
                 .find(|(k, name)| *k == &target_name || *name == &target_name)
                 .map(|(k, _)| k.clone());
 
-            if let Some(key) = key {
-                if let Some(symbol) = self.symbol_table.lookup_global_mut(&key) {
-                    for reference in refs {
-                        symbol.add_reference(reference);
-                    }
+            if let Some(key) = key
+                && let Some(symbol) = self.symbol_table.lookup_global_mut(&key)
+            {
+                for reference in refs {
+                    symbol.add_reference(reference);
                 }
             }
         }

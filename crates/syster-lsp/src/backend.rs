@@ -274,10 +274,8 @@ impl Backend {
             .collect();
 
         // Add declaration if requested
-        if include_declaration {
-            if let Some(def) = self.get_definition(uri, position) {
-                locations.push(def);
-            }
+        if include_declaration && let Some(def) = self.get_definition(uri, position) {
+            locations.push(def);
         }
 
         Some(locations)

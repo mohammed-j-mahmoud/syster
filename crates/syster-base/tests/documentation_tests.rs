@@ -92,7 +92,7 @@ fn test_symbol_enum_variants_documented() {
         scope_id: 0,
         source_file: None,
         span: None,
-    references: Vec::new(),
+        references: Vec::new(),
     };
 
     let classifier = Symbol::Classifier {
@@ -103,7 +103,7 @@ fn test_symbol_enum_variants_documented() {
         scope_id: 0,
         source_file: None,
         span: None,
-    references: Vec::new(),
+        references: Vec::new(),
     };
 
     // Verify symbol variants can be matched

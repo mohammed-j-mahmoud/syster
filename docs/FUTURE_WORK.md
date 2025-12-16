@@ -46,8 +46,28 @@
 - [ ] Async event handlers (tokio/async-std)
 - [ ] Priority-based listener ordering
 
-## Architecture
-- [ ] Split `semantic/events.rs` into folder if >300 lines
+## Architecture & Code Organization
+
+### Module Refactoring (Priority Order)
+1. [ ] **symbol_table.rs (566 lines)** → Split into `symbol_table/` folder
+   - Extract: symbol operations, scope management, lookup logic
+   - Keep main file as module exports only
+   
+2. [ ] **analyzer.rs (345 lines)** → Split into `analyzer/` folder
+   - Extract: validation rules, analysis passes, helper functions
+   - Keep main file as module exports only
+
+3. [ ] **error.rs (194 lines)** → Split into `error/` folder
+   - Extract: error types by category (parse, semantic, resolution, etc.)
+   - Keep main file as module exports only
+
+4. [ ] **resolver.rs (180 lines)** → Split into `resolver/` folder
+   - Extract: resolution strategies, helper logic
+   - Keep main file as module exports only
+
+5. [ ] **events.rs (171 lines)** → Consider splitting if grows
+   - Could split into: workspace_events.rs, dependency_events.rs, symbol_table_events.rs
+   - Currently borderline - revisit if exceeds 200 lines
 - [ ] Metrics/observability layer for EventEmitter
 
 ## LSP Features

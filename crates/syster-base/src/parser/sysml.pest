@@ -2129,7 +2129,7 @@ namespace_element = {
 }
 
 // Supporting Rules
-element_reference = { qualified_name | quoted_name }
+element_reference = { qualified_name | identifier | quoted_name }
 identification = { identifier | quoted_name }
 quoted_name = @{ "'" ~ (!("'") ~ ANY)+ ~ "'" }
 relationship_body = { ";" | ( "{" ~ relationship_body_elements ~ "}" ) }
