@@ -177,10 +177,21 @@ If you answer "no" to any of these, STOP and address it before proceeding.
 
 ## Task Completion Workflow - MANDATORY
 
-After completing EACH todo/task, you MUST run:
+After completing EACH todo/task, you MUST:
 
-1. `make run-guidelines` - Validates format, lint, and tests
-2. `git add -A && git commit` - Commits the changes with descriptive message
+1. **Complete the pre-commit checklist** (see `.github/instructions/chore.md`):
+   - Remove unnecessary documentation from each changed file
+   - Remove unused methods that don't have a TODO prefix
+   - Move tests into their own files if that hasn't been done
+   - Go through each changed file and add any missing tests
+   - Remove if-else match logic from tests
+   - Make tests more concrete (clear equals values rather than >=/<= comparisons)
+   - Address any TODOs added during the task
+   - Clean up any temporary notes
+
+2. **Run validation**: `make run-guidelines` or `cargo clippy && cargo test`
+
+3. **Commit changes**: `git add -A && git commit` with descriptive message
 
 **This is mandatory after every todo completion.** Do not skip these steps.
 
