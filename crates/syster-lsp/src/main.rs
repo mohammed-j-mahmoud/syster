@@ -31,7 +31,7 @@ impl LanguageServer for SysterLanguageServer {
     }
 
     async fn did_open(&self, params: DidOpenTextDocumentParams) {
-        let uri = params.text_document.uri;
+        let uri = params.text_document.uri.clone();
         let text = params.text_document.text;
 
         let mut backend = self.backend.lock().await;
@@ -39,6 +39,12 @@ impl LanguageServer for SysterLanguageServer {
             Ok(_) => {
                 self.client
                     .log_message(MessageType::INFO, format!("Opened document: {}", uri))
+                    .await;
+
+                // Publish diagnostics
+                let diagnostics = backend.get_diagnostics(&uri);
+                self.client
+                    .publish_diagnostics(uri, diagnostics, None)
                     .await;
             }
             Err(e) => {
@@ -53,7 +59,7 @@ impl LanguageServer for SysterLanguageServer {
     }
 
     async fn did_change(&self, params: DidChangeTextDocumentParams) {
-        let uri = params.text_document.uri;
+        let uri = params.text_document.uri.clone();
 
         // We're using FULL sync, so there should be exactly one change with full content
         if let Some(change) = params.content_changes.into_iter().next() {
@@ -62,6 +68,12 @@ impl LanguageServer for SysterLanguageServer {
                 Ok(_) => {
                     self.client
                         .log_message(MessageType::INFO, format!("Updated document: {}", uri))
+                        .await;
+
+                    // Publish diagnostics
+                    let diagnostics = backend.get_diagnostics(&uri);
+                    self.client
+                        .publish_diagnostics(uri, diagnostics, None)
                         .await;
                 }
                 Err(e) => {

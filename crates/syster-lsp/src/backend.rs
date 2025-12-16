@@ -1,15 +1,21 @@
+use std::collections::HashMap;
+use std::path::PathBuf;
+use syster::project::ParseError;
 use syster::semantic::Workspace;
-use tower_lsp::lsp_types::Url;
+use tower_lsp::lsp_types::{Diagnostic, DiagnosticSeverity, Position, Range, Url};
 
 /// Backend manages the workspace state for the LSP server
 pub struct Backend {
     workspace: Workspace,
+    /// Track parse errors for each file (keyed by file path)
+    parse_errors: HashMap<PathBuf, Vec<ParseError>>,
 }
 
 impl Backend {
     pub fn new() -> Self {
         Self {
             workspace: Workspace::new(),
+            parse_errors: HashMap::new(),
         }
     }
 
@@ -28,8 +34,8 @@ impl Backend {
             .map_err(|_| format!("Invalid file URI: {}", uri))?;
 
         // Parse the file based on extension
-        let file = if path.extension().and_then(|s| s.to_str()) == Some("sysml") {
-            syster::project::file_loader::parse_content(text, &path)?
+        let parse_result = if path.extension().and_then(|s| s.to_str()) == Some("sysml") {
+            syster::project::file_loader::parse_with_result(text, &path)
         } else if path.extension().and_then(|s| s.to_str()) == Some("kerml") {
             return Err("KerML files not yet fully supported".to_string());
         } else {
@@ -39,11 +45,15 @@ impl Backend {
             ));
         };
 
-        // Add to workspace
-        self.workspace.add_file(path, file);
+        // Store parse errors
+        self.parse_errors.insert(path.clone(), parse_result.errors);
 
-        // Populate symbols
-        self.workspace.populate_all()?;
+        // If parsing succeeded, add to workspace
+        if let Some(file) = parse_result.content {
+            self.workspace.add_file(path, file);
+            // Populate symbols - ignore semantic errors for now
+            let _ = self.workspace.populate_all();
+        }
 
         Ok(())
     }
@@ -55,8 +65,8 @@ impl Backend {
             .map_err(|_| format!("Invalid file URI: {}", uri))?;
 
         // Parse the updated file
-        let file = if path.extension().and_then(|s| s.to_str()) == Some("sysml") {
-            syster::project::file_loader::parse_content(text, &path)?
+        let parse_result = if path.extension().and_then(|s| s.to_str()) == Some("sysml") {
+            syster::project::file_loader::parse_with_result(text, &path)
         } else if path.extension().and_then(|s| s.to_str()) == Some("kerml") {
             return Err("KerML files not yet fully supported".to_string());
         } else {
@@ -66,12 +76,18 @@ impl Backend {
             ));
         };
 
-        // Update in workspace (remove old, add new)
-        self.workspace.remove_file(&path);
-        self.workspace.add_file(path, file);
+        // Store parse errors
+        self.parse_errors.insert(path.clone(), parse_result.errors);
 
-        // Repopulate symbols
-        self.workspace.populate_all()?;
+        // Update in workspace (remove old first)
+        self.workspace.remove_file(&path);
+
+        // If parsing succeeded, add new version to workspace
+        if let Some(file) = parse_result.content {
+            self.workspace.add_file(path, file);
+            // Repopulate symbols - ignore semantic errors for now
+            let _ = self.workspace.populate_all();
+        }
 
         Ok(())
     }
@@ -83,6 +99,39 @@ impl Backend {
         // We don't remove from workspace to keep cross-file references working
         // In the future, might want to track "open" vs "workspace" files separately
         Ok(())
+    }
+
+    /// Get LSP diagnostics for a given file
+    pub fn get_diagnostics(&self, uri: &Url) -> Vec<Diagnostic> {
+        let path = match uri.to_file_path() {
+            Ok(p) => p,
+            Err(_) => return vec![],
+        };
+
+        // Convert parse errors to LSP diagnostics
+        self.parse_errors
+            .get(&path)
+            .map(|errors| {
+                errors
+                    .iter()
+                    .map(|e| Diagnostic {
+                        range: Range {
+                            start: Position {
+                                line: e.position.line as u32,
+                                character: e.position.column as u32,
+                            },
+                            end: Position {
+                                line: e.position.line as u32,
+                                character: (e.position.column + 1) as u32,
+                            },
+                        },
+                        severity: Some(DiagnosticSeverity::ERROR),
+                        message: e.message.clone(),
+                        ..Default::default()
+                    })
+                    .collect()
+            })
+            .unwrap_or_default()
     }
 }
 
@@ -127,8 +176,17 @@ mod tests {
         let uri = Url::parse("file:///test.sysml").unwrap();
         let text = "invalid syntax !@#$%";
 
+        // Should succeed (errors are captured, not returned)
         let result = backend.open_document(&uri, text);
-        assert!(result.is_err());
+        assert!(result.is_ok());
+
+        // File should NOT be added to workspace (parse failed)
+        assert_eq!(backend.workspace().file_count(), 0);
+
+        // Should have diagnostics
+        let diagnostics = backend.get_diagnostics(&uri);
+        assert!(!diagnostics.is_empty());
+        assert!(diagnostics[0].message.len() > 0);
     }
 
     #[test]
@@ -181,10 +239,18 @@ mod tests {
 
         // Open valid document
         backend.open_document(&uri, "part def Car;").unwrap();
+        assert_eq!(backend.workspace().file_count(), 1);
 
-        // Try to change to invalid content
+        // Change to invalid content - should succeed but capture error
         let result = backend.change_document(&uri, "invalid syntax !@#");
-        assert!(result.is_err());
+        assert!(result.is_ok());
+
+        // File should be removed from workspace (parse failed)
+        assert_eq!(backend.workspace().file_count(), 0);
+
+        // Should have diagnostics
+        let diagnostics = backend.get_diagnostics(&uri);
+        assert!(!diagnostics.is_empty());
     }
 
     #[test]
@@ -209,5 +275,68 @@ mod tests {
 
         // Document should still be in workspace (we keep it for cross-file refs)
         assert_eq!(backend.workspace().file_count(), 1);
+    }
+
+    #[test]
+    fn test_get_diagnostics_for_valid_file() {
+        let mut backend = Backend::new();
+        let uri = Url::parse("file:///test.sysml").unwrap();
+        let text = "part def Vehicle;";
+
+        backend.open_document(&uri, text).unwrap();
+
+        let diagnostics = backend.get_diagnostics(&uri);
+        assert!(
+            diagnostics.is_empty(),
+            "Valid file should have no diagnostics"
+        );
+    }
+
+    #[test]
+    fn test_get_diagnostics_for_parse_error() {
+        let mut backend = Backend::new();
+        let uri = Url::parse("file:///test.sysml").unwrap();
+        let text = "part def invalid syntax";
+
+        backend.open_document(&uri, text).unwrap();
+
+        let diagnostics = backend.get_diagnostics(&uri);
+        assert!(
+            !diagnostics.is_empty(),
+            "Should have parse error diagnostic"
+        );
+        assert_eq!(diagnostics[0].severity, Some(DiagnosticSeverity::ERROR));
+        assert!(diagnostics[0].message.len() > 0);
+    }
+
+    #[test]
+    fn test_get_diagnostics_clears_on_fix() {
+        let mut backend = Backend::new();
+        let uri = Url::parse("file:///test.sysml").unwrap();
+
+        // Open with error
+        backend.open_document(&uri, "invalid syntax").unwrap();
+        let diagnostics = backend.get_diagnostics(&uri);
+        assert!(!diagnostics.is_empty());
+
+        // Fix the error
+        backend.change_document(&uri, "part def Car;").unwrap();
+        let diagnostics = backend.get_diagnostics(&uri);
+        assert!(
+            diagnostics.is_empty(),
+            "Diagnostics should be cleared after fix"
+        );
+    }
+
+    #[test]
+    fn test_get_diagnostics_for_nonexistent_file() {
+        let backend = Backend::new();
+        let uri = Url::parse("file:///nonexistent.sysml").unwrap();
+
+        let diagnostics = backend.get_diagnostics(&uri);
+        assert!(
+            diagnostics.is_empty(),
+            "Nonexistent file should have no diagnostics"
+        );
     }
 }
