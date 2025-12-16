@@ -48,26 +48,24 @@
 
 ## Architecture & Code Organization
 
-### Module Refactoring (Priority Order)
-1. [ ] **symbol_table.rs (566 lines)** → Split into `symbol_table/` folder
-   - Extract: symbol operations, scope management, lookup logic
-   - Keep main file as module exports only
-   
-2. [ ] **analyzer.rs (345 lines)** → Split into `analyzer/` folder
-   - Extract: validation rules, analysis passes, helper functions
-   - Keep main file as module exports only
+### Module Refactoring ✅ COMPLETE
+All major semantic module files have been refactored into focused submodules:
 
-3. [ ] **error.rs (194 lines)** → Split into `error/` folder
-   - Extract: error types by category (parse, semantic, resolution, etc.)
-   - Keep main file as module exports only
+**Pattern established:** Main files ~10-20 lines with focused submodules handling specific concerns.
 
-4. [ ] **resolver.rs (180 lines)** → Split into `resolver/` folder
-   - Extract: resolution strategies, helper logic
-   - Keep main file as module exports only
+### Next Module Refactoring Tasks
+- [ ] **project/ folder** - Review files for refactoring opportunities
+  - Check file sizes and identify files >150 lines
+  - Apply same modularization pattern as semantic/
+  
+- [ ] **language/ folder** - Review files for refactoring opportunities
+  - Check file sizes and identify files >150 lines
+  - Apply same modularization pattern as semantic/
+  
+- [ ] **lsp/ folder** (lsp-server crate) - Review files for refactoring opportunities
+  - Check file sizes and identify files >150 lines
+  - Apply same modularization pattern as semantic/
 
-5. [ ] **events.rs (171 lines)** → Consider splitting if grows
-   - Could split into: workspace_events.rs, dependency_events.rs, symbol_table_events.rs
-   - Currently borderline - revisit if exceeds 200 lines
 - [ ] Metrics/observability layer for EventEmitter
 
 ## LSP Features
