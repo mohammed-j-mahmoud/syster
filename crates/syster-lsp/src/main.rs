@@ -22,6 +22,7 @@ impl LanguageServer for SysterLanguageServer {
                 definition_provider: Some(OneOf::Left(true)),
                 references_provider: Some(OneOf::Left(true)),
                 document_symbol_provider: Some(OneOf::Left(true)),
+                rename_provider: Some(OneOf::Left(true)),
                 completion_provider: Some(CompletionOptions {
                     resolve_provider: Some(false),
                     trigger_characters: Some(vec![":".to_string(), " ".to_string()]),
@@ -194,6 +195,15 @@ impl LanguageServer for SysterLanguageServer {
         let response = server.get_completions(path, position);
 
         Ok(Some(response))
+    }
+
+    async fn rename(&self, params: RenameParams) -> Result<Option<WorkspaceEdit>> {
+        let uri = params.text_document_position.text_document.uri;
+        let position = params.text_document_position.position;
+        let new_name = params.new_name;
+
+        let server = self.server.lock().await;
+        Ok(server.get_rename_edits(&uri, position, &new_name))
     }
 
     async fn shutdown(&self) -> Result<()> {

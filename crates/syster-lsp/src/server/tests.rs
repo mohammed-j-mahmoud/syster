@@ -802,3 +802,72 @@ fn test_code_completion_file_types() {
     assert!(!kerml_keywords.contains(&"part def"));
     assert!(!sysml_keywords.contains(&"classifier"));
 }
+
+#[test]
+fn test_rename_symbol() {
+    let mut server = LspServer::new();
+    let uri = Url::parse("file:///test.sysml").unwrap();
+    let text = r#"
+package TestPkg {
+    part def OldName;
+    part myPart : OldName;
+}
+    "#;
+
+    server.open_document(&uri, text).unwrap();
+
+    // Rename at definition position
+    let position = Position::new(2, 14); // On "OldName" in definition
+    let Some(edit) = server.get_rename_edits(&uri, position, "NewName") else {
+        panic!("Expected rename edit");
+    };
+
+    let Some(changes) = edit.changes else {
+        panic!("Expected changes");
+    };
+
+    let Some(edits) = changes.get(&uri) else {
+        panic!("Expected edits for file");
+    };
+
+    // Should have 2 edits: definition + usage
+    assert_eq!(edits.len(), 2);
+
+    // Check that both locations are being renamed
+    let edit_texts: Vec<&str> = edits.iter().map(|e| e.new_text.as_str()).collect();
+    assert!(edit_texts.iter().all(|&t| t == "NewName"));
+}
+
+#[test]
+fn test_rename_from_usage() {
+    let mut server = LspServer::new();
+    let uri = Url::parse("file:///test.sysml").unwrap();
+    let text = r#"
+package TestPkg {
+    part def Vehicle;
+    part car : Vehicle;
+}
+    "#;
+
+    server.open_document(&uri, text).unwrap();
+
+    // Rename from usage position
+    let position = Position::new(3, 16); // On "Vehicle" in usage
+    let Some(edit) = server.get_rename_edits(&uri, position, "Automobile") else {
+        panic!("Expected rename edit");
+    };
+
+    let Some(changes) = edit.changes else {
+        panic!("Expected changes");
+    };
+
+    let Some(edits) = changes.get(&uri) else {
+        panic!("Expected edits for file");
+    };
+
+    // Should have 2 edits: definition + usage
+    assert_eq!(edits.len(), 2);
+
+    let edit_texts: Vec<&str> = edits.iter().map(|e| e.new_text.as_str()).collect();
+    assert!(edit_texts.iter().all(|&t| t == "Automobile"));
+}

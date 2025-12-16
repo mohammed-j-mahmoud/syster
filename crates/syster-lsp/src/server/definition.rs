@@ -14,24 +14,12 @@ impl LspServer {
     /// If the cursor is on a definition itself, this returns the location of that definition.
     pub fn get_definition(&self, uri: &Url, position: Position) -> Option<Location> {
         let path = uri.to_file_path().ok()?;
-
-        // Get document text to extract word at position
         let text = self.document_texts.get(&path)?;
-
-        // Find symbol at position using AST spans (this gives us the containing element)
         let (element_name, _hover_range) = self.find_symbol_at_position(&path, position)?;
-
-        // Extract the actual word under the cursor - this might be different from element_name
-        // if the cursor is on a type reference (e.g., ": Car" in "part myCar : Car")
         let cursor_word = extract_word_at_cursor(text, position)?;
-
-        // Try to look up the word under cursor first (handles type references)
-        // Then fall back to the element name (handles hovering on the element itself)
         let lookup_name = if cursor_word != element_name {
-            // Cursor is on something other than the element name (likely a type reference)
             &cursor_word
         } else {
-            // Cursor is on the element itself
             &element_name
         };
 

@@ -8,6 +8,7 @@ mod helpers;
 mod hover;
 mod position;
 mod references;
+mod rename;
 mod semantic_tokens;
 
 pub use core::LspServer;
