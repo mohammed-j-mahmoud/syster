@@ -2,13 +2,16 @@
 
 ## LSP Feature Implementation (Priority Order)
 
+### Completed
+- [x] **Task 12: Document Symbols** (Outline view) ✅
+  - [x] Add `get_document_symbols()` method to Backend
+  - [x] Extract all symbols from a file with hierarchy
+  - [x] Map Symbol types to LSP SymbolKind (Package → Namespace, Definition → Class, etc.)
+  - [x] Include symbol ranges for navigation
+  - [x] Wire up `textDocument/documentSymbol` LSP handler
+  - [x] Tests: flat file, nested packages, definitions with members
+
 ### In Progress / Next Tasks
-  - [ ] Add `get_document_symbols()` method to Backend
-  - [ ] Extract all symbols from a file with hierarchy
-  - [ ] Map Symbol types to LSP SymbolKind (Package → Namespace, Definition → Class, etc.)
-  - [ ] Include symbol ranges for navigation
-  - [ ] Wire up `textDocument/documentSymbol` LSP handler
-  - [ ] Tests: flat file, nested packages, definitions with members
 
 - [ ] **Task 13: Semantic Tokens** (Syntax highlighting)
   - [ ] Add `get_semantic_tokens()` method to Backend
