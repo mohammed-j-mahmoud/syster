@@ -1,5 +1,8 @@
 #![allow(clippy::unwrap_used, clippy::expect_used)]
 
+mod collection_tests;
+mod parsing_tests;
+
 use super::*;
 use crate::project::ParseErrorKind;
 use std::path::PathBuf;

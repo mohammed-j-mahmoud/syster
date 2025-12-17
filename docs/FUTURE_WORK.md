@@ -56,15 +56,15 @@
 
 ### Next Module Refactoring Tasks
 - [ ] **project/ folder** - Review files for refactoring opportunities
-  - Check file sizes and identify files >150 lines
+  - Check file sizes and identify files >100 lines
   - Apply same modularization pattern as semantic/
   
 - [ ] **language/ folder** - Review files for refactoring opportunities
-  - Check file sizes and identify files >150 lines
+  - Check file sizes and identify files >100 lines
   - Apply same modularization pattern as semantic/
   
 - [ ] **lsp/ folder** (lsp-server crate) - Review files for refactoring opportunities
-  - Check file sizes and identify files >150 lines
+  - Check file sizes and identify files >100 lines
   - Apply same modularization pattern as semantic/
 
 - [ ] Metrics/observability layer for EventEmitter
