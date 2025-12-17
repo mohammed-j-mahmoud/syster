@@ -4,9 +4,9 @@ use crate::core::constants::{
 };
 use crate::core::{Position, Span};
 use crate::semantic::graphs::RelationshipGraph;
-use crate::semantic::processors::{NoOpValidator, RelationshipValidator};
 use crate::semantic::symbol_table::{Symbol, SymbolTable};
 use crate::semantic::workspace::WorkspaceFile;
+use crate::semantic::{NoOpValidator, RelationshipValidator};
 use crate::syntax::sysml::ast::{
     Alias, Definition, DefinitionKind, Element, Package, Relationships, SysMLFile, Usage, UsageKind,
 };
@@ -77,6 +77,7 @@ fn test_typing_relationship_reference() {
                 name: "myCar".to_string(),
                 qualified_name: "myCar".to_string(),
                 kind: "part".to_string(),
+                semantic_role: None,
                 usage_type: None,
                 scope_id: 0,
                 source_file: Some("model.sysml".to_string()),
@@ -430,6 +431,7 @@ fn test_reference_subsetting() {
                 name: "vehicle".to_string(),
                 qualified_name: "vehicle".to_string(),
                 kind: "ref".to_string(),
+                semantic_role: None,
                 usage_type: None,
                 scope_id: 0,
                 source_file: Some("model.sysml".to_string()),
@@ -453,6 +455,7 @@ fn test_reference_subsetting() {
                 name: "car".to_string(),
                 qualified_name: "car".to_string(),
                 kind: "ref".to_string(),
+                semantic_role: None,
                 usage_type: None,
                 scope_id: 0,
                 source_file: Some("model.sysml".to_string()),
@@ -560,6 +563,7 @@ fn test_symbol_without_span() {
                 name: "Source".to_string(),
                 qualified_name: "Source".to_string(),
                 kind: "part".to_string(),
+                semantic_role: None,
                 usage_type: None,
                 scope_id: 0,
                 source_file: Some("model.sysml".to_string()),
@@ -640,6 +644,7 @@ fn test_mixed_relationships() {
                 name: "instance".to_string(),
                 qualified_name: "instance".to_string(),
                 kind: "part".to_string(),
+                semantic_role: None,
                 usage_type: None,
                 scope_id: 0,
                 source_file: Some("model.sysml".to_string()),

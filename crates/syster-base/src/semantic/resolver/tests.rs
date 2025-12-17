@@ -337,6 +337,7 @@ fn test_resolve_definition_symbol() {
                 name: "MyPart".to_string(),
                 qualified_name: "MyPart".to_string(),
                 kind: "Part".to_string(),
+                semantic_role: None,
             },
         )
         .unwrap();
@@ -381,6 +382,7 @@ fn test_resolve_usage_symbol() {
                 name: "myPort".to_string(),
                 qualified_name: "System::myPort".to_string(),
                 kind: "Port".to_string(),
+                semantic_role: None,
                 usage_type: None,
             },
         )
@@ -613,6 +615,7 @@ fn test_resolve_definition_in_nested_scopes() {
                 name: "requirement".to_string(),
                 qualified_name: "OuterPkg::InnerPkg::requirement".to_string(),
                 kind: "Requirement".to_string(),
+                semantic_role: None,
             },
         )
         .unwrap();
@@ -624,10 +627,7 @@ fn test_resolve_definition_in_nested_scopes() {
         name,
         qualified_name,
         kind,
-        scope_id: _,
-        source_file: None,
-        span: None,
-        references: _,
+        ..
     }) = result
     else {
         panic!("Expected Definition symbol, got: {result:?}");

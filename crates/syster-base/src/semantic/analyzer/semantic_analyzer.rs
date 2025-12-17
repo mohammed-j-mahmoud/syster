@@ -1,8 +1,8 @@
 use super::AnalysisContext;
 use crate::semantic::RelationshipGraph;
-use crate::semantic::processors::{NoOpValidator, RelationshipValidator};
 use crate::semantic::symbol_table::SymbolTable;
 use crate::semantic::types::SemanticResult;
+use crate::semantic::{NoOpValidator, RelationshipValidator};
 use std::sync::Arc;
 
 /// Main semantic analyzer that orchestrates analysis passes

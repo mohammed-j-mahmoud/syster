@@ -5,9 +5,9 @@ use crate::syntax::sysml::ast::{
 };
 use crate::syntax::sysml::visitor::AstVisitor;
 
-use super::SymbolTablePopulator;
+use crate::semantic::adapters::SysmlAdapter;
 
-impl<'a> AstVisitor for SymbolTablePopulator<'a> {
+impl<'a> AstVisitor for SysmlAdapter<'a> {
     fn visit_namespace(&mut self, namespace: &NamespaceDeclaration) {
         // Create the Package symbol for the file-level namespace
         let qualified_name = self.qualified_name(&namespace.name);
@@ -48,11 +48,13 @@ impl<'a> AstVisitor for SymbolTablePopulator<'a> {
         if let Some(name) = &definition.name {
             let qualified_name = self.qualified_name(name);
             let kind = Self::map_definition_kind(&definition.kind);
+            let semantic_role = Self::definition_kind_to_semantic_role(&definition.kind);
             let scope_id = self.symbol_table.current_scope_id();
             let symbol = Symbol::Definition {
                 name: name.clone(),
                 qualified_name: qualified_name.clone(),
                 kind,
+                semantic_role: Some(semantic_role),
                 scope_id,
                 source_file: self.symbol_table.current_file().map(String::from),
                 span: definition.span,
@@ -124,11 +126,13 @@ impl<'a> AstVisitor for SymbolTablePopulator<'a> {
         if let Some(name) = &usage.name {
             let qualified_name = self.qualified_name(name);
             let kind = Self::map_usage_kind(&usage.kind);
+            let semantic_role = Self::usage_kind_to_semantic_role(&usage.kind);
             let scope_id = self.symbol_table.current_scope_id();
             let symbol = Symbol::Usage {
                 name: name.clone(),
                 qualified_name: qualified_name.clone(),
                 kind,
+                semantic_role: Some(semantic_role),
                 usage_type: usage.relationships.typed_by.clone(),
                 scope_id,
                 source_file: self.symbol_table.current_file().map(String::from),

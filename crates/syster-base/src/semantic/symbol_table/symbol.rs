@@ -1,4 +1,5 @@
 use crate::core::Span;
+use crate::semantic::types::SemanticRole;
 
 /// A reference to a symbol from another location in the code
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -41,6 +42,7 @@ pub enum Symbol {
         name: String,
         qualified_name: String,
         kind: String,
+        semantic_role: Option<SemanticRole>,
         scope_id: usize,
         source_file: Option<String>,
         span: Option<Span>,
@@ -50,6 +52,7 @@ pub enum Symbol {
         name: String,
         qualified_name: String,
         kind: String,
+        semantic_role: Option<SemanticRole>,
         usage_type: Option<String>,
         scope_id: usize,
         source_file: Option<String>,

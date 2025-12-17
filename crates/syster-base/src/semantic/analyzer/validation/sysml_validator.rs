@@ -2,7 +2,7 @@
 
 #![allow(clippy::result_large_err)]
 
-use crate::semantic::processors::RelationshipValidator;
+use crate::semantic::RelationshipValidator;
 use crate::semantic::symbol_table::Symbol;
 use crate::semantic::types::SemanticError;
 use crate::syntax::sysml::ast::constants::{
@@ -104,7 +104,3 @@ impl Default for SysMLRelationshipValidator {
         Self::new()
     }
 }
-
-#[cfg(test)]
-#[path = "validator/tests.rs"]
-mod tests;

@@ -1,8 +1,8 @@
 #![allow(clippy::unwrap_used)]
 #![allow(clippy::panic)]
 
-use super::*;
-use crate::semantic::symbol_table::Symbol;
+use crate::semantic::adapters::SysmlAdapter;
+use crate::semantic::symbol_table::{Symbol, SymbolTable};
 use crate::syntax::sysml::ast::{
     Definition, DefinitionKind, Element, Package, SysMLFile, UsageKind,
 };
@@ -10,7 +10,7 @@ use crate::syntax::sysml::ast::{
 #[test]
 fn test_populate_empty_file() {
     let mut table = SymbolTable::new();
-    let mut populator = SymbolTablePopulator::new(&mut table);
+    let mut populator = SysmlAdapter::new(&mut table);
 
     let file = SysMLFile {
         namespace: None,
@@ -24,7 +24,7 @@ fn test_populate_empty_file() {
 #[test]
 fn test_populate_single_package() {
     let mut table = SymbolTable::new();
-    let mut populator = SymbolTablePopulator::new(&mut table);
+    let mut populator = SysmlAdapter::new(&mut table);
 
     let file = SysMLFile {
         namespace: None,
@@ -56,7 +56,7 @@ fn test_populate_single_package() {
 #[test]
 fn test_populate_nested_packages() {
     let mut table = SymbolTable::new();
-    let mut populator = SymbolTablePopulator::new(&mut table);
+    let mut populator = SysmlAdapter::new(&mut table);
 
     let file = SysMLFile {
         namespace: None,
@@ -94,7 +94,7 @@ fn test_populate_nested_packages() {
 #[test]
 fn test_populate_definition() {
     let mut table = SymbolTable::new();
-    let mut populator = SymbolTablePopulator::new(&mut table);
+    let mut populator = SysmlAdapter::new(&mut table);
 
     let file = SysMLFile {
         namespace: None,
@@ -125,7 +125,7 @@ fn test_populate_definition() {
 #[test]
 fn test_populate_usage() {
     let mut table = SymbolTable::new();
-    let mut populator = SymbolTablePopulator::new(&mut table);
+    let mut populator = SysmlAdapter::new(&mut table);
 
     let file = SysMLFile {
         namespace: None,
@@ -157,7 +157,7 @@ fn test_populate_usage() {
 #[test]
 fn test_populate_duplicate_definition_error() {
     let mut table = SymbolTable::new();
-    let mut populator = SymbolTablePopulator::new(&mut table);
+    let mut populator = SysmlAdapter::new(&mut table);
 
     let file = SysMLFile {
         namespace: None,
@@ -186,7 +186,7 @@ fn test_populate_duplicate_definition_error() {
 #[test]
 fn test_populate_definition_in_package() {
     let mut table = SymbolTable::new();
-    let mut populator = SymbolTablePopulator::new(&mut table);
+    let mut populator = SysmlAdapter::new(&mut table);
 
     let file = SysMLFile {
         namespace: None,
@@ -225,7 +225,7 @@ fn test_populate_definition_in_package() {
 #[test]
 fn test_populate_anonymous_package() {
     let mut table = SymbolTable::new();
-    let mut populator = SymbolTablePopulator::new(&mut table);
+    let mut populator = SysmlAdapter::new(&mut table);
 
     let file = SysMLFile {
         namespace: None,
@@ -243,7 +243,7 @@ fn test_populate_anonymous_package() {
 #[test]
 fn test_populate_anonymous_definition() {
     let mut table = SymbolTable::new();
-    let mut populator = SymbolTablePopulator::new(&mut table);
+    let mut populator = SysmlAdapter::new(&mut table);
 
     let file = SysMLFile {
         namespace: None,
@@ -265,7 +265,7 @@ fn test_populate_anonymous_definition() {
 #[test]
 fn test_populate_multiple_definitions() {
     let mut table = SymbolTable::new();
-    let mut populator = SymbolTablePopulator::new(&mut table);
+    let mut populator = SysmlAdapter::new(&mut table);
 
     let file = SysMLFile {
         namespace: None,
@@ -312,7 +312,7 @@ fn test_populate_multiple_definitions() {
 #[test]
 fn test_populate_deeply_nested_structure() {
     let mut table = SymbolTable::new();
-    let mut populator = SymbolTablePopulator::new(&mut table);
+    let mut populator = SysmlAdapter::new(&mut table);
 
     let file = SysMLFile {
         namespace: None,
@@ -359,7 +359,7 @@ fn test_populate_deeply_nested_structure() {
 #[test]
 fn test_populate_all_definition_kinds() {
     let mut table = SymbolTable::new();
-    let mut populator = SymbolTablePopulator::new(&mut table);
+    let mut populator = SysmlAdapter::new(&mut table);
 
     let kinds = vec![
         (DefinitionKind::Part, "Part"),
@@ -402,7 +402,7 @@ fn test_populate_all_definition_kinds() {
 #[test]
 fn test_populate_mixed_elements_in_package() {
     let mut table = SymbolTable::new();
-    let mut populator = SymbolTablePopulator::new(&mut table);
+    let mut populator = SysmlAdapter::new(&mut table);
 
     let file = SysMLFile {
         namespace: None,
@@ -475,7 +475,7 @@ fn test_populate_mixed_elements_in_package() {
 #[test]
 fn test_populate_sibling_packages() {
     let mut table = SymbolTable::new();
-    let mut populator = SymbolTablePopulator::new(&mut table);
+    let mut populator = SysmlAdapter::new(&mut table);
 
     let file = SysMLFile {
         namespace: None,
@@ -536,7 +536,7 @@ fn test_populate_sibling_packages() {
 #[test]
 fn test_populate_duplicate_in_nested_scope() {
     let mut table = SymbolTable::new();
-    let mut populator = SymbolTablePopulator::new(&mut table);
+    let mut populator = SysmlAdapter::new(&mut table);
 
     let file = SysMLFile {
         namespace: None,
@@ -577,7 +577,7 @@ fn test_populate_duplicate_in_nested_scope() {
 #[test]
 fn test_populate_same_name_different_scopes() {
     let mut table = SymbolTable::new();
-    let mut populator = SymbolTablePopulator::new(&mut table);
+    let mut populator = SysmlAdapter::new(&mut table);
 
     let file = SysMLFile {
         namespace: None,
@@ -630,7 +630,7 @@ fn test_populate_same_name_different_scopes() {
 #[test]
 fn test_populate_all_usage_kinds() {
     let mut table = SymbolTable::new();
-    let mut populator = SymbolTablePopulator::new(&mut table);
+    let mut populator = SysmlAdapter::new(&mut table);
 
     let kinds = vec![
         (UsageKind::Part, "partUsage"),
@@ -673,7 +673,7 @@ fn test_populate_all_usage_kinds() {
 #[test]
 fn test_populate_complex_hierarchy() {
     let mut table = SymbolTable::new();
-    let mut populator = SymbolTablePopulator::new(&mut table);
+    let mut populator = SysmlAdapter::new(&mut table);
 
     let file = SysMLFile {
         namespace: None,
@@ -787,7 +787,7 @@ fn test_populate_complex_hierarchy() {
 #[test]
 fn test_populate_multiple_errors() {
     let mut table = SymbolTable::new();
-    let mut populator = SymbolTablePopulator::new(&mut table);
+    let mut populator = SysmlAdapter::new(&mut table);
 
     let file = SysMLFile {
         namespace: None,
@@ -841,7 +841,7 @@ fn test_populate_multiple_errors() {
 #[test]
 fn test_populate_empty_package_hierarchy() {
     let mut table = SymbolTable::new();
-    let mut populator = SymbolTablePopulator::new(&mut table);
+    let mut populator = SysmlAdapter::new(&mut table);
 
     let file = SysMLFile {
         namespace: None,
@@ -893,7 +893,7 @@ fn test_populate_with_relationship_graph() {
 
     let mut table = SymbolTable::new();
     let mut graph = RelationshipGraph::new();
-    let mut populator = SymbolTablePopulator::with_relationships(&mut table, &mut graph);
+    let mut populator = SysmlAdapter::with_relationships(&mut table, &mut graph);
 
     let file = SysMLFile {
         namespace: None,
@@ -923,7 +923,7 @@ fn test_populate_with_relationship_graph() {
 fn test_populator_without_relationship_graph() {
     // Verify backward compatibility - can still use without graph
     let mut table = SymbolTable::new();
-    let mut populator = SymbolTablePopulator::new(&mut table);
+    let mut populator = SysmlAdapter::new(&mut table);
 
     let file = SysMLFile {
         namespace: None,

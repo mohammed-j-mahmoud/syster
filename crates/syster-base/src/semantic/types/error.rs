@@ -67,6 +67,8 @@ pub enum SemanticErrorKind {
     InvalidImport { path: String, reason: String },
     /// Circular dependency detected
     CircularDependency { cycle: Vec<String> },
+    /// Unsupported language or file type
+    UnsupportedLanguage,
 }
 
 impl SemanticError {

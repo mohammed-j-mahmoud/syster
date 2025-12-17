@@ -69,6 +69,9 @@ pub const SEMANTIC_ABSTRACT_INSTANTIATION_MSG: &str = "Cannot instantiate abstra
 pub const SEMANTIC_INVALID_IMPORT: &str = "E012";
 pub const SEMANTIC_INVALID_IMPORT_MSG: &str = "Invalid import statement";
 
+pub const SEMANTIC_UNSUPPORTED_LANGUAGE: &str = "E013";
+pub const SEMANTIC_UNSUPPORTED_LANGUAGE_MSG: &str = "Unsupported language or file type";
+
 // ============================================================================
 // PARSER ERROR CODES (P001-P999)
 // ============================================================================

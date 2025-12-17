@@ -3,12 +3,11 @@
 //! Handles the population of files in a workspace - extracting symbols from
 //! ASTs and building the symbol table and relationship graph.
 
+use crate::semantic::adapters;
 use crate::semantic::graphs::RelationshipGraph;
 use crate::semantic::processors::ReferenceCollector;
 use crate::semantic::symbol_table::SymbolTable;
 use crate::semantic::workspace::WorkspaceFile;
-use crate::syntax::sysml::SymbolTablePopulator;
-use crate::syntax::sysml::ast::SysMLFile;
 use std::collections::HashMap;
 use std::path::PathBuf;
 
@@ -66,30 +65,15 @@ impl<'a> WorkspacePopulator<'a> {
 
         let file_path_str = path.to_string_lossy().to_string();
 
-        // Only populate SysML files for now
-        if let crate::syntax::SyntaxFile::SysML(sysml_file) = &content {
-            self.populate_file_content(&file_path_str, sysml_file)?;
-        }
+        self.symbol_table.remove_symbols_from_file(&file_path_str);
+        self.symbol_table
+            .set_current_file(Some(file_path_str.clone()));
+
+        // Delegate to adapter factory - workspace doesn't know about specific languages
+        adapters::populate_syntax_file(&content, self.symbol_table, self.relationship_graph)
+            .map_err(|errors| format!("Failed to populate {}: {:?}", file_path_str, errors))?;
 
         Ok(())
-    }
-
-    /// Populates the symbol table with file content
-    fn populate_file_content(
-        &mut self,
-        file_path: &str,
-        content: &SysMLFile,
-    ) -> Result<(), String> {
-        self.symbol_table.remove_symbols_from_file(file_path);
-        self.symbol_table
-            .set_current_file(Some(file_path.to_string()));
-
-        let mut populator =
-            SymbolTablePopulator::with_relationships(self.symbol_table, self.relationship_graph);
-
-        populator
-            .populate(content)
-            .map_err(|e| format!("Failed to populate {}: {:?}", file_path, e))
     }
 
     /// Collects references from relationship graph into symbols

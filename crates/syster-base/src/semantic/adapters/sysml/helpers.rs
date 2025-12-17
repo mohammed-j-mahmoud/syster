@@ -1,10 +1,10 @@
 use crate::semantic::symbol_table::Symbol;
-use crate::semantic::types::SemanticError;
+use crate::semantic::types::{SemanticError, SemanticRole};
 use crate::syntax::sysml::ast::{DefinitionKind, UsageKind};
 
-use super::SymbolTablePopulator;
+use crate::semantic::adapters::SysmlAdapter;
 
-impl<'a> SymbolTablePopulator<'a> {
+impl<'a> SysmlAdapter<'a> {
     pub(super) fn qualified_name(&self, name: &str) -> String {
         if self.current_namespace.is_empty() {
             name.to_string()
@@ -44,7 +44,7 @@ impl<'a> SymbolTablePopulator<'a> {
             DefinitionKind::Requirement => "Requirement".to_string(),
             DefinitionKind::Concern => "UseCase".to_string(),
             DefinitionKind::Case => "UseCase".to_string(),
-            DefinitionKind::AnalysisCase => "UseCase".to_string(),
+            DefinitionKind::AnalysisCase => "AnalysisCase".to_string(),
             DefinitionKind::VerificationCase => "VerificationCase".to_string(),
             DefinitionKind::UseCase => "UseCase".to_string(),
             DefinitionKind::View => "View".to_string(),
@@ -68,6 +68,48 @@ impl<'a> SymbolTablePopulator<'a> {
             UsageKind::PerformAction => "PerformAction".to_string(),
             UsageKind::ExhibitState => "ExhibitState".to_string(),
             UsageKind::IncludeUseCase => "IncludeUseCase".to_string(),
+        }
+    }
+
+    /// Maps a SysML DefinitionKind directly to a semantic role.
+    /// This is the ONLY place where language-specific AST types are translated to semantic concepts.
+    pub(super) fn definition_kind_to_semantic_role(kind: &DefinitionKind) -> SemanticRole {
+        match kind {
+            DefinitionKind::Requirement => SemanticRole::Requirement,
+            DefinitionKind::Action => SemanticRole::Action,
+            DefinitionKind::State => SemanticRole::State,
+            DefinitionKind::UseCase | DefinitionKind::Case | DefinitionKind::Concern => {
+                SemanticRole::UseCase
+            }
+            DefinitionKind::VerificationCase => SemanticRole::VerificationCase,
+            DefinitionKind::AnalysisCase => SemanticRole::AnalysisCase,
+            DefinitionKind::Part => SemanticRole::Component,
+            DefinitionKind::Port => SemanticRole::Port,
+            DefinitionKind::Attribute => SemanticRole::Attribute,
+            DefinitionKind::Item => SemanticRole::Item,
+            DefinitionKind::View => SemanticRole::View,
+            DefinitionKind::Viewpoint => SemanticRole::Metadata,
+            DefinitionKind::Rendering => SemanticRole::View,
+        }
+    }
+
+    /// Maps a SysML UsageKind directly to a semantic role.
+    pub(super) fn usage_kind_to_semantic_role(kind: &UsageKind) -> SemanticRole {
+        match kind {
+            UsageKind::Requirement => SemanticRole::Requirement,
+            UsageKind::Action => SemanticRole::Action,
+            UsageKind::Part => SemanticRole::Component,
+            UsageKind::Port => SemanticRole::Port,
+            UsageKind::Attribute => SemanticRole::Attribute,
+            UsageKind::Item => SemanticRole::Item,
+            UsageKind::View => SemanticRole::View,
+            UsageKind::Concern => SemanticRole::UseCase,
+            UsageKind::Case => SemanticRole::UseCase,
+            // Domain relationship usages map to their target roles
+            UsageKind::SatisfyRequirement => SemanticRole::Requirement,
+            UsageKind::PerformAction => SemanticRole::Action,
+            UsageKind::ExhibitState => SemanticRole::State,
+            UsageKind::IncludeUseCase => SemanticRole::UseCase,
         }
     }
 }

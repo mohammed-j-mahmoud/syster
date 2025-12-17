@@ -2,9 +2,9 @@ use crate::semantic::types::SemanticError;
 use crate::syntax::sysml::ast::{Element, SysMLFile};
 use crate::syntax::sysml::visitor::AstVisitor;
 
-use super::SymbolTablePopulator;
+use crate::semantic::adapters::SysmlAdapter;
 
-impl<'a> SymbolTablePopulator<'a> {
+impl<'a> SysmlAdapter<'a> {
     /// Populates the symbol table by visiting all elements in the SysML file.
     ///
     /// # Errors

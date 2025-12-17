@@ -235,6 +235,7 @@ fn test_different_symbol_types() {
                 name: "MyDef".to_string(),
                 qualified_name: "MyDef".to_string(),
                 kind: "Part".to_string(),
+                semantic_role: None,
             },
         )
         .unwrap();
@@ -247,6 +248,7 @@ fn test_different_symbol_types() {
                 source_file: None,
                 span: None,
                 usage_type: None,
+                semantic_role: None,
                 references: Vec::new(),
                 name: "MyUsage".to_string(),
                 qualified_name: "MyUsage".to_string(),

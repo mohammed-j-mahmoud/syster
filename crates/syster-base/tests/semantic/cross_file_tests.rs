@@ -6,9 +6,9 @@ use std::path::PathBuf;
 use syster::core::constants::REL_SPECIALIZATION;
 use syster::parser::SysMLParser;
 use syster::parser::sysml::Rule;
+use syster::semantic::adapters::SysmlAdapter;
 use syster::semantic::symbol_table::SymbolTable;
 use syster::semantic::{RelationshipGraph, Workspace};
-use syster::syntax::sysml::SymbolTablePopulator;
 use syster::syntax::sysml::ast::SysMLFile;
 
 #[test]
@@ -33,13 +33,13 @@ fn test_cross_file_specialization() {
     // Populate from file 1 with source tracking
     symbol_table.set_current_file(Some("base.sysml".to_string()));
     let mut populator1 =
-        SymbolTablePopulator::with_relationships(&mut symbol_table, &mut relationship_graph);
+        SysmlAdapter::with_relationships(&mut symbol_table, &mut relationship_graph);
     populator1.populate(&file1).unwrap();
 
     // Populate from file 2 - this should be able to resolve Vehicle from file 1
     symbol_table.set_current_file(Some("derived.sysml".to_string()));
     let mut populator2 =
-        SymbolTablePopulator::with_relationships(&mut symbol_table, &mut relationship_graph);
+        SysmlAdapter::with_relationships(&mut symbol_table, &mut relationship_graph);
     let result = populator2.populate(&file2);
 
     // This test will fail initially because cross-file resolution isn't implemented
@@ -89,11 +89,11 @@ fn test_cross_file_typing() {
 
     // Populate both files into shared symbol table
     let mut populator1 =
-        SymbolTablePopulator::with_relationships(&mut symbol_table, &mut relationship_graph);
+        SysmlAdapter::with_relationships(&mut symbol_table, &mut relationship_graph);
     populator1.populate(&file1).unwrap();
 
     let mut populator2 =
-        SymbolTablePopulator::with_relationships(&mut symbol_table, &mut relationship_graph);
+        SysmlAdapter::with_relationships(&mut symbol_table, &mut relationship_graph);
     let result = populator2.populate(&file2);
 
     assert!(
@@ -131,17 +131,17 @@ fn test_cross_file_transitive_relationships() {
     // Populate all three files with file tracking
     symbol_table.set_current_file(Some("file1.sysml".to_string()));
     let mut populator1 =
-        SymbolTablePopulator::with_relationships(&mut symbol_table, &mut relationship_graph);
+        SysmlAdapter::with_relationships(&mut symbol_table, &mut relationship_graph);
     populator1.populate(&file1).unwrap();
 
     symbol_table.set_current_file(Some("file2.sysml".to_string()));
     let mut populator2 =
-        SymbolTablePopulator::with_relationships(&mut symbol_table, &mut relationship_graph);
+        SysmlAdapter::with_relationships(&mut symbol_table, &mut relationship_graph);
     populator2.populate(&file2).unwrap();
 
     symbol_table.set_current_file(Some("file3.sysml".to_string()));
     let mut populator3 =
-        SymbolTablePopulator::with_relationships(&mut symbol_table, &mut relationship_graph);
+        SysmlAdapter::with_relationships(&mut symbol_table, &mut relationship_graph);
     let result = populator3.populate(&file3);
 
     assert!(
@@ -176,7 +176,7 @@ fn test_unresolved_cross_file_reference() {
     let mut symbol_table = SymbolTable::new();
     let mut relationship_graph = RelationshipGraph::new();
     let mut populator =
-        SymbolTablePopulator::with_relationships(&mut symbol_table, &mut relationship_graph);
+        SysmlAdapter::with_relationships(&mut symbol_table, &mut relationship_graph);
 
     let result = populator.populate(&file);
 
@@ -203,13 +203,13 @@ fn test_symbol_source_tracking() {
     // Populate file 1 with source tracking
     symbol_table.set_current_file(Some("vehicle.sysml".to_string()));
     let mut populator1 =
-        SymbolTablePopulator::with_relationships(&mut symbol_table, &mut relationship_graph);
+        SysmlAdapter::with_relationships(&mut symbol_table, &mut relationship_graph);
     populator1.populate(&file1).unwrap();
 
     // Populate file 2 with source tracking
     symbol_table.set_current_file(Some("car.sysml".to_string()));
     let mut populator2 =
-        SymbolTablePopulator::with_relationships(&mut symbol_table, &mut relationship_graph);
+        SysmlAdapter::with_relationships(&mut symbol_table, &mut relationship_graph);
     populator2.populate(&file2).unwrap();
 
     // We can now query which file a symbol came from

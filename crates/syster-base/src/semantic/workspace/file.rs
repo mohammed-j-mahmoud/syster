@@ -1,7 +1,6 @@
 //! Workspace file representation
 
 use crate::syntax::SyntaxFile;
-use crate::syntax::sysml::ast::SysMLFile;
 use std::path::PathBuf;
 
 /// Represents a file in the workspace with its path and parsed content
@@ -29,14 +28,6 @@ impl WorkspaceFile {
 
     pub fn content(&self) -> &SyntaxFile {
         &self.content
-    }
-
-    /// Returns the content as SysML file if it is SysML, otherwise None
-    pub fn content_as_sysml(&self) -> Option<&SysMLFile> {
-        match &self.content {
-            SyntaxFile::SysML(file) => Some(file),
-            _ => None,
-        }
     }
 
     pub fn version(&self) -> u32 {

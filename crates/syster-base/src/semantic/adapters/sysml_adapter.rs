@@ -1,19 +1,15 @@
-mod helpers;
-mod population;
-mod visitors;
-
 use crate::semantic::graphs::RelationshipGraph;
 use crate::semantic::symbol_table::SymbolTable;
 use crate::semantic::types::SemanticError;
 
-pub struct SymbolTablePopulator<'a> {
-    symbol_table: &'a mut SymbolTable,
-    relationship_graph: Option<&'a mut RelationshipGraph>,
-    current_namespace: Vec<String>,
-    errors: Vec<SemanticError>,
+pub struct SysmlAdapter<'a> {
+    pub(super) symbol_table: &'a mut SymbolTable,
+    pub(super) relationship_graph: Option<&'a mut RelationshipGraph>,
+    pub(super) current_namespace: Vec<String>,
+    pub(super) errors: Vec<SemanticError>,
 }
 
-impl<'a> SymbolTablePopulator<'a> {
+impl<'a> SysmlAdapter<'a> {
     pub fn new(symbol_table: &'a mut SymbolTable) -> Self {
         Self {
             symbol_table,
@@ -35,7 +31,3 @@ impl<'a> SymbolTablePopulator<'a> {
         }
     }
 }
-
-#[cfg(test)]
-#[path = "populator/tests.rs"]
-mod tests;

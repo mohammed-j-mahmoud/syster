@@ -9,8 +9,8 @@ use syster::core::constants::{
 use syster::parser::SysMLParser;
 use syster::parser::sysml::Rule;
 use syster::semantic::RelationshipGraph;
+use syster::semantic::adapters::SysmlAdapter;
 use syster::semantic::symbol_table::SymbolTable;
-use syster::syntax::sysml::SymbolTablePopulator;
 use syster::syntax::sysml::ast::SysMLFile;
 
 #[test]
@@ -25,7 +25,7 @@ fn test_end_to_end_relationship_population() {
     let mut symbol_table = SymbolTable::new();
     let mut relationship_graph = RelationshipGraph::new();
     let mut populator =
-        SymbolTablePopulator::with_relationships(&mut symbol_table, &mut relationship_graph);
+        SysmlAdapter::with_relationships(&mut symbol_table, &mut relationship_graph);
 
     let result = populator.populate(&file);
     assert!(result.is_ok(), "Failed to populate: {:?}", result.err());
@@ -56,7 +56,7 @@ fn test_multiple_relationships() {
     let mut symbol_table = SymbolTable::new();
     let mut relationship_graph = RelationshipGraph::new();
     let mut populator =
-        SymbolTablePopulator::with_relationships(&mut symbol_table, &mut relationship_graph);
+        SysmlAdapter::with_relationships(&mut symbol_table, &mut relationship_graph);
 
     populator.populate(&file).unwrap();
 
@@ -89,7 +89,7 @@ fn test_transitive_specialization() {
     let mut symbol_table = SymbolTable::new();
     let mut relationship_graph = RelationshipGraph::new();
     let mut populator =
-        SymbolTablePopulator::with_relationships(&mut symbol_table, &mut relationship_graph);
+        SysmlAdapter::with_relationships(&mut symbol_table, &mut relationship_graph);
 
     populator.populate(&file).unwrap();
 
@@ -120,7 +120,7 @@ fn test_multiple_specializations() {
     let mut symbol_table = SymbolTable::new();
     let mut relationship_graph = RelationshipGraph::new();
     let mut populator =
-        SymbolTablePopulator::with_relationships(&mut symbol_table, &mut relationship_graph);
+        SysmlAdapter::with_relationships(&mut symbol_table, &mut relationship_graph);
 
     populator.populate(&file).unwrap();
 
@@ -144,7 +144,7 @@ fn test_diamond_inheritance() {
     let mut symbol_table = SymbolTable::new();
     let mut relationship_graph = RelationshipGraph::new();
     let mut populator =
-        SymbolTablePopulator::with_relationships(&mut symbol_table, &mut relationship_graph);
+        SysmlAdapter::with_relationships(&mut symbol_table, &mut relationship_graph);
 
     populator.populate(&file).unwrap();
 
@@ -171,7 +171,7 @@ fn test_usage_typing_and_subsetting() {
     let mut symbol_table = SymbolTable::new();
     let mut relationship_graph = RelationshipGraph::new();
     let mut populator =
-        SymbolTablePopulator::with_relationships(&mut symbol_table, &mut relationship_graph);
+        SysmlAdapter::with_relationships(&mut symbol_table, &mut relationship_graph);
 
     populator.populate(&file).unwrap();
 
@@ -202,7 +202,7 @@ fn test_action_relationships() {
     let mut symbol_table = SymbolTable::new();
     let mut relationship_graph = RelationshipGraph::new();
     let mut populator =
-        SymbolTablePopulator::with_relationships(&mut symbol_table, &mut relationship_graph);
+        SysmlAdapter::with_relationships(&mut symbol_table, &mut relationship_graph);
 
     populator.populate(&file).unwrap();
 
@@ -229,7 +229,7 @@ fn test_requirement_relationships() {
     let mut symbol_table = SymbolTable::new();
     let mut relationship_graph = RelationshipGraph::new();
     let mut populator =
-        SymbolTablePopulator::with_relationships(&mut symbol_table, &mut relationship_graph);
+        SysmlAdapter::with_relationships(&mut symbol_table, &mut relationship_graph);
 
     populator.populate(&file).unwrap();
 
@@ -254,7 +254,7 @@ fn test_deep_inheritance_chain() {
     let mut symbol_table = SymbolTable::new();
     let mut relationship_graph = RelationshipGraph::new();
     let mut populator =
-        SymbolTablePopulator::with_relationships(&mut symbol_table, &mut relationship_graph);
+        SysmlAdapter::with_relationships(&mut symbol_table, &mut relationship_graph);
 
     populator.populate(&file).unwrap();
 
@@ -279,7 +279,7 @@ fn test_multiple_subsettings() {
     let mut symbol_table = SymbolTable::new();
     let mut relationship_graph = RelationshipGraph::new();
     let mut populator =
-        SymbolTablePopulator::with_relationships(&mut symbol_table, &mut relationship_graph);
+        SysmlAdapter::with_relationships(&mut symbol_table, &mut relationship_graph);
 
     populator.populate(&file).unwrap();
 
@@ -303,7 +303,7 @@ fn test_redefinition_chain() {
     let mut symbol_table = SymbolTable::new();
     let mut relationship_graph = RelationshipGraph::new();
     let mut populator =
-        SymbolTablePopulator::with_relationships(&mut symbol_table, &mut relationship_graph);
+        SysmlAdapter::with_relationships(&mut symbol_table, &mut relationship_graph);
 
     populator.populate(&file).unwrap();
 
@@ -344,7 +344,7 @@ fn test_mixed_definition_kinds() {
     let mut symbol_table = SymbolTable::new();
     let mut relationship_graph = RelationshipGraph::new();
     let mut populator =
-        SymbolTablePopulator::with_relationships(&mut symbol_table, &mut relationship_graph);
+        SysmlAdapter::with_relationships(&mut symbol_table, &mut relationship_graph);
 
     populator.populate(&file).unwrap();
 
@@ -374,7 +374,7 @@ fn test_no_circular_relationships() {
     let mut symbol_table = SymbolTable::new();
     let mut relationship_graph = RelationshipGraph::new();
     let mut populator =
-        SymbolTablePopulator::with_relationships(&mut symbol_table, &mut relationship_graph);
+        SysmlAdapter::with_relationships(&mut symbol_table, &mut relationship_graph);
 
     populator.populate(&file).unwrap();
 
@@ -399,7 +399,7 @@ fn test_satisfy_requirement_relationship() {
     let mut symbol_table = SymbolTable::new();
     let mut relationship_graph = RelationshipGraph::new();
     let mut populator =
-        SymbolTablePopulator::with_relationships(&mut symbol_table, &mut relationship_graph);
+        SysmlAdapter::with_relationships(&mut symbol_table, &mut relationship_graph);
 
     populator.populate(&file).unwrap();
 
@@ -424,7 +424,7 @@ fn test_satisfy_with_requirement_keyword() {
     let mut symbol_table = SymbolTable::new();
     let mut relationship_graph = RelationshipGraph::new();
     let mut populator =
-        SymbolTablePopulator::with_relationships(&mut symbol_table, &mut relationship_graph);
+        SysmlAdapter::with_relationships(&mut symbol_table, &mut relationship_graph);
 
     populator.populate(&file).unwrap();
 
@@ -447,7 +447,7 @@ fn test_perform_action_relationship() {
     let mut symbol_table = SymbolTable::new();
     let mut relationship_graph = RelationshipGraph::new();
     let mut populator =
-        SymbolTablePopulator::with_relationships(&mut symbol_table, &mut relationship_graph);
+        SysmlAdapter::with_relationships(&mut symbol_table, &mut relationship_graph);
 
     populator.populate(&file).unwrap();
 
@@ -471,7 +471,7 @@ fn test_exhibit_state_relationship() {
     let mut symbol_table = SymbolTable::new();
     let mut relationship_graph = RelationshipGraph::new();
     let mut populator =
-        SymbolTablePopulator::with_relationships(&mut symbol_table, &mut relationship_graph);
+        SysmlAdapter::with_relationships(&mut symbol_table, &mut relationship_graph);
 
     populator.populate(&file).unwrap();
 
@@ -501,7 +501,7 @@ fn test_include_use_case_relationship() {
     let mut symbol_table = SymbolTable::new();
     let mut relationship_graph = RelationshipGraph::new();
     let mut populator =
-        SymbolTablePopulator::with_relationships(&mut symbol_table, &mut relationship_graph);
+        SysmlAdapter::with_relationships(&mut symbol_table, &mut relationship_graph);
 
     populator.populate(&file).unwrap();
 
@@ -528,7 +528,7 @@ fn test_multiple_satisfy_relationships() {
     let mut symbol_table = SymbolTable::new();
     let mut relationship_graph = RelationshipGraph::new();
     let mut populator =
-        SymbolTablePopulator::with_relationships(&mut symbol_table, &mut relationship_graph);
+        SysmlAdapter::with_relationships(&mut symbol_table, &mut relationship_graph);
 
     populator.populate(&file).unwrap();
 
@@ -556,7 +556,7 @@ fn test_mixed_domain_and_structural_relationships() {
     let mut symbol_table = SymbolTable::new();
     let mut relationship_graph = RelationshipGraph::new();
     let mut populator =
-        SymbolTablePopulator::with_relationships(&mut symbol_table, &mut relationship_graph);
+        SysmlAdapter::with_relationships(&mut symbol_table, &mut relationship_graph);
 
     populator.populate(&file).unwrap();
 
@@ -582,7 +582,7 @@ fn test_derive_requirement_relationship() {
     let mut symbol_table = SymbolTable::new();
     let mut relationship_graph = RelationshipGraph::new();
     let mut populator =
-        SymbolTablePopulator::with_relationships(&mut symbol_table, &mut relationship_graph);
+        SysmlAdapter::with_relationships(&mut symbol_table, &mut relationship_graph);
 
     populator.populate(&file).unwrap();
 
@@ -607,7 +607,7 @@ fn test_derive_requirement_keyword_syntax() {
     let mut symbol_table = SymbolTable::new();
     let mut relationship_graph = RelationshipGraph::new();
     let mut populator =
-        SymbolTablePopulator::with_relationships(&mut symbol_table, &mut relationship_graph);
+        SysmlAdapter::with_relationships(&mut symbol_table, &mut relationship_graph);
 
     populator.populate(&file).unwrap();
 
@@ -635,7 +635,7 @@ fn test_derived_requirement_in_body() {
     let mut symbol_table = SymbolTable::new();
     let mut relationship_graph = RelationshipGraph::new();
     let mut populator =
-        SymbolTablePopulator::with_relationships(&mut symbol_table, &mut relationship_graph);
+        SysmlAdapter::with_relationships(&mut symbol_table, &mut relationship_graph);
 
     populator.populate(&file).unwrap();
 
@@ -666,7 +666,7 @@ fn test_derived_requirement_modifier() {
     let mut symbol_table = SymbolTable::new();
     let mut relationship_graph = RelationshipGraph::new();
     let mut populator =
-        SymbolTablePopulator::with_relationships(&mut symbol_table, &mut relationship_graph);
+        SysmlAdapter::with_relationships(&mut symbol_table, &mut relationship_graph);
 
     populator.populate(&file).unwrap();
 
@@ -703,7 +703,7 @@ fn test_derived_keyword_with_subsetting() {
     let mut symbol_table = SymbolTable::new();
     let mut relationship_graph = RelationshipGraph::new();
     let mut populator =
-        SymbolTablePopulator::with_relationships(&mut symbol_table, &mut relationship_graph);
+        SysmlAdapter::with_relationships(&mut symbol_table, &mut relationship_graph);
 
     populator.populate(&file).unwrap();
 
@@ -733,7 +733,7 @@ fn test_multiple_derived_requirements_in_body() {
     let mut symbol_table = SymbolTable::new();
     let mut relationship_graph = RelationshipGraph::new();
     let mut populator =
-        SymbolTablePopulator::with_relationships(&mut symbol_table, &mut relationship_graph);
+        SysmlAdapter::with_relationships(&mut symbol_table, &mut relationship_graph);
 
     populator.populate(&file).unwrap();
 

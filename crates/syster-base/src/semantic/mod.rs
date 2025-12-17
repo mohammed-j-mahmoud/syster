@@ -2,6 +2,7 @@
 //!
 //! This module provides semantic analysis for SysML v2 and KerML models, transforming
 //! parsed ASTs into a queryable semantic model with cross-file symbol resolution.
+pub mod adapters;
 pub mod analyzer;
 pub mod graphs;
 pub mod processors;
@@ -10,14 +11,19 @@ pub mod symbol_table;
 pub mod types;
 pub mod workspace;
 
-pub use analyzer::{AnalysisContext, SemanticAnalyzer};
+pub use adapters::{SysmlAdapter, populate_syntax_file};
+pub use analyzer::{
+    AnalysisContext, NoOpValidator, RelationshipValidator, SemanticAnalyzer,
+    SysMLRelationshipValidator,
+};
 pub use graphs::{DependencyGraph, RelationshipGraph};
-pub use processors::{NoOpValidator, ReferenceCollector, RelationshipValidator};
+pub use processors::ReferenceCollector;
 pub use resolver::{Resolver, extract_imports, is_wildcard_import, parse_import_path};
 pub use symbol_table::SymbolTable;
 pub use types::{
     DependencyEvent, Diagnostic, Location as DiagnosticLocation, Location, Position, Range,
-    SemanticError, SemanticErrorKind, SemanticResult, Severity, SymbolTableEvent, WorkspaceEvent,
+    SemanticError, SemanticErrorKind, SemanticResult, SemanticRole, Severity, SymbolTableEvent,
+    WorkspaceEvent,
 };
 pub use workspace::Workspace;
 
