@@ -2,12 +2,11 @@
 #![allow(clippy::panic)]
 
 use super::*;
-use crate::syntax::sysml::validator::SysMLRelationshipValidator;
 use crate::semantic::RelationshipGraph;
 use crate::semantic::SemanticErrorKind;
-use crate::semantic::symbol_table::Symbol;
-use crate::semantic::types::SemanticError;
-use std::sync::Arc;
+use crate::semantic::create_validator;
+use crate::semantic::symbol_table::{Symbol, SymbolTable};
+use crate::semantic::types::{SemanticError, SemanticResult, SemanticRole};
 
 #[test]
 fn test_analyzer_creation() {
@@ -146,6 +145,7 @@ fn test_analyzer_with_multiple_symbols() {
                 name: "MyDef".to_string(),
                 qualified_name: "MyDef".to_string(),
                 kind: "Part".to_string(),
+                semantic_role: None,
             },
         )
         .unwrap();
@@ -312,6 +312,7 @@ fn test_analyze_with_all_symbol_types() {
                 name: "Integer".to_string(),
                 qualified_name: "Integer".to_string(),
                 kind: "Part".to_string(),
+                semantic_role: None,
             },
         )
         .unwrap();
@@ -342,6 +343,7 @@ fn test_analyze_with_all_symbol_types() {
                 name: "MyDef".to_string(),
                 qualified_name: "MyDef".to_string(),
                 kind: "Requirement".to_string(),
+                semantic_role: None,
             },
         )
         .unwrap();
@@ -357,6 +359,7 @@ fn test_analyze_with_all_symbol_types() {
                 name: "MyUsage".to_string(),
                 qualified_name: "MyUsage".to_string(),
                 kind: "Action".to_string(),
+                semantic_role: None,
                 usage_type: None,
             },
         )
@@ -467,6 +470,7 @@ fn test_analyzer_with_features() {
                 name: "String".to_string(),
                 qualified_name: "String".to_string(),
                 kind: "Part".to_string(),
+                semantic_role: None,
             },
         )
         .unwrap();
@@ -563,6 +567,7 @@ fn test_analyzer_with_different_definition_kinds() {
                     name: format!("Def{}", idx),
                     qualified_name: format!("Def{}", idx),
                     kind: (*kind).to_string(),
+                    semantic_role: None,
                 },
             )
             .unwrap();
@@ -593,6 +598,7 @@ fn test_analyzer_with_different_usage_kinds() {
                     qualified_name: format!("Usage{}", idx),
                     kind: (*kind).to_string(),
                     usage_type: None,
+                    semantic_role: None,
                 },
             )
             .unwrap();
@@ -836,6 +842,7 @@ fn test_type_validation_valid_type_reference() {
                 name: "Vehicle".to_string(),
                 qualified_name: "Vehicle".to_string(),
                 kind: "Part".to_string(),
+                semantic_role: None,
             },
         )
         .unwrap();
@@ -998,6 +1005,7 @@ fn test_type_validation_multiple_features() {
                 name: "Type1".to_string(),
                 qualified_name: "Type1".to_string(),
                 kind: "Part".to_string(),
+                semantic_role: None,
             },
         )
         .unwrap();
@@ -1013,6 +1021,7 @@ fn test_type_validation_multiple_features() {
                 name: "Type2".to_string(),
                 qualified_name: "Type2".to_string(),
                 kind: "Port".to_string(),
+                semantic_role: None,
             },
         )
         .unwrap();
@@ -1085,6 +1094,7 @@ fn test_type_validation_qualified_type_reference() {
                 name: "SubType".to_string(),
                 qualified_name: "Package::SubType".to_string(),
                 kind: "Part".to_string(),
+                semantic_role: None,
             },
         )
         .unwrap();
@@ -1235,6 +1245,7 @@ fn test_type_validation_scope_aware_resolution() {
                 name: "Vehicle".to_string(),
                 qualified_name: "Pkg1::Vehicle".to_string(),
                 kind: "Part".to_string(),
+                semantic_role: None,
                 scope_id: pkg1_scope,
                 source_file: None,
                 span: None,
@@ -1273,6 +1284,7 @@ fn test_type_validation_scope_aware_resolution() {
                 name: "Vehicle".to_string(),
                 qualified_name: "Pkg2::Vehicle".to_string(),
                 kind: "Part".to_string(),
+                semantic_role: None,
                 scope_id: pkg2_scope,
                 source_file: None,
                 span: None,
@@ -1334,6 +1346,7 @@ fn test_type_validation_scope_aware_undefined() {
                 name: "Vehicle".to_string(),
                 qualified_name: "Pkg2::Vehicle".to_string(),
                 kind: "Part".to_string(),
+                semantic_role: None,
                 scope_id: pkg2_scope,
                 source_file: None,
                 span: None,
@@ -1404,6 +1417,7 @@ fn test_type_validation_usage_not_valid_type() {
                 name: "myUsage".to_string(),
                 qualified_name: "myUsage".to_string(),
                 kind: "Part".to_string(),
+                semantic_role: None,
                 usage_type: None,
                 scope_id: 0,
                 source_file: None,
@@ -1455,6 +1469,7 @@ fn test_type_validation_shadowing() {
                 name: "Vehicle".to_string(),
                 qualified_name: "Vehicle".to_string(),
                 kind: "Part".to_string(),
+                semantic_role: None,
                 scope_id: 0,
                 source_file: None,
                 span: None,
@@ -1474,6 +1489,7 @@ fn test_type_validation_shadowing() {
                 name: "Vehicle".to_string(),
                 qualified_name: "Nested::Vehicle".to_string(),
                 kind: "Port".to_string(),
+                semantic_role: None,
                 scope_id: nested_scope,
                 source_file: None,
                 span: None,
@@ -1543,6 +1559,7 @@ fn test_relationship_validation_undefined_target() {
                 name: "Vehicle".to_string(),
                 qualified_name: "Vehicle".to_string(),
                 kind: "Part".to_string(),
+                semantic_role: None,
             },
         )
         .unwrap();
@@ -1584,6 +1601,7 @@ fn test_relationship_validation_typing_undefined_target() {
                 name: "myPart".to_string(),
                 qualified_name: "myPart".to_string(),
                 kind: "Part".to_string(),
+                semantic_role: None,
                 usage_type: None,
             },
         )
@@ -1621,6 +1639,7 @@ fn test_circular_specialization_detection() {
                 name: "A".to_string(),
                 qualified_name: "A".to_string(),
                 kind: "Part".to_string(),
+                semantic_role: None,
             },
         )
         .unwrap();
@@ -1636,6 +1655,7 @@ fn test_circular_specialization_detection() {
                 name: "B".to_string(),
                 qualified_name: "B".to_string(),
                 kind: "Part".to_string(),
+                semantic_role: None,
             },
         )
         .unwrap();
@@ -1651,6 +1671,7 @@ fn test_circular_specialization_detection() {
                 name: "C".to_string(),
                 qualified_name: "C".to_string(),
                 kind: "Part".to_string(),
+                semantic_role: None,
             },
         )
         .unwrap();
@@ -1692,6 +1713,7 @@ fn test_self_specialization_detection() {
                 name: "Vehicle".to_string(),
                 qualified_name: "Vehicle".to_string(),
                 kind: "Part".to_string(),
+                semantic_role: None,
             },
         )
         .unwrap();
@@ -1734,6 +1756,7 @@ fn test_valid_specialization_chain() {
                 name: "Vehicle".to_string(),
                 qualified_name: "Vehicle".to_string(),
                 kind: "Part".to_string(),
+                semantic_role: None,
             },
         )
         .unwrap();
@@ -1749,6 +1772,7 @@ fn test_valid_specialization_chain() {
                 name: "Car".to_string(),
                 qualified_name: "Car".to_string(),
                 kind: "Part".to_string(),
+                semantic_role: None,
             },
         )
         .unwrap();
@@ -1764,6 +1788,7 @@ fn test_valid_specialization_chain() {
                 name: "SportsCar".to_string(),
                 qualified_name: "SportsCar".to_string(),
                 kind: "Part".to_string(),
+                semantic_role: None,
             },
         )
         .unwrap();
@@ -1798,6 +1823,7 @@ fn test_multiple_relationship_types_validation() {
                 name: "VehicleDef".to_string(),
                 qualified_name: "VehicleDef".to_string(),
                 kind: "Part".to_string(),
+                semantic_role: None,
             },
         )
         .unwrap();
@@ -1813,6 +1839,7 @@ fn test_multiple_relationship_types_validation() {
                 name: "myVehicle".to_string(),
                 qualified_name: "myVehicle".to_string(),
                 kind: "Part".to_string(),
+                semantic_role: None,
                 usage_type: None,
             },
         )
@@ -1874,6 +1901,7 @@ fn test_relationship_validation_with_qualified_names() {
                 name: "Car".to_string(),
                 qualified_name: "Vehicles::Car".to_string(),
                 kind: "Part".to_string(),
+                semantic_role: None,
             },
         )
         .unwrap();
@@ -1889,6 +1917,7 @@ fn test_relationship_validation_with_qualified_names() {
                 name: "SportsCar".to_string(),
                 qualified_name: "Vehicles::SportsCar".to_string(),
                 kind: "Part".to_string(),
+                semantic_role: None,
             },
         )
         .unwrap();
@@ -1926,6 +1955,7 @@ fn test_satisfy_relationship_validation_valid() {
                 name: "SafetyCase".to_string(),
                 qualified_name: "SafetyCase".to_string(),
                 kind: "Case".to_string(),
+                semantic_role: None,
             },
         )
         .unwrap();
@@ -1942,6 +1972,7 @@ fn test_satisfy_relationship_validation_valid() {
                 name: "SafetyReq".to_string(),
                 qualified_name: "SafetyReq".to_string(),
                 kind: "Requirement".to_string(),
+                semantic_role: None,
             },
         )
         .unwrap();
@@ -1975,6 +2006,7 @@ fn test_satisfy_relationship_validation_invalid_target() {
                 name: "MyCase".to_string(),
                 qualified_name: "MyCase".to_string(),
                 kind: "Case".to_string(),
+                semantic_role: Some(SemanticRole::AnalysisCase),
             },
         )
         .unwrap();
@@ -1991,6 +2023,7 @@ fn test_satisfy_relationship_validation_invalid_target() {
                 name: "Vehicle".to_string(),
                 qualified_name: "Vehicle".to_string(),
                 kind: "Part".to_string(),
+                semantic_role: Some(SemanticRole::Component),
             },
         )
         .unwrap();
@@ -1998,7 +2031,7 @@ fn test_satisfy_relationship_validation_invalid_target() {
     // Invalid satisfy relationship - targeting a part instead of requirement
     graph.add_one_to_many("satisfy", "MyCase".to_string(), "Vehicle".to_string());
 
-    let validator = Arc::new(SysMLRelationshipValidator::new());
+    let validator = create_validator("sysml");
     let analyzer = SemanticAnalyzer::with_validator(table, graph, validator);
     let result = analyzer.analyze();
 
@@ -2029,6 +2062,7 @@ fn test_perform_relationship_validation() {
                 name: "Robot".to_string(),
                 qualified_name: "Robot".to_string(),
                 kind: "Part".to_string(),
+                semantic_role: None,
             },
         )
         .unwrap();
@@ -2045,6 +2079,7 @@ fn test_perform_relationship_validation() {
                 name: "Move".to_string(),
                 qualified_name: "Move".to_string(),
                 kind: "Action".to_string(),
+                semantic_role: None,
             },
         )
         .unwrap();
@@ -2078,6 +2113,7 @@ fn test_perform_relationship_invalid_target() {
                 name: "Robot".to_string(),
                 qualified_name: "Robot".to_string(),
                 kind: "Part".to_string(),
+                semantic_role: None,
             },
         )
         .unwrap();
@@ -2094,6 +2130,7 @@ fn test_perform_relationship_invalid_target() {
                 name: "Tool".to_string(),
                 qualified_name: "Tool".to_string(),
                 kind: "Part".to_string(),
+                semantic_role: Some(SemanticRole::Component),
             },
         )
         .unwrap();
@@ -2101,7 +2138,7 @@ fn test_perform_relationship_invalid_target() {
     // Invalid perform relationship - targeting a part instead of action
     graph.add_one_to_many("perform", "Robot".to_string(), "Tool".to_string());
 
-    let validator = Arc::new(SysMLRelationshipValidator::new());
+    let validator = create_validator("sysml");
     let analyzer = SemanticAnalyzer::with_validator(table, graph, validator);
     let result = analyzer.analyze();
 
@@ -2132,6 +2169,7 @@ fn test_exhibit_relationship_validation() {
                 name: "Vehicle".to_string(),
                 qualified_name: "Vehicle".to_string(),
                 kind: "Part".to_string(),
+                semantic_role: None,
             },
         )
         .unwrap();
@@ -2148,6 +2186,7 @@ fn test_exhibit_relationship_validation() {
                 name: "Moving".to_string(),
                 qualified_name: "Moving".to_string(),
                 kind: "State".to_string(),
+                semantic_role: None,
             },
         )
         .unwrap();
@@ -2181,6 +2220,7 @@ fn test_include_relationship_validation() {
                 name: "ManageAccount".to_string(),
                 qualified_name: "ManageAccount".to_string(),
                 kind: "UseCase".to_string(),
+                semantic_role: None,
             },
         )
         .unwrap();
@@ -2196,6 +2236,7 @@ fn test_include_relationship_validation() {
                 name: "Login".to_string(),
                 qualified_name: "Login".to_string(),
                 kind: "UseCase".to_string(),
+                semantic_role: None,
             },
         )
         .unwrap();

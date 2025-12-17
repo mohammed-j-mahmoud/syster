@@ -6,6 +6,9 @@ mod semantic_analyzer;
 pub mod validation;
 mod validator;
 
+#[cfg(test)]
+mod tests;
+
 pub use context::AnalysisContext;
 pub use semantic_analyzer::SemanticAnalyzer;
-pub use validation::{NoOpValidator, RelationshipValidator, SysMLRelationshipValidator};
+pub use validation::{NoOpValidator, RelationshipValidator};

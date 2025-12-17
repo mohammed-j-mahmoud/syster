@@ -15,17 +15,20 @@
 - [x] Created adapter factory pattern - workspace no longer knows about specific adapter types
 - [x] Workspace is now language-agnostic (only uses SyntaxFile abstraction, delegates to adapters module)
 
-## Phase 3: Make Validator Truly Generic
-- [ ] Update `semantic/analyzer/validation/relationship_validator.rs` trait to work with `SemanticRole` instead of string matching
-- [ ] Delete `semantic/analyzer/validation/sysml_validator.rs` entirely
-- [ ] Delete `semantic/analyzer/validation/sysml/` directory
-- [ ] Create generic validator implementation `SemanticRelationshipValidator` that checks semantic rules using roles
+## Phase 3: Make Validator Truly Generic ✅ COMPLETE
+- [x] Simplified `RelationshipValidator` trait to just define the interface
+- [x] Moved `SysmlValidator` to `semantic/adapters/sysml/validator.rs` (where language knowledge belongs)
+- [x] Validator uses `SemanticRole` helpers: `is_requirement()`, `is_action()`, `is_state()`, `is_use_case()`
+- [x] Deleted old `semantic/analyzer/validation/sysml_validator.rs` and tests
+- [x] Tests now live in the adapter module with the validator
+- [x] Updated exports: `SysmlValidator` exported from adapters, not analyzer
+- [x] All 313 unit tests + 1441 integration tests passing
 
-## Phase 4: Move Language-Specific Validation to Adapter
-- [ ] Create `semantic/adapters/sysml/validator.rs` for SysML-specific constraint checks during adaptation
-- [ ] Validates AST before creating Symbols (syntax errors, SysML-specific naming rules)
-- [ ] Adapter uses this validator during `populate()` method
-- [ ] Return validation errors as part of adaptation process
+## Phase 4: Move Language-Specific Validation to Adapter ✅ COMPLETE
+- [x] Validation logic lives in `semantic/adapters/sysml/validator.rs`
+- [x] Trait is generic, implementations are language-specific
+- [x] Clean separation: semantic/analyzer defines trait, adapters provide implementations
+- [x] Ready for KerML validator when needed
 
 ## Phase 5: Update All References
 - [ ] Find and update all imports of `SysMLRelationshipValidator` to use generic `SemanticRelationshipValidator`

@@ -11,11 +11,8 @@ pub mod symbol_table;
 pub mod types;
 pub mod workspace;
 
-pub use adapters::{SysmlAdapter, populate_syntax_file};
-pub use analyzer::{
-    AnalysisContext, NoOpValidator, RelationshipValidator, SemanticAnalyzer,
-    SysMLRelationshipValidator,
-};
+pub use adapters::{SysmlAdapter, SysmlValidator, create_validator, populate_syntax_file};
+pub use analyzer::{AnalysisContext, NoOpValidator, RelationshipValidator, SemanticAnalyzer};
 pub use graphs::{DependencyGraph, RelationshipGraph};
 pub use processors::ReferenceCollector;
 pub use resolver::{Resolver, extract_imports, is_wildcard_import, parse_import_path};

@@ -28,6 +28,12 @@ pub const REL_INCLUDE: &str = "include";
 pub const REL_ASSERT: &str = "assert";
 pub const REL_VERIFY: &str = "verify";
 
+// Semantic role names for validation messages
+pub const ROLE_REQUIREMENT: &str = "requirement";
+pub const ROLE_ACTION: &str = "action";
+pub const ROLE_STATE: &str = "state";
+pub const ROLE_USE_CASE: &str = "use case";
+
 /// Maps relationship type constants to human-readable labels
 pub fn relationship_label(rel_type: &str) -> &str {
     match rel_type {
