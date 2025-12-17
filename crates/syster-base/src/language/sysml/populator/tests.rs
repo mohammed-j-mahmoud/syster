@@ -2,7 +2,10 @@
 #![allow(clippy::panic)]
 
 use super::*;
-use crate::language::sysml::syntax::{DefinitionKind, Element, Package, SysMLFile, UsageKind};
+use crate::language::sysml::syntax::{
+    Definition, DefinitionKind, Element, Package, SysMLFile, UsageKind,
+};
+use crate::semantic::symbol_table::Symbol;
 
 #[test]
 fn test_populate_empty_file() {
