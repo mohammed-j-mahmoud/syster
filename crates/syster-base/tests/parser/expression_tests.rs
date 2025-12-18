@@ -1094,6 +1094,42 @@ fn test_qualified_name_with_quoted_name_in_attribute_body() {
 }
 
 #[test]
+fn test_attribute_with_short_name() {
+    let result = SysMLParser::parse(Rule::attribute_usage, "attribute <x> myAttr;");
+    assert!(
+        result.is_ok(),
+        "Failed to parse attribute with short name: {:?}",
+        result.err()
+    );
+}
+
+#[test]
+fn test_attribute_with_short_name_and_quoted_full_name() {
+    let result = SysMLParser::parse(
+        Rule::attribute_usage,
+        "attribute <isq> 'International System of Quantities';",
+    );
+    assert!(
+        result.is_ok(),
+        "Failed to parse attribute with short name and quoted full name: {:?}",
+        result.err()
+    );
+}
+
+#[test]
+fn test_attribute_with_short_name_typed_and_body() {
+    let result = SysMLParser::parse(
+        Rule::attribute_usage,
+        "attribute <isq> 'International System of Quantities': SystemOfQuantities { }",
+    );
+    assert!(
+        result.is_ok(),
+        "Failed to parse attribute with short name, type, and body: {:?}",
+        result.err()
+    );
+}
+
+#[test]
 fn test_qualified_name_with_unicode_theta_as_owned_expression() {
     let result = SysMLParser::parse(Rule::owned_expression, "isq.'Θ'");
     assert!(
