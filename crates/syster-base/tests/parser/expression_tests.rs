@@ -923,3 +923,129 @@ fn test_parameter_binding_without_direction() {
         result.err()
     );
 }
+
+#[test]
+fn test_attribute_with_default_value_and_body() {
+    let result = SysMLParser::parse(Rule::attribute_usage, "attribute x default foo { }");
+    assert!(
+        result.is_ok(),
+        "Failed to parse attribute with default value and body: {:?}",
+        result.err()
+    );
+}
+
+#[test]
+fn test_attribute_with_redefinition_default_and_body() {
+    let result = SysMLParser::parse(Rule::attribute_usage, "attribute :>> x default foo { }");
+    assert!(
+        result.is_ok(),
+        "Failed to parse attribute with redefinition, default, and body: {:?}",
+        result.err()
+    );
+}
+
+#[test]
+fn test_attribute_with_multiplicity_and_body() {
+    let result = SysMLParser::parse(Rule::attribute_usage, "attribute x[1] { }");
+    assert!(
+        result.is_ok(),
+        "Failed to parse attribute with multiplicity and body: {:?}",
+        result.err()
+    );
+}
+
+#[test]
+fn test_attribute_with_multiplicity_and_default() {
+    let result = SysMLParser::parse(Rule::attribute_usage, "attribute x[1] default foo;");
+    assert!(
+        result.is_ok(),
+        "Failed to parse attribute with multiplicity and default: {:?}",
+        result.err()
+    );
+}
+
+#[test]
+fn test_attribute_with_multiplicity_default_no_redef_with_body() {
+    let result = SysMLParser::parse(Rule::attribute_usage, "attribute x[1] default foo { }");
+    assert!(
+        result.is_ok(),
+        "Failed to parse attribute with multiplicity, default, and body (no redef): {:?}",
+        result.err()
+    );
+}
+
+#[test]
+fn test_attribute_with_redef_multiplicity_and_body() {
+    let result = SysMLParser::parse(Rule::attribute_usage, "attribute :>> x[1] { }");
+    assert!(
+        result.is_ok(),
+        "Failed to parse attribute with redef, multiplicity, and body: {:?}",
+        result.err()
+    );
+}
+
+#[test]
+fn test_attribute_with_redef_multiplicity_and_default() {
+    let result = SysMLParser::parse(Rule::attribute_usage, "attribute :>> x[1] default foo;");
+    assert!(
+        result.is_ok(),
+        "Failed to parse attribute with redef, multiplicity, and default: {:?}",
+        result.err()
+    );
+}
+
+#[test]
+fn test_attribute_with_long_name_multiplicity_default_body() {
+    let result = SysMLParser::parse(
+        Rule::attribute_usage,
+        "attribute transformation[1] default nullTransformation { }",
+    );
+    assert!(
+        result.is_ok(),
+        "Failed to parse attribute with long name, multiplicity, default, body: {:?}",
+        result.err()
+    );
+}
+
+#[test]
+fn test_attribute_y_multiplicity_default_body() {
+    let result = SysMLParser::parse(Rule::attribute_usage, "attribute y[1] default z { }");
+    assert!(
+        result.is_ok(),
+        "Failed to parse attribute y[1] default z with body: {:?}",
+        result.err()
+    );
+}
+
+#[test]
+fn test_attribute_x_multiplicity_default_nullX_body() {
+    let result = SysMLParser::parse(Rule::attribute_usage, "attribute x[1] default nullX { }");
+    assert!(
+        result.is_ok(),
+        "Failed to parse attribute x[1] default nullX with body: {:?}",
+        result.err()
+    );
+}
+
+#[test]
+fn test_attribute_x_multiplicity_default_abc_body() {
+    let result = SysMLParser::parse(Rule::attribute_usage, "attribute x[1] default abcdef { }");
+    assert!(
+        result.is_ok(),
+        "Failed to parse attribute x[1] default abcdef with body: {:?}",
+        result.err()
+    );
+}
+
+#[test]
+fn test_attribute_with_multiplicity_default_and_body() {
+    let result = SysMLParser::parse(
+        Rule::attribute_usage,
+        "attribute :>> transformation[1] default nullTransformation { attribute :>> source; }",
+    );
+    assert!(
+        result.is_ok(),
+        "Failed to parse attribute with multiplicity, default, and body: {:?}",
+        result.err()
+    );
+}

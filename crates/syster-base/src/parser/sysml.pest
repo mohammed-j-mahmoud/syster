@@ -431,8 +431,8 @@ instantiation_expression = {
     "new" ~ owned_feature_typing ~ argument_list?
 }
 
-null_expression = {
-    "null"
+null_expression = @{
+    "null" ~ !(ASCII_ALPHANUMERIC | "_")
 }
 
 literal_expression = {
@@ -518,8 +518,10 @@ literal = {
     string_value
     | numeric_value
     | boolean_value
-    | "null"
+    | null_literal
 }
+
+null_literal = @{ "null" ~ !(ASCII_ALPHANUMERIC | "_") }
 
 string_value = @{ "\"" ~ (!"\"" ~ ANY)* ~ "\"" }
 numeric_value = @{ "-"? ~ ASCII_DIGIT+ ~ ("." ~ ASCII_DIGIT+)? }
