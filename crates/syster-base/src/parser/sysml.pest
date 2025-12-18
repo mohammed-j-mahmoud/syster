@@ -452,7 +452,7 @@ invocation_expression = {
 }
 
 feature_chain_member = {
-    identifier
+    identifier | quoted_name
 }
 
 // Sequence Expressions

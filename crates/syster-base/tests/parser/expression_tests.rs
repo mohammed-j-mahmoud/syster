@@ -1038,6 +1038,85 @@ fn test_attribute_x_multiplicity_default_abc_body() {
 }
 
 #[test]
+fn test_qualified_name_with_unicode_theta_simple() {
+    let result = SysMLParser::parse(Rule::qualified_name, "isq.'Θ'");
+    assert!(
+        result.is_ok(),
+        "Failed to parse simple qualified name with Unicode theta: {:?}",
+        result.err()
+    );
+}
+
+#[test]
+fn test_qualified_name_with_unicode_theta_in_expression() {
+    let result = SysMLParser::parse(Rule::primary_expression, "isq.'Θ'");
+    assert!(
+        result.is_ok(),
+        "Failed to parse qualified name with Unicode theta as expression: {:?}",
+        result.err()
+    );
+}
+
+#[test]
+fn test_unrestricted_name_with_unicode_theta() {
+    let result = SysMLParser::parse(Rule::quoted_name, "'Θ'");
+    assert!(
+        result.is_ok(),
+        "Failed to parse quoted name with Unicode theta: {:?}",
+        result.err()
+    );
+}
+
+#[test]
+fn test_qualified_name_with_regular_identifiers_in_attribute_body() {
+    let result = SysMLParser::parse(
+        Rule::attribute_usage,
+        "attribute pf { :>> quantity = isq.theta; }",
+    );
+    assert!(
+        result.is_ok(),
+        "Failed to parse attribute with regular qualified name in body assignment: {:?}",
+        result.err()
+    );
+}
+
+#[test]
+fn test_qualified_name_with_quoted_name_in_attribute_body() {
+    let result = SysMLParser::parse(
+        Rule::attribute_usage,
+        "attribute pf { :>> quantity = isq.'z'; }",
+    );
+    assert!(
+        result.is_ok(),
+        "Failed to parse attribute with quoted name in body assignment: {:?}",
+        result.err()
+    );
+}
+
+#[test]
+fn test_qualified_name_with_unicode_theta_as_owned_expression() {
+    let result = SysMLParser::parse(Rule::owned_expression, "isq.'Θ'");
+    assert!(
+        result.is_ok(),
+        "Failed to parse qualified name with Unicode theta as owned_expression: {:?}",
+        result.err()
+    );
+}
+
+#[test]
+fn test_qualified_name_with_unicode_theta_assignment() {
+    let result = SysMLParser::parse(
+        Rule::attribute_usage,
+        "attribute pf { :>> quantity = isq.'Θ'; }",
+    );
+    assert!(
+        result.is_ok(),
+        "Failed to parse attribute with Unicode theta in body assignment: {:?}",
+        result.err()
+    );
+}
+
+#[test]
 fn test_attribute_with_multiplicity_default_and_body() {
     let result = SysMLParser::parse(
         Rule::attribute_usage,
