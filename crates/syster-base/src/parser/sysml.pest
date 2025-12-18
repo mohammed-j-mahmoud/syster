@@ -308,14 +308,14 @@ equality_operator = {
 
 // Classification Expressions
 classification_expression = {
-    relational_expression ~ (
+    metadata_reference ~ "@@" ~ type_reference_member
+    | metadata_reference ~ "meta" ~ type_result_member
+    | classification_test_operator ~ type_reference_member
+    | "as" ~ type_result_member
+    | relational_expression ~ (
         (classification_test_operator ~ type_reference_member)
         | ("as" ~ type_result_member)
     )?
-    | classification_test_operator ~ type_reference_member
-    | metadata_reference ~ "@@" ~ type_reference_member
-    | "as" ~ type_result_member
-    | metadata_reference ~ "meta" ~ type_result_member
 }
 
 classification_test_operator = {
@@ -327,7 +327,7 @@ type_reference_member = {
 }
 
 type_reference = {
-    identifier
+    qualified_name
 }
 
 type_result_member = {
@@ -335,11 +335,11 @@ type_result_member = {
 }
 
 type_result = {
-    identifier
+    qualified_name
 }
 
 metadata_reference = {
-    identifier
+    qualified_name
 }
 
 // Relational Expressions

@@ -791,3 +791,111 @@ fn test_succession_with_multiplicity() {
         result.err()
     );
 }
+
+#[test]
+fn test_as_expression_with_qualified_name() {
+    let input = "causes as SysML::Usage";
+    let result = SysMLParser::parse(Rule::classification_expression, input);
+
+    assert!(
+        result.is_ok(),
+        "Failed to parse as expression with qualified name: {:?}",
+        result.err()
+    );
+}
+
+#[test]
+fn test_hastype_with_qualified_name() {
+    let input = "value hastype Domain::ItemType";
+    let result = SysMLParser::parse(Rule::classification_expression, input);
+
+    assert!(
+        result.is_ok(),
+        "Failed to parse hastype with qualified name: {:?}",
+        result.err()
+    );
+}
+
+#[test]
+fn test_attribute_with_qualified_type_and_as_cast() {
+    let input = "ref :>> baseType = causes as SysML::Usage;";
+    let result = SysMLParser::parse(Rule::reference_usage, input);
+
+    assert!(
+        result.is_ok(),
+        "Failed to parse attribute with qualified type in as expression: {:?}",
+        result.err()
+    );
+}
+
+#[test]
+fn test_meta_expression_with_qualified_name() {
+    let input = "multicausations meta SysML::Usage";
+    let result = SysMLParser::parse(Rule::classification_expression, input);
+
+    assert!(
+        result.is_ok(),
+        "Failed to parse meta expression with qualified name: {:?}",
+        result.err()
+    );
+}
+
+#[test]
+fn test_attribute_with_meta_expression() {
+    let input = "ref :>> baseType = multicausations meta SysML::Usage;";
+    let result = SysMLParser::parse(Rule::reference_usage, input);
+
+    assert!(
+        result.is_ok(),
+        "Failed to parse attribute with meta expression: {:?}",
+        result.err()
+    );
+}
+
+#[test]
+fn test_metadata_access_with_qualified_name() {
+    let input = "myMetadata @@ SysML::Metadata";
+    let result = SysMLParser::parse(Rule::classification_expression, input);
+
+    assert!(
+        result.is_ok(),
+        "Failed to parse @@ expression with qualified name: {:?}",
+        result.err()
+    );
+}
+
+#[test]
+fn test_type_reference_with_qualified_name() {
+    let input = "Domain::Library::Type";
+    let result = SysMLParser::parse(Rule::type_reference, input);
+
+    assert!(
+        result.is_ok(),
+        "Failed to parse type_reference with qualified name: {:?}",
+        result.err()
+    );
+}
+
+#[test]
+fn test_type_result_with_qualified_name() {
+    let input = "SysML::Usage";
+    let result = SysMLParser::parse(Rule::type_result, input);
+
+    assert!(
+        result.is_ok(),
+        "Failed to parse type_result with qualified name: {:?}",
+        result.err()
+    );
+}
+
+#[test]
+fn test_metadata_reference_with_qualified_name() {
+    let input = "MyPackage::MyMetadata";
+    let result = SysMLParser::parse(Rule::metadata_reference, input);
+
+    assert!(
+        result.is_ok(),
+        "Failed to parse metadata_reference with qualified name: {:?}",
+        result.err()
+    );
+}
