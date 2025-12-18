@@ -1,4 +1,5 @@
 mod constraint_tests;
+mod expression_tests;
 mod kerml_tests;
 mod span_tests;
 mod stdlib_sysml_tests;

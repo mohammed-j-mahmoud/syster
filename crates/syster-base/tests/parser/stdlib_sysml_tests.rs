@@ -5,7 +5,7 @@ use std::path::PathBuf;
 use syster::project::file_loader;
 
 /// Test that each SysML stdlib file can be parsed successfully
-/// 
+///
 /// This test suite creates individual test cases for each SysML file in the standard library.
 /// When a file fails to parse, the test name clearly indicates which file has the issue.
 
@@ -73,7 +73,7 @@ fn test_parse_stdlib_sysml_file(#[case] relative_path: &str) {
     path.push(relative_path);
 
     let result = file_loader::load_and_parse(&path);
-    
+
     assert!(
         result.is_ok(),
         "Failed to parse {}: {}",

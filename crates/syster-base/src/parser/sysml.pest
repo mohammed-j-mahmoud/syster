@@ -388,20 +388,17 @@ extent_expression = {
 // Primary Expressions
 primary_expression = {
     base_expression
-    ~ ("." ~ feature_chain_member)?
     ~ (
-        (
-            "#" ~ "(" ~ sequence_expression ~ ")"  // indexing with #
-            | "[" ~ sequence_expression ~ "]"      // indexing with []
-            | "->" ~ reference_typing ~ (
-                expression_body_member
-                | function_reference_member
-                | argument_list
-            )  // invocation
-            | "." ~ expression_body_member         // collect
-            | ".?" ~ expression_body_member        // select
-        )
-        ~ ("." ~ feature_chain_member)?
+        "." ~ feature_chain_member
+        | "#" ~ "(" ~ sequence_expression ~ ")"  // indexing with #
+        | "[" ~ sequence_expression ~ "]"      // indexing with []
+        | "->" ~ reference_typing ~ (
+            expression_body_member
+            | function_reference_member
+            | argument_list
+        )  // invocation
+        | "." ~ expression_body_member         // collect
+        | ".?" ~ expression_body_member        // select
     )*
 }
 
@@ -409,9 +406,14 @@ primary_expression = {
 base_expression = {
     null_expression
     | literal_expression
+    | instantiation_expression
     | invocation_expression
     | feature_reference_expression
     | "(" ~ sequence_expression ~ ")"
+}
+
+instantiation_expression = {
+    "new" ~ owned_feature_typing ~ argument_list?
 }
 
 null_expression = {
@@ -1498,13 +1500,13 @@ variant_reference = {
 // Body Elements
 
 non_occurrence_usage_element = {
-    default_reference_usage
-    | reference_usage
+    reference_usage
     | attribute_usage
     | enumeration_usage
     | binding_connector_as_usage
     | succession_as_usage
     | extended_usage
+    | default_reference_usage
 }
 
 occurrence_usage_element = {
