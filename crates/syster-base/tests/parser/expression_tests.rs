@@ -899,3 +899,27 @@ fn test_metadata_reference_with_qualified_name() {
         result.err()
     );
 }
+
+#[test]
+fn test_expression_body_with_typed_parameter_no_direction() {
+    let input = "{p2 : Point; p1 != p2}";
+    let result = SysMLParser::parse(Rule::expression_body, input);
+
+    assert!(
+        result.is_ok(),
+        "Failed to parse expression body with typed parameter (no direction): {:?}",
+        result.err()
+    );
+}
+
+#[test]
+fn test_parameter_binding_without_direction() {
+    let input = "p : Point";
+    let result = SysMLParser::parse(Rule::parameter_binding, input);
+
+    assert!(
+        result.is_ok(),
+        "Failed to parse parameter binding without direction: {:?}",
+        result.err()
+    );
+}

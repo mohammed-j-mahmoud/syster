@@ -211,7 +211,8 @@ parameter_binding_with_terminator = {
 }
 
 parameter_binding = {
-    ("in" | "out" | "inout") ~ "ref"? ~ identifier ~ (":" ~ owned_feature_typing)? ~ ("{" ~ visible_annotating_member* ~ "}")?
+    feature_direction_kind ~ "ref"? ~ identifier? ~ (":" ~ owned_feature_typing)? ~ ("{" ~ visible_annotating_member* ~ "}")?
+    | "ref"? ~ identifier ~ ":" ~ owned_feature_typing ~ ("{" ~ visible_annotating_member* ~ "}")?
 }
 
 owned_expression_member = {
