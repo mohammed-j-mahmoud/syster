@@ -197,7 +197,17 @@ element_filter_member = { visibility? ~ "filter" ~ owned_expression ~ ";" }
 
 // Expressions
 expression_body = {
-    calculation_body
+    "{" ~ expression_body_part ~ "}"
+}
+
+expression_body_part = {
+    (parameter_binding ~ ";")+ ~ owned_expression
+    | (parameter_binding ~ ";")+
+    | owned_expression
+}
+
+parameter_binding = {
+    ("in" | "out" | "inout") ~ identifier ~ (":" ~ owned_feature_typing)?
 }
 
 owned_expression_member = {
@@ -1167,7 +1177,12 @@ calculation_body = {
 }
 
 calculation_body_part = {
-    calculation_body_item* ~ result_expression_member?
+    (parameter_binding ~ ";")+ ~ result_expression_member
+    | (parameter_binding ~ ";")+ ~ (calculation_body_item ~ ";")+ ~ result_expression_member
+    | (parameter_binding ~ ";")+ ~ (calculation_body_item ~ ";")*
+    | (calculation_body_item ~ ";")* ~ result_expression_member
+    | (calculation_body_item ~ ";")+
+    | ""  // empty body
 }
 
 calculation_body_item = {
@@ -2270,6 +2285,15 @@ dependency = {
     ~ "to"
     ~ element_reference ~ ("," ~ element_reference)*
     ~ relationship_body
+}
+
+// Test rules for debugging
+test_calc_body_minimal = {
+    "{" ~ owned_expression ~ "}"
+}
+
+test_calc_body_with_item = {
+    "{" ~ action_body_item ~ ";" ~ owned_expression ~ "}"
 }
 
 // Entry point
