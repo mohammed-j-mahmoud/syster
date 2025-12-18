@@ -197,7 +197,8 @@ element_filter_member = { visibility? ~ "filter" ~ owned_expression ~ ";" }
 
 // Expressions
 expression_body = {
-    "{" ~ expression_body_part ~ "}"
+    "{" ~ expression_body_part? ~ "}"
+    | ";"
 }
 
 expression_body_part = {
@@ -307,15 +308,21 @@ equality_operator = {
     "===" | "!==" | "==" | "!="
 }
 
-// Classification Expressions
+// Atomic operators with word boundaries
+as_operator = @{ "as" ~ !(ASCII_ALPHANUMERIC | "_") }
+meta_operator = @{ "meta" ~ !(ASCII_ALPHANUMERIC | "_") }
+
+// Classification Expressions  
 classification_expression = {
     metadata_reference ~ "@@" ~ type_reference_member
-    | metadata_reference ~ "meta" ~ type_result_member
+    | metadata_reference ~ meta_operator ~ type_result_member
     | classification_test_operator ~ type_reference_member
-    | "as" ~ type_result_member
+    | as_operator ~ type_result_member
     | relational_expression ~ (
-        (classification_test_operator ~ type_reference_member)
-        | ("as" ~ type_result_member)
+        ("@@" ~ type_reference_member)
+        | (meta_operator ~ type_result_member)
+        | (classification_test_operator ~ type_reference_member)
+        | (as_operator ~ type_result_member)
     )?
 }
 
@@ -340,7 +347,7 @@ type_result = {
 }
 
 metadata_reference = {
-    qualified_name
+    qualified_name | "metadata"
 }
 
 // Relational Expressions
@@ -396,7 +403,7 @@ unary_operator = {
 
 // Extent Expressions
 extent_expression = {
-    "all" ~ !(ASCII_ALPHANUMERIC | "_") ~ type_result_member
+    "all" ~ !(ASCII_ALPHANUMERIC | "_" | "(") ~ type_result_member
     | primary_expression
 }
 
@@ -1517,9 +1524,8 @@ default_reference_usage = {
 }
 
 reference_usage = {
-    (end_usage_prefix | ref_prefix)
-    ~ "ref"
-    ~ usage_suffix
+    end_marker ~ ref_prefix ~ "ref" ~ usage_suffix
+    | ref_prefix ~ "ref" ~ usage_suffix
 }
 
 variant_reference = {
@@ -2125,13 +2131,13 @@ owned_feature_typing = { feature_reference }
 
 // Feature subsetting and redefinition rules
 owned_subsetting = {
-    feature_reference
-    | owned_feature_chain
+    owned_feature_chain
+    | feature_reference
 }
 
 owned_reference_subsetting = {
-    feature_reference
-    | owned_feature_chain
+    owned_feature_chain
+    | feature_reference
 }
 
 owned_cross_subsetting = {
@@ -2145,7 +2151,7 @@ owned_redefinition = {
 }
 
 // Feature references and chains (matching KerML structure)
-feature_reference = { qualified_name | identifier | quoted_name }
+feature_reference = { qualified_name | identifier | quoted_name | "all" }
 
 owned_feature_chain = { identifier ~ ("." ~ identifier)+ }
 
@@ -2240,7 +2246,7 @@ prefix_metadata_usage = { "#" ~ metadata_typing }
 // State-related placeholder rules
 guarded_target_succession = { identifier }
 
-metadata_typing = { identifier }
+metadata_typing = { identifier | "meta" }
 
 metadata_usage = {
     prefix_metadata?

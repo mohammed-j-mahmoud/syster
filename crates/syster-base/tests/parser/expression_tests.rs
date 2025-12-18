@@ -1018,7 +1018,7 @@ fn test_attribute_y_multiplicity_default_body() {
 }
 
 #[test]
-fn test_attribute_x_multiplicity_default_nullX_body() {
+fn test_attribute_x_multiplicity_default_null_x_body() {
     let result = SysMLParser::parse(Rule::attribute_usage, "attribute x[1] default nullX { }");
     assert!(
         result.is_ok(),
@@ -1288,7 +1288,7 @@ fn test_constraint_with_function_on_right() {
 }
 
 #[test]
-fn test_allTrue_as_identifier() {
+fn test_all_true_as_identifier() {
     let result = SysMLParser::parse(Rule::identifier, "allTrue");
     assert!(
         result.is_ok(),
@@ -1311,7 +1311,7 @@ fn test_constraint_with_actual_names() {
 }
 
 #[test]
-fn test_constraint_with_allTrue_function() {
+fn test_constraint_with_all_true_function() {
     let result = SysMLParser::parse(
         Rule::assert_constraint_usage,
         "assert constraint c { x implies allTrue(y) }",
@@ -1428,4 +1428,212 @@ fn test_in_parameter_with_default_block() {
         "Failed to parse in parameter with default block: {:?}",
         result.err()
     );
+}
+
+#[test]
+fn test_ref_with_feature_chain_subsetting() {
+    let result = SysMLParser::parse(
+        Rule::definition_body_item,
+        "ref :>> outgoingTransfersFromSelf :> interfacingPorts.incomingTransfersToSelf { }",
+    );
+    assert!(
+        result.is_ok(),
+        "Failed to parse ref with feature chain subsetting: {:?}",
+        result.err()
+    );
+}
+
+#[test]
+fn test_end_ref_with_name_only() {
+    let result = SysMLParser::parse(Rule::reference_usage, "end ref source;");
+    assert!(
+        result.is_ok(),
+        "Failed to parse end ref with name only: {:?}",
+        result.err()
+    );
+}
+
+#[test]
+fn test_nested_invocation_expression() {
+    // Test at classification_expression level
+    let result = SysMLParser::parse(Rule::classification_expression, "allTrue(assumptions())");
+    assert!(
+        result.is_ok(),
+        "Failed at classification_expression: {:?}",
+        result.err()
+    );
+}
+
+#[test]
+fn test_nested_invocation_equality() {
+    // Test at equality_expression level
+    let result = SysMLParser::parse(Rule::equality_expression, "allTrue(assumptions())");
+    assert!(
+        result.is_ok(),
+        "Failed at equality_expression: {:?}",
+        result.err()
+    );
+}
+
+#[test]
+fn test_nested_invocation_classification() {
+    // Test at classification_expression level
+    let result = SysMLParser::parse(Rule::classification_expression, "assumptions()");
+    assert!(
+        result.is_ok(),
+        "Failed at classification_expression: {:?}",
+        result.err()
+    );
+}
+
+#[test]
+fn test_nested_invocation_relational() {
+    // Test at relational_expression level
+    let result = SysMLParser::parse(Rule::relational_expression, "assumptions()");
+    assert!(
+        result.is_ok(),
+        "Failed at relational_expression: {:?}",
+        result.err()
+    );
+}
+
+#[test]
+fn test_nested_invocation_base() {
+    // Test at base_expression level
+    let result = SysMLParser::parse(Rule::base_expression, "assumptions()");
+    assert!(
+        result.is_ok(),
+        "Failed at base_expression: {:?}",
+        result.err()
+    );
+}
+
+#[test]
+fn test_invocation_after_constraint() {
+    // Test with constraint context - this should reveal the issue
+    let result = SysMLParser::parse(Rule::owned_expression, "assumptions()");
+    assert!(
+        result.is_ok(),
+        "Failed with owned_expression: {:?}",
+        result.err()
+    );
+}
+
+#[test]
+fn test_nested_function_call() {
+    // Test nested invocation at argument level
+    let result = SysMLParser::parse(Rule::argument, "assumptions()");
+    assert!(
+        result.is_ok(),
+        "Failed to parse as argument: {:?}",
+        result.err()
+    );
+}
+
+#[test]
+fn test_outer_function_with_inner_call() {
+    // Test outer function with inner invocation
+    let result = SysMLParser::parse(Rule::owned_expression, "allTrue(assumptions())");
+    assert!(result.is_ok(), "Failed nested call: {:?}", result.err());
+}
+
+#[test]
+fn test_argument_value_with_invocation() {
+    // Test at argument_value level (this is where it fails in practice)
+    let result = SysMLParser::parse(Rule::argument_value, "assumptions()");
+    assert!(
+        result.is_ok(),
+        "Failed at argument_value: {:?}",
+        result.err()
+    );
+}
+
+#[test]
+fn test_invocation_in_calc_body_with_constraints() {
+    // Test the exact failing scenario - calculation_body with prior constraint declarations
+    let input = r#"{
+        constraint assumptions[0..*] :> constraintChecks, subperformances { }
+        constraint constraints[0..*] :> constraintChecks, subperformances { }
+        return result = allTrue(assumptions()) implies allTrue(constraints()) { }
+    }"#;
+    let result = SysMLParser::parse(Rule::calculation_body, input);
+    assert!(
+        result.is_ok(),
+        "Failed with constraint declarations before return: {:?}",
+        result.err()
+    );
+}
+
+// Test identifiers starting with "as" keyword
+#[test]
+fn test_invocations_starting_with_as_keyword() {
+    // Issue: "as" keyword was greedily matching prefixes in identifiers
+    let cases = vec![
+        ("allTrue(assumptions())", "assumptions starts with 'as'"),
+        ("allTrue(assertion())", "assertion starts with 'as'"),
+        ("allTrue(asdf())", "asdf starts with 'as'"),
+        (
+            "foo(assumptions(), assertion(), asdf())",
+            "multiple args starting with 'as'",
+        ),
+    ];
+
+    for (input, description) in cases {
+        let result = SysMLParser::parse(Rule::owned_expression, input);
+        assert!(
+            result.is_ok(),
+            "Failed to parse {} - {}: {:?}",
+            description,
+            input,
+            result.err()
+        );
+    }
+}
+
+// Test "as" operator with proper word boundary
+#[test]
+fn test_as_operator_with_qualified_names() {
+    // "as" should work as cast operator when followed by space
+    let cases = vec![
+        ("x as Int", "simple cast"),
+        ("x as SysML::Usage", "cast to qualified name"),
+        ("foo() as MyType::SubType", "invocation result cast"),
+        ("causes as SysML::Usage", "exact case"),
+    ];
+
+    for (input, description) in cases {
+        let result = SysMLParser::parse(Rule::owned_expression, input);
+        assert!(
+            result.is_ok(),
+            "Failed to parse {} - {}: {:?}",
+            description,
+            input,
+            result.err()
+        );
+    }
+}
+
+// Test "meta" operator with proper word boundary
+#[test]
+fn test_meta_operator_with_qualified_names() {
+    // "meta" should work as operator when followed by space
+    let cases = vec![
+        ("x meta Usage", "simple meta"),
+        ("x meta SysML::Usage", "meta with qualified name"),
+        (
+            "multicausations meta SysML::Usage",
+            "identifier starting with similar pattern",
+        ),
+    ];
+
+    for (input, description) in cases {
+        let result = SysMLParser::parse(Rule::owned_expression, input);
+        assert!(
+            result.is_ok(),
+            "Failed to parse {} - {}: {:?}",
+            description,
+            input,
+            result.err()
+        );
+    }
 }

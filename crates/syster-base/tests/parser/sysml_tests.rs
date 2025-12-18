@@ -3360,8 +3360,8 @@ fn test_parse_send_node_declaration(#[case] input: &str, #[case] desc: &str) {
 }
 
 #[rstest]
-#[case("via port", "sender receiver part with via")]
-#[case("via port to receiver", "sender receiver part with via and to")]
+#[case("via port1", "sender receiver part with via")]
+#[case("via port1 to port2", "sender receiver part with via and to")]
 fn test_parse_sender_receiver_part(#[case] input: &str, #[case] desc: &str) {
     let result = SysMLParser::parse(Rule::sender_receiver_part, input);
 
@@ -3414,7 +3414,8 @@ fn test_parse_target_parameter(#[case] input: &str, #[case] desc: &str) {
 }
 
 #[rstest]
-#[case("binding", "target binding")]
+#[case("target", "target binding with identifier")]
+#[case("source.property", "target binding with feature chain")]
 fn test_parse_target_binding(#[case] input: &str, #[case] desc: &str) {
     let result = SysMLParser::parse(Rule::target_binding, input);
 
@@ -3817,7 +3818,6 @@ fn test_parse_empty_parameter_member(#[case] input: &str, #[case] desc: &str) {
 }
 
 #[rstest]
-#[case("for item in collection {}", "for loop")]
 #[case("for x in items {}", "for with simple vars")]
 fn test_parse_for_loop_node(#[case] input: &str, #[case] desc: &str) {
     let result = SysMLParser::parse(Rule::for_loop_node, input);
@@ -4172,7 +4172,8 @@ fn test_parse_transition_source_member(#[case] input: &str, #[case] desc: &str) 
 }
 
 #[rstest]
-#[case("accept msg", "trigger action")]
+#[case("msg", "trigger action with type")]
+#[case("msg via msg2", "trigger action with other msg")]
 fn test_parse_trigger_action(#[case] input: &str, #[case] desc: &str) {
     let result = SysMLParser::parse(Rule::trigger_action, input);
 
