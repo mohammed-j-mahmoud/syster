@@ -2,7 +2,7 @@
 // This will be incrementally expanded following TDD
 
 WHITESPACE = _{ " " | "\t" | "\r" | "\n" }
-COMMENT = _{ line_comment | block_comment }
+COMMENT = _{ line_comment }
 
 line_comment = { "//" ~ (!"\n" ~ ANY)* }
 block_comment = { "/*" ~ (!"*/" ~ ANY)* ~ "*/" }
@@ -2214,11 +2214,12 @@ annotating_element = {
     | documentation
     | textual_representation
     | metadata_usage_annotation
+    | block_comment
 }
 
-comment_annotation = { "comment" ~ identifier ~ ("about" ~ element_reference)? ~ ";" }
+comment_annotation = { "comment" ~ identifier? ~ ("locale" ~ quoted_name)? ~ ("about" ~ element_reference ~ ("," ~ element_reference)*)? ~ (block_comment | ";")? }
 
-documentation = { "doc" ~ block_comment? ~ (identifier ~ ";")? }
+documentation = { "doc" ~ identifier? ~ ("locale" ~ quoted_name)? ~ (block_comment | ";")? }
 
 textual_representation = { "rep" ~ "language" ~ quoted_name ~ block_comment? }
 
@@ -2324,15 +2325,6 @@ dependency = {
     ~ "to"
     ~ element_reference ~ ("," ~ element_reference)*
     ~ relationship_body
-}
-
-// Test rules for debugging
-test_calc_body_minimal = {
-    "{" ~ owned_expression ~ "}"
-}
-
-test_calc_body_with_item = {
-    "{" ~ action_body_item ~ ";" ~ owned_expression ~ "}"
 }
 
 // Entry point

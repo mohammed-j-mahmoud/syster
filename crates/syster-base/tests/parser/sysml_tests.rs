@@ -711,6 +711,23 @@ fn test_parse_comment() {
     );
 }
 
+#[rstest]
+#[case(r#"comment locale "en-US" /* comment text */"#)]
+#[case(r#"comment MyComment locale "fr-FR" /* texte */"#)]
+#[case(r#"comment about Foo;"#)]
+#[case(r#"comment about Foo, Bar;"#)]
+#[case(r#"comment MyComment about Foo, Bar /* about multiple */"#)]
+#[case(r#"comment locale "en-US" about Foo;"#)]
+fn test_parse_comment_variants(#[case] input: &str) {
+    let result = SysMLParser::parse(Rule::comment_annotation, input);
+    assert!(
+        result.is_ok(),
+        "Failed to parse comment '{}': {:?}",
+        input,
+        result.err()
+    );
+}
+
 #[test]
 fn test_parse_documentation() {
     let input = "doc MyDoc;";
@@ -719,6 +736,21 @@ fn test_parse_documentation() {
     assert!(
         result.is_ok(),
         "Failed to parse documentation: {:?}",
+        result.err()
+    );
+}
+
+#[rstest]
+#[case(r#"doc locale "en-US" /* docs */"#)]
+#[case(r#"doc MyDoc locale "ja-JP" /* text */"#)]
+#[case(r#"doc /* inline doc */"#)]
+#[case(r#"doc;"#)]
+fn test_parse_documentation_variants(#[case] input: &str) {
+    let result = SysMLParser::parse(Rule::documentation, input);
+    assert!(
+        result.is_ok(),
+        "Failed to parse documentation '{}': {:?}",
+        input,
         result.err()
     );
 }
