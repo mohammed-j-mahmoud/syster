@@ -2214,8 +2214,10 @@ annotating_element = {
     | documentation
     | textual_representation
     | metadata_usage_annotation
-    | block_comment
+    | ignored_block_comment
 }
+
+ignored_block_comment = _{ block_comment }
 
 comment_annotation = { "comment" ~ identifier? ~ ("locale" ~ quoted_name)? ~ ("about" ~ element_reference ~ ("," ~ element_reference)*)? ~ (block_comment | ";")? }
 

@@ -153,7 +153,10 @@ annotating_element = {
     | documentation
     | textual_representation
     | metadata_feature
+    | ignored_block_comment
 }
+
+ignored_block_comment = _{ block_comment }
 
 // Prefix Metadata Annotation
 prefix_metadata_annotation = {
@@ -1274,7 +1277,6 @@ namespace_body_element = {
     | shorthand_feature_member
     | non_feature_member
     | relationship_member
-    | block_comment
     | operator_expression
 }
 
