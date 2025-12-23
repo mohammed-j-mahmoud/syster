@@ -269,7 +269,7 @@ fn test_kerml_visitor_handles_multiple_packages() {
     eprintln!("Namespace: {:?}", file.namespace);
     eprintln!("Elements: {}", file.elements.len());
     for (i, e) in file.elements.iter().enumerate() {
-        eprintln!("  {}: {:?}", i, e);
+        eprintln!("  {i}: {e:?}");
     }
 
     let mut symbol_table = SymbolTable::new();
@@ -279,7 +279,7 @@ fn test_kerml_visitor_handles_multiple_packages() {
 
     eprintln!("\nSymbols:");
     for (name, _) in symbol_table.all_symbols() {
-        eprintln!("  {}", name);
+        eprintln!("  {name}");
     }
 
     assert!(symbol_table.lookup("Package1").is_some());
