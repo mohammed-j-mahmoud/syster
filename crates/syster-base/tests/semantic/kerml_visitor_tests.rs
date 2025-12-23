@@ -92,7 +92,20 @@ fn test_kerml_visitor_handles_nested_elements() {
     adapter.populate(&file).unwrap();
 
     assert!(symbol_table.lookup("OuterPackage").is_some());
-    assert!(symbol_table.lookup("InnerClassifier").is_some());
+
+    // Nested elements must be looked up via all_symbols since they're in a nested scope
+    let all_symbols = symbol_table.all_symbols();
+    let inner = all_symbols
+        .iter()
+        .find(|(name, _)| *name == "InnerClassifier")
+        .expect("Should have 'InnerClassifier' symbol");
+
+    match inner.1 {
+        Symbol::Classifier { qualified_name, .. } => {
+            assert_eq!(qualified_name, "OuterPackage::InnerClassifier");
+        }
+        _ => panic!("Expected Classifier symbol for InnerClassifier"),
+    }
 }
 
 #[test]
@@ -253,10 +266,21 @@ fn test_kerml_visitor_handles_multiple_packages() {
     let mut pairs = KerMLParser::parse(Rule::file, source).unwrap();
     let file = KerMLFile::from_pest(&mut pairs).unwrap();
 
+    eprintln!("Namespace: {:?}", file.namespace);
+    eprintln!("Elements: {}", file.elements.len());
+    for (i, e) in file.elements.iter().enumerate() {
+        eprintln!("  {}: {:?}", i, e);
+    }
+
     let mut symbol_table = SymbolTable::new();
     let mut graph = RelationshipGraph::new();
     let mut adapter = KermlAdapter::with_relationships(&mut symbol_table, &mut graph);
     adapter.populate(&file).unwrap();
+
+    eprintln!("\nSymbols:");
+    for (name, _) in symbol_table.all_symbols() {
+        eprintln!("  {}", name);
+    }
 
     assert!(symbol_table.lookup("Package1").is_some());
     assert!(symbol_table.lookup("Package2").is_some());
