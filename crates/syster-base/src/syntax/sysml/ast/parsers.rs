@@ -184,8 +184,8 @@ mod tests {
 
     #[test]
     fn test_import_with_span() {
-        use crate::project::file_loader;
         use crate::syntax::SyntaxFile;
+        use crate::syntax::parser::parse_content;
         use std::path::PathBuf;
 
         let source = r#"package TestPkg {
@@ -194,8 +194,7 @@ mod tests {
 }"#;
 
         let path = PathBuf::from("test.sysml");
-        let parse_result = file_loader::parse_with_result(source, &path);
-        let syntax_file = parse_result.content.expect("Parse should succeed");
+        let syntax_file = parse_content(source, &path).expect("Parse should succeed");
 
         if let SyntaxFile::SysML(file) = syntax_file {
             // Find the package
@@ -261,8 +260,8 @@ mod tests {
 
     #[test]
     fn test_attribute_usage_with_type_and_span() {
-        use crate::project::file_loader;
         use crate::syntax::SyntaxFile;
+        use crate::syntax::parser::parse_content;
         use std::path::PathBuf;
 
         let source = r#"attribute def SoundPressureLevelValue;
@@ -273,8 +272,7 @@ attribute soundPressureLevel: SoundPressureLevelValue[*] nonunique;
 "#;
 
         let path = PathBuf::from("test.sysml");
-        let parse_result = file_loader::parse_with_result(source, &path);
-        let syntax_file = parse_result.content.expect("Parse should succeed");
+        let syntax_file = parse_content(source, &path).expect("Parse should succeed");
 
         if let SyntaxFile::SysML(file) = syntax_file {
             // Find attribute usage (not definition)

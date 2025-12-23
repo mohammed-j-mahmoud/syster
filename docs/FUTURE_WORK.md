@@ -7,6 +7,7 @@
 
 ### In Progress / Next Tasks
 - [ ] **CRITICAL BUG: Duplicate symbol definitions from qualified redefinitions** - The semantic visitor incorrectly treats qualified names in redefinitions (e.g., `ref item :>> Shell::edges::vertices`) as new symbol definitions, causing duplicate definition errors. In ShapeItems.sysml, both "Shell" and "Disc" are reported as duplicates multiple times despite each being defined only once. The visitor needs to distinguish between symbol references in qualified names vs actual symbol definitions.
+- [ ] **Fix architecture tests** - Add proper assertions to architecture violation summary test instead of just printing. The test should fail when violations are found.
 - [x] **CRITICAL BUG FIX: Stdlib cross-file reference resolution** - Fixed parser not capturing `abstract` flag from `abstract attribute def` declarations. Added `extract_definition_flags()` to properly extract abstract and variation markers. Fixed `populate_all()` to continue processing files even when one fails, preventing early exit that blocked MeasurementReferences.sysml and other files from loading.
 - [ ] Add tests for KerML visitor
 - [ ] Add tests for semantic tokens support

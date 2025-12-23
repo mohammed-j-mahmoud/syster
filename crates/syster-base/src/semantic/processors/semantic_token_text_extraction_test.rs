@@ -4,20 +4,19 @@
 //! This test creates realistic SysML code, parses it, and verifies
 //! that semantic tokens correctly identify the text they're highlighting.
 
-use crate::project::file_loader;
 use crate::semantic::Workspace;
 use crate::semantic::adapters::syntax_factory::populate_syntax_file;
 use crate::semantic::graphs::RelationshipGraph;
 use crate::semantic::processors::SemanticTokenCollector;
 use crate::semantic::symbol_table::SymbolTable;
 use crate::syntax::SyntaxFile;
+use crate::syntax::parser::parse_content;
 use std::path::PathBuf;
 
 /// Helper to parse SysML content
 fn parse_sysml(source: &str) -> SyntaxFile {
     let path = PathBuf::from("test.sysml");
-    let parse_result = file_loader::parse_with_result(source, &path);
-    parse_result.content.expect("Parse should succeed")
+    parse_content(source, &path).expect("Parse should succeed")
 }
 
 #[test]
@@ -158,8 +157,7 @@ fn test_kerml_classifiers() {
     }
 
     let path = PathBuf::from("test.kerml");
-    let parse_result = file_loader::parse_with_result(source, &path);
-    let syntax_file = parse_result.content.expect("Parse should succeed");
+    let syntax_file = parse_content(source, &path).expect("Parse should succeed");
 
     let mut symbol_table = SymbolTable::new();
     let mut relationship_graph = RelationshipGraph::new();
