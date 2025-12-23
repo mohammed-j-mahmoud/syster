@@ -281,7 +281,14 @@ fn test_import_alias() {
     let car = workspace.symbol_table().lookup_qualified("Derived::Car");
     assert!(car.is_some(), "Car should be defined");
 
-    // TODO: Verify that BaseVehicle resolves to Vehicle
+    // Verify that BaseVehicle resolves to Vehicle
+    let base_vehicle = workspace
+        .symbol_table()
+        .lookup_qualified("Derived::BaseVehicle");
+    assert!(
+        base_vehicle.is_some(),
+        "BaseVehicle alias should be defined in Derived package"
+    );
 }
 
 #[test]
