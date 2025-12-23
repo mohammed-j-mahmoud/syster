@@ -198,6 +198,8 @@ fn is_relationship_part(pair: &Pair<Rule>) -> bool {
             | Rule::crosses
             | Rule::subclassification_part
             | Rule::owned_subclassification
+            | Rule::feature_value
+            | Rule::value_part
     )
 }
 

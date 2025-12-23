@@ -202,6 +202,145 @@ fn test_comma_separated_redefinitions_do_not_create_duplicate_symbols() {
 }
 
 #[test]
+fn test_attribute_reference_in_expression_not_treated_as_definition() {
+    // Pattern: attribute :>> semiMajorAxis [1] = radius;
+    // The "radius" in the expression should NOT create a symbol
+    let source = r#"
+        package TestPkg {
+            attribute radius : Real;
+            
+            item def Circle {
+                attribute :>> radius [1];
+                attribute :>> semiMajorAxis [1] = radius;
+                attribute :>> semiMinorAxis [1] = radius;
+            }
+            
+            item def Sphere {
+                attribute :>> radius [1];
+                attribute :>> semiAxis1 [1] = radius;
+                attribute :>> semiAxis2 [1] = radius;
+                attribute :>> semiAxis3 [1] = radius;
+            }
+        }
+    "#;
+    let mut pairs = SysMLParser::parse(Rule::model, source).unwrap();
+    let file = SysMLFile::from_pest(&mut pairs).unwrap();
+
+    let mut symbol_table = SymbolTable::new();
+    let mut graph = RelationshipGraph::new();
+    let mut adapter = SysmlAdapter::with_relationships(&mut symbol_table, &mut graph);
+
+    let result = adapter.populate(&file);
+
+    // Should succeed without duplicate symbol errors
+    assert!(
+        result.is_ok(),
+        "Should not have duplicate symbol errors, got: {:?}",
+        result.err()
+    );
+
+    // radius should be defined exactly once at package level
+    let all_symbols = symbol_table.all_symbols();
+    let radius_count = all_symbols
+        .iter()
+        .filter(|(name, _)| *name == "radius")
+        .count();
+
+    assert_eq!(
+        radius_count, 1,
+        "radius should be defined exactly once at package level, got {} definitions",
+        radius_count
+    );
+}
+
+#[test]
+fn test_inline_attribute_definitions_with_same_name_create_duplicates() {
+    // Pattern: item :>> shape : Circle { attribute :>> semiMajor, Circle::semiMajor; }
+    // Multiple inline body definitions might be creating duplicates
+    let source = r#"
+        package TestPkg {
+            item def Circle {
+                attribute radius;
+            }
+            
+            item def CircularDisc {
+                item :>> shape : Circle {
+                    attribute :>> radius;
+                }
+                item :>> edges : Circle {
+                    attribute :>> radius;
+                }
+            }
+        }
+    "#;
+    let mut pairs = SysMLParser::parse(Rule::model, source).unwrap();
+    let file = SysMLFile::from_pest(&mut pairs).unwrap();
+
+    let mut symbol_table = SymbolTable::new();
+    let mut graph = RelationshipGraph::new();
+    let mut adapter = SysmlAdapter::with_relationships(&mut symbol_table, &mut graph);
+
+    let result = adapter.populate(&file);
+
+    // Print any errors for debugging
+    if let Err(ref e) = result {
+        eprintln!("Errors: {:?}", e);
+    }
+
+    // Should succeed without duplicate symbol errors
+    assert!(
+        result.is_ok(),
+        "Should not have duplicate symbol errors, got: {:?}",
+        result.err()
+    );
+}
+
+#[test]
+fn test_radius_redefinition_in_multiple_items_no_duplicates() {
+    // Test case from ShapeItems.sysml: multiple item definitions each redefine "radius"
+    // This should NOT create duplicate symbols because they're in different scopes
+    let source = r#"
+        package ShapeItems {
+            item def CircularDisc {
+                attribute :>> radius [1];
+            }
+            
+            item def Sphere {
+                attribute :>> radius [1];
+            }
+        }
+    "#;
+    let mut pairs = SysMLParser::parse(Rule::model, source).unwrap();
+    let file = SysMLFile::from_pest(&mut pairs).unwrap();
+
+    let mut symbol_table = SymbolTable::new();
+    let mut graph = RelationshipGraph::new();
+    let mut adapter = SysmlAdapter::with_relationships(&mut symbol_table, &mut graph);
+
+    let result = adapter.populate(&file);
+
+    // Should succeed without duplicate symbol errors
+    assert!(
+        result.is_ok(),
+        "Should not have duplicate symbol errors, got: {:?}",
+        result.err()
+    );
+
+    // Check that "radius" doesn't appear as a symbol at all (it's redefined, not defined)
+    let all_symbols = symbol_table.all_symbols();
+    let radius_count = all_symbols
+        .iter()
+        .filter(|(name, _)| *name == "radius")
+        .count();
+
+    assert_eq!(
+        radius_count, 0,
+        "radius should not appear as a symbol (it's only redefined), got {} definitions",
+        radius_count
+    );
+}
+
+#[test]
 fn test_simple_redefinition_creates_no_new_symbol() {
     // When you redefine without giving it a new name: attribute :>> radius [1];
     // This should NOT create a new symbol named "radius"
