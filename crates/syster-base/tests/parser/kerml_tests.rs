@@ -311,8 +311,12 @@ fn test_element_creation() {
 
 #[test]
 fn test_annotation_creation() {
-    let annotation = Annotation {};
+    let annotation = Annotation {
+        reference: "SomeElement".to_string(),
+        span: None,
+    };
     assert!(format!("{annotation:?}").contains("Annotation"));
+    assert_eq!(annotation.reference, "SomeElement");
 }
 
 #[test]
@@ -323,8 +327,14 @@ fn test_annotating_element_empty() {
 
 #[test]
 fn test_annotating_element_with_annotations() {
-    let annotation1 = Annotation {};
-    let annotation2 = Annotation {};
+    let annotation1 = Annotation {
+        reference: "Element1".to_string(),
+        span: None,
+    };
+    let annotation2 = Annotation {
+        reference: "Element2".to_string(),
+        span: None,
+    };
 
     let annotating = AnnotatingElement {
         about: vec![annotation1, annotation2],
@@ -401,15 +411,25 @@ fn test_textual_representation() {
 
 #[test]
 fn test_clone_annotation() {
-    let annotation = Annotation {};
+    let annotation = Annotation {
+        reference: "TestElement".to_string(),
+        span: None,
+    };
     let cloned = annotation.clone();
     assert_eq!(annotation, cloned);
+    assert_eq!(cloned.reference, "TestElement");
 }
 
 #[test]
 fn test_equality_annotations() {
-    let annotation1 = Annotation {};
-    let annotation2 = Annotation {};
+    let annotation1 = Annotation {
+        reference: "Element".to_string(),
+        span: None,
+    };
+    let annotation2 = Annotation {
+        reference: "Element".to_string(),
+        span: None,
+    };
     assert_eq!(annotation1, annotation2);
 }
 
