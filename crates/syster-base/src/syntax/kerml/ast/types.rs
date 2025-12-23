@@ -20,6 +20,7 @@ pub struct NamespaceDeclaration {
 pub struct Package {
     pub name: Option<String>,
     pub elements: Vec<Element>,
+    /// Span of the package name identifier
     pub span: Option<Span>,
 }
 
@@ -29,6 +30,7 @@ pub struct Classifier {
     pub is_abstract: bool,
     pub name: Option<String>,
     pub body: Vec<ClassifierMember>,
+    /// Span of the classifier name identifier
     pub span: Option<Span>,
 }
 
@@ -39,6 +41,7 @@ pub struct Feature {
     pub is_readonly: bool,
     pub is_derived: bool,
     pub body: Vec<FeatureMember>,
+    /// Span of the feature name identifier
     pub span: Option<Span>,
 }
 

@@ -2765,9 +2765,9 @@ fn test_parse_scalar_values_stdlib_file() {
     abstract datatype ScalarValue specializes DataValue;
     datatype Boolean specializes ScalarValue;
 }"#;
-    
+
     let pairs = KerMLParser::parse(syster::parser::kerml::Rule::file, content).unwrap();
-    
+
     println!("\n=== Parse Tree ===");
     for pair in pairs.clone() {
         println!("Top-level Rule: {:?}", pair.as_rule());
@@ -2778,20 +2778,20 @@ fn test_parse_scalar_values_stdlib_file() {
             }
         }
     }
-    
+
     // Try to convert to KerMLFile
-    use syster::syntax::kerml::ast::KerMLFile;
     use from_pest::FromPest;
-    
+    use syster::syntax::kerml::ast::KerMLFile;
+
     let mut pairs = KerMLParser::parse(syster::parser::kerml::Rule::file, content).unwrap();
     let file = KerMLFile::from_pest(&mut pairs).unwrap();
-    
+
     println!("\n=== KerMLFile ===");
     println!("Namespace: {:?}", file.namespace);
     println!("Elements count: {}", file.elements.len());
     for (i, elem) in file.elements.iter().enumerate() {
         println!("  Element {}: {:?}", i, elem);
     }
-    
+
     assert!(!file.elements.is_empty(), "File should have elements!");
 }

@@ -49,6 +49,16 @@ impl<'a> SysmlAdapter<'a> {
             DefinitionKind::UseCase => "UseCase".to_string(),
             DefinitionKind::View => "View".to_string(),
             DefinitionKind::Viewpoint => "Viewpoint".to_string(),
+            DefinitionKind::Allocation => "Allocation".to_string(),
+            DefinitionKind::Calculation => "Calculation".to_string(),
+            DefinitionKind::Connection => "Connection".to_string(),
+            DefinitionKind::Constraint => "Constraint".to_string(),
+            DefinitionKind::Enumeration => "Enumeration".to_string(),
+            DefinitionKind::Flow => "Flow".to_string(),
+            DefinitionKind::Individual => "Individual".to_string(),
+            DefinitionKind::Interface => "Interface".to_string(),
+            DefinitionKind::Occurrence => "Occurrence".to_string(),
+            DefinitionKind::Metadata => "Metadata".to_string(),
             DefinitionKind::Rendering => "Rendering".to_string(),
         }
     }
@@ -64,6 +74,7 @@ impl<'a> SysmlAdapter<'a> {
             UsageKind::Concern => "Concern".to_string(),
             UsageKind::Case => "Case".to_string(),
             UsageKind::View => "View".to_string(),
+            UsageKind::Enumeration => "Enumeration".to_string(),
             UsageKind::SatisfyRequirement => "SatisfyRequirement".to_string(),
             UsageKind::PerformAction => "PerformAction".to_string(),
             UsageKind::ExhibitState => "ExhibitState".to_string(),
@@ -90,6 +101,16 @@ impl<'a> SysmlAdapter<'a> {
             DefinitionKind::View => SemanticRole::View,
             DefinitionKind::Viewpoint => SemanticRole::Metadata,
             DefinitionKind::Rendering => SemanticRole::View,
+            DefinitionKind::Allocation => SemanticRole::Component,
+            DefinitionKind::Calculation => SemanticRole::Action,
+            DefinitionKind::Connection => SemanticRole::Component,
+            DefinitionKind::Constraint => SemanticRole::Constraint,
+            DefinitionKind::Enumeration => SemanticRole::Component,
+            DefinitionKind::Flow => SemanticRole::Component,
+            DefinitionKind::Individual => SemanticRole::Component,
+            DefinitionKind::Interface => SemanticRole::Interface,
+            DefinitionKind::Occurrence => SemanticRole::Component,
+            DefinitionKind::Metadata => SemanticRole::Metadata,
         }
     }
 
@@ -105,6 +126,7 @@ impl<'a> SysmlAdapter<'a> {
             UsageKind::View => SemanticRole::View,
             UsageKind::Concern => SemanticRole::UseCase,
             UsageKind::Case => SemanticRole::UseCase,
+            UsageKind::Enumeration => SemanticRole::Item, // Treat enum values as items
             // Domain relationship usages map to their target roles
             UsageKind::SatisfyRequirement => SemanticRole::Requirement,
             UsageKind::PerformAction => SemanticRole::Action,

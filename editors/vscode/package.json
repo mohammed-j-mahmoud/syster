@@ -89,6 +89,14 @@
         }
       }
     },
+    "configurationDefaults": {
+      "[sysml]": {
+        "editor.semanticHighlighting.enabled": true
+      },
+      "[kerml]": {
+        "editor.semanticHighlighting.enabled": true
+      }
+    },
     "commands": [
       {
         "command": "syster.restartServer",

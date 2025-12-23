@@ -4,6 +4,7 @@ use crate::semantic::types::SemanticError;
 
 pub struct KermlAdapter<'a> {
     pub(super) symbol_table: &'a mut SymbolTable,
+    #[allow(dead_code)]
     pub(super) relationship_graph: Option<&'a mut RelationshipGraph>,
     pub(super) current_namespace: Vec<String>,
     pub(super) errors: Vec<SemanticError>,

@@ -1,45 +1,95 @@
 use crate::server::core::LspServer;
-use std::path::PathBuf;
 use syster::semantic::processors::SemanticTokenCollector;
 use tower_lsp::lsp_types::{
     SemanticToken as LspSemanticToken, SemanticTokenType, SemanticTokens, SemanticTokensLegend,
     SemanticTokensResult,
 };
 
+/// Convert a character offset in a line to UTF-16 code units
+fn char_offset_to_utf16(line: &str, char_offset: usize) -> u32 {
+    // Take characters up to the offset
+    line.chars()
+        .take(char_offset)
+        .map(|c| c.len_utf16())
+        .sum::<usize>() as u32
+}
+
+/// Convert character offset to byte offset
+fn char_offset_to_byte(line: &str, char_offset: usize) -> usize {
+    line.chars().take(char_offset).map(|c| c.len_utf8()).sum()
+}
+
 impl LspServer {
     /// Get semantic tokens for a document
     ///
     /// Thin adapter that calls the semantic layer and converts to LSP format
     pub fn get_semantic_tokens(&self, uri: &str) -> Option<SemanticTokensResult> {
-        let path = PathBuf::from(uri.trim_start_matches("file://"));
+        // Parse URI and convert to file path (handles URL decoding)
+        let uri_parsed = tower_lsp::lsp_types::Url::parse(uri).ok()?;
+        let path = uri_parsed.to_file_path().ok()?;
 
-        // Get workspace file and use processor to collect tokens
-        let workspace_file = self.workspace.files().get(&path)?;
-        let tokens = SemanticTokenCollector::collect(workspace_file);
+        // Get the file path as a string for symbol table lookup
+        let file_path_str = path.to_string_lossy();
 
-        // Convert to LSP format with delta encoding
+        // Get the document text for UTF-16 conversion
+        let document_text = self.document_texts.get(&path)?;
+        let lines: Vec<&str> = document_text.lines().collect();
+
+        // Collect tokens from the workspace (includes type references from AST)
+        let tokens =
+            SemanticTokenCollector::collect_from_workspace(&self.workspace, &file_path_str);
+
+        // Convert to LSP format (delta encoding with UTF-16 positions)
         let mut lsp_tokens = Vec::new();
-        let mut prev_line = 0u32;
-        let mut prev_start = 0u32;
+        let mut prev_line = 0;
+        let mut prev_start = 0;
 
-        for token in tokens {
-            let delta_line = token.line - prev_line;
-            let delta_start = if delta_line == 0 {
-                token.column - prev_start
+        for token in tokens.iter() {
+            // Get the line text for conversion
+            let line_text = lines.get(token.line as usize).unwrap_or(&"");
+
+            // Columns and lengths in our spans are CHARACTER offsets/counts (from Pest)
+            // We need to convert both to UTF-16
+
+            // Convert character offset to UTF-16 code units
+            let utf16_column = char_offset_to_utf16(line_text, token.column as usize);
+
+            // Convert character offset to byte offset for text extraction
+            let start_byte = char_offset_to_byte(line_text, token.column as usize);
+
+            // Calculate end byte using character count
+            let end_char = token.column as usize + token.length as usize;
+            let end_byte = char_offset_to_byte(line_text, end_char);
+
+            // Extract token text for debugging
+            let token_text = if end_byte <= line_text.len() {
+                &line_text[start_byte..end_byte]
             } else {
-                token.column
+                ""
             };
 
-            lsp_tokens.push(LspSemanticToken {
+            // Get UTF-16 length of the token text
+            let utf16_length = token_text.chars().map(|c| c.len_utf16()).sum::<usize>() as u32;
+
+            let delta_line = token.line - prev_line;
+            let delta_start = if delta_line == 0 {
+                utf16_column - prev_start
+            } else {
+                utf16_column
+            };
+
+            let lsp_token = LspSemanticToken {
                 delta_line,
                 delta_start,
-                length: token.length,
+                length: utf16_length,
                 token_type: token.token_type as u32,
                 token_modifiers_bitset: 0,
-            });
+            };
+
+            lsp_tokens.push(lsp_token);
 
             prev_line = token.line;
-            prev_start = token.column;
+            prev_start = utf16_column;
         }
 
         Some(SemanticTokensResult::Tokens(SemanticTokens {

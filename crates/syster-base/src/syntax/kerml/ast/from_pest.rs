@@ -104,11 +104,13 @@ impl_from_pest!(Import, |pest: &mut Pairs<Rule>| {
     let pair = pest.next().ok_or(ConversionError::NoMatch)?;
     let mut path = String::new();
     let mut is_recursive = false;
-    let span = Some(to_span(pair.as_span()));
+    let mut span = None;
 
     for inner in pair.into_inner() {
         match inner.as_rule() {
             Rule::imported_reference => {
+                // Capture the span of the imported path
+                span = Some(to_span(inner.as_span()));
                 // imported_reference contains element_reference and optional import_kind
                 for child in inner.into_inner() {
                     match child.as_rule() {
@@ -191,20 +193,20 @@ impl_from_pest!(KerMLFile, |pest: &mut Pairs<Rule>| {
     let mut namespace = None;
 
     for pair in model.into_inner() {
-        if pair.as_rule() == Rule::namespace_element {
-            if let Ok(element) = Element::from_pest(&mut pair.into_inner()) {
-                if let Element::Package(ref pkg) = element {
-                    if namespace.is_none() && pkg.elements.is_empty() {
-                        if let Some(ref name) = pkg.name {
-                            namespace = Some(NamespaceDeclaration {
-                                name: name.clone(),
-                                span: pkg.span,
-                            });
-                        }
-                    }
-                }
-                elements.push(element);
+        if pair.as_rule() == Rule::namespace_element
+            && let Ok(element) = Element::from_pest(&mut pair.into_inner())
+        {
+            if let Element::Package(ref pkg) = element
+                && namespace.is_none()
+                && pkg.elements.is_empty()
+                && let Some(ref name) = pkg.name
+            {
+                namespace = Some(NamespaceDeclaration {
+                    name: name.clone(),
+                    span: pkg.span,
+                });
             }
+            elements.push(element);
         }
     }
 

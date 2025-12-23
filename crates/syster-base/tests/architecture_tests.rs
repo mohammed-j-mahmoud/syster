@@ -149,6 +149,12 @@ fn test_show_architecture_violations_summary() {
         println!("\nRun individual tests with --ignored to see details:");
         println!("  cargo test --test architecture_tests -- --ignored --nocapture");
     }
+
+    assert_eq!(
+        total_violations, 0,
+        "Found {} architecture violations. Run with --nocapture to see details.",
+        total_violations
+    );
 }
 
 // ============================================================================

@@ -23,6 +23,7 @@ pub struct NamespaceDeclaration {
 pub struct Package {
     pub name: Option<String>,
     pub elements: Vec<Element>,
+    /// Span of the package name identifier
     pub span: Option<Span>,
 }
 
@@ -37,6 +38,8 @@ pub struct Relationships {
     pub subsets: Vec<String>,
     /// Feature typing (: or "typed by")
     pub typed_by: Option<String>,
+    /// Span of the type reference (if typed_by is set)
+    pub typed_by_span: Option<crate::core::Span>,
     /// References (::> or "references")
     pub references: Vec<String>,
     /// Crosses (=> or "crosses")  
@@ -70,6 +73,7 @@ pub struct Definition {
     pub name: Option<String>,
     pub relationships: Relationships,
     pub body: Vec<DefinitionMember>,
+    /// Span of the definition name identifier
     pub span: Option<Span>,
     // Property modifiers
     #[doc(hidden)]
@@ -103,6 +107,7 @@ pub struct Usage {
     pub name: Option<String>,
     pub relationships: Relationships,
     pub body: Vec<UsageMember>,
+    /// Span of the usage name identifier
     pub span: Option<Span>,
     // Property modifiers
     #[doc(hidden)]

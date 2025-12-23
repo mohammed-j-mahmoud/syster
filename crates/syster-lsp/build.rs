@@ -26,11 +26,6 @@ fn main() {
         // Copy the directory
         if let Err(e) = copy_dir_all(stdlib_src, &stdlib_dest) {
             eprintln!("Warning: Failed to copy stdlib: {}", e);
-        } else {
-            println!(
-                "cargo:warning=Copied sysml.library to {}",
-                stdlib_dest.display()
-            );
         }
     }
 

@@ -24,6 +24,8 @@ pub fn is_body_rule(r: Rule) -> bool {
     matches!(
         r,
         Rule::definition_body
+            | Rule::action_body
+            | Rule::enumeration_body
             | Rule::state_def_body
             | Rule::case_body
             | Rule::calculation_body
@@ -50,6 +52,8 @@ pub fn is_usage_rule(r: Rule) -> bool {
             | Rule::exhibit_state_usage
             | Rule::include_use_case_usage
             | Rule::objective_member
+            | Rule::enumeration_usage
+            | Rule::enumerated_value
     )
 }
 
@@ -72,6 +76,16 @@ pub fn is_definition_rule(r: Rule) -> bool {
             | Rule::view_definition
             | Rule::viewpoint_definition
             | Rule::rendering_definition
+            | Rule::allocation_definition
+            | Rule::calculation_definition
+            | Rule::connection_definition
+            | Rule::constraint_definition
+            | Rule::enumeration_definition
+            | Rule::flow_definition
+            | Rule::individual_definition
+            | Rule::interface_definition
+            | Rule::occurrence_definition
+            | Rule::metadata_definition
     )
 }
 
@@ -87,6 +101,22 @@ pub fn ref_from(pair: &Pair<Rule>) -> Option<String> {
         | Rule::feature_reference
         | Rule::classifier_reference => Some(pair.as_str().trim().to_string()),
         _ => pair.clone().into_inner().find_map(|p| ref_from(&p)),
+    }
+}
+
+/// Extract reference with span from pair or its immediate children
+pub fn ref_with_span_from(pair: &Pair<Rule>) -> Option<(String, crate::core::Span)> {
+    match pair.as_rule() {
+        Rule::identifier
+        | Rule::quoted_name
+        | Rule::feature_reference
+        | Rule::classifier_reference => {
+            Some((pair.as_str().trim().to_string(), to_span(pair.as_span())))
+        }
+        _ => pair
+            .clone()
+            .into_inner()
+            .find_map(|p| ref_with_span_from(&p)),
     }
 }
 
@@ -121,6 +151,24 @@ pub fn find_name<'pest>(pairs: impl Iterator<Item = Pair<'pest, Rule>>) -> Optio
     None
 }
 
+/// Recursively find identifier and return (name, span)
+pub fn find_identifier_span<'a>(
+    pairs: impl Iterator<Item = Pair<'a, Rule>>,
+) -> (Option<String>, Option<crate::core::Span>) {
+    for pair in pairs {
+        if matches!(pair.as_rule(), Rule::identifier | Rule::identification) {
+            return (
+                Some(pair.as_str().to_string()),
+                Some(to_span(pair.as_span())),
+            );
+        }
+        if let (Some(name), Some(span)) = find_identifier_span(pair.into_inner()) {
+            return (Some(name), Some(span));
+        }
+    }
+    (None, None)
+}
+
 // ============================================================================
 // Kind mapping
 // ============================================================================
@@ -143,6 +191,16 @@ pub fn to_def_kind(rule: Rule) -> Result<DefinitionKind, ConversionError<Void>> 
         Rule::view_definition => DefinitionKind::View,
         Rule::viewpoint_definition => DefinitionKind::Viewpoint,
         Rule::rendering_definition => DefinitionKind::Rendering,
+        Rule::allocation_definition => DefinitionKind::Allocation,
+        Rule::calculation_definition => DefinitionKind::Calculation,
+        Rule::connection_definition => DefinitionKind::Connection,
+        Rule::constraint_definition => DefinitionKind::Constraint,
+        Rule::enumeration_definition => DefinitionKind::Enumeration,
+        Rule::flow_definition => DefinitionKind::Flow,
+        Rule::individual_definition => DefinitionKind::Individual,
+        Rule::interface_definition => DefinitionKind::Interface,
+        Rule::occurrence_definition => DefinitionKind::Occurrence,
+        Rule::metadata_definition => DefinitionKind::Metadata,
         _ => return Err(ConversionError::NoMatch),
     })
 }
@@ -159,6 +217,7 @@ pub fn to_usage_kind(rule: Rule) -> Result<UsageKind, ConversionError<Void>> {
         Rule::concern_usage => UsageKind::Concern,
         Rule::case_usage => UsageKind::Case,
         Rule::view_usage => UsageKind::View,
+        Rule::enumeration_usage | Rule::enumerated_value => UsageKind::Enumeration,
         Rule::satisfy_requirement_usage => UsageKind::SatisfyRequirement,
         Rule::perform_action_usage => UsageKind::PerformAction,
         Rule::exhibit_state_usage => UsageKind::ExhibitState,
@@ -195,6 +254,36 @@ pub fn extract_flags(pairs: &[Pair<Rule>]) -> (bool, bool) {
     (derived, readonly)
 }
 
+/// Check if a pair has a definition flag (with recursion into prefixes)
+fn has_definition_flag(pair: &Pair<Rule>, flag: Rule) -> bool {
+    if pair.as_rule() == flag {
+        return true;
+    }
+    if matches!(
+        pair.as_rule(),
+        Rule::basic_definition_prefix
+            | Rule::definition_prefix
+            | Rule::occurrence_definition_prefix
+    ) {
+        return pair
+            .clone()
+            .into_inner()
+            .any(|p| has_definition_flag(&p, flag));
+    }
+    false
+}
+
+/// Extract abstract and variation flags from definition pairs
+pub fn extract_definition_flags(pairs: &[Pair<Rule>]) -> (bool, bool) {
+    let is_abstract = pairs
+        .iter()
+        .any(|p| has_definition_flag(p, Rule::abstract_marker));
+    let is_variation = pairs
+        .iter()
+        .any(|p| has_definition_flag(p, Rule::variation_marker));
+    (is_abstract, is_variation)
+}
+
 // ============================================================================
 // Relationship extraction
 // ============================================================================
@@ -221,6 +310,13 @@ fn extract_rels_recursive(pair: &Pair<Rule>, rel: &mut super::types::Relationshi
                 }
             }
         }
+        Rule::redefinition_part => {
+            for p in pair.clone().into_inner() {
+                if p.as_rule() == Rule::owned_subclassification {
+                    rel.redefines.extend(ref_from(&p));
+                }
+            }
+        }
         Rule::satisfy_requirement_usage => rel.satisfies.extend(ref_from(pair)),
         Rule::perform_action_usage => rel.performs.extend(ref_from(pair)),
         Rule::exhibit_state_usage => rel.exhibits.extend(ref_from(pair)),
@@ -228,7 +324,14 @@ fn extract_rels_recursive(pair: &Pair<Rule>, rel: &mut super::types::Relationshi
         Rule::feature_specialization => {
             for spec in pair.clone().into_inner() {
                 match spec.as_rule() {
-                    Rule::typings => rel.typed_by = ref_from(&spec),
+                    Rule::typings => {
+                        if let Some((name, span)) = ref_with_span_from(&spec) {
+                            rel.typed_by = Some(name);
+                            rel.typed_by_span = Some(span);
+                        } else {
+                            rel.typed_by = ref_from(&spec);
+                        }
+                    }
                     Rule::subsettings => rel.subsets.extend(all_refs_from(&spec)),
                     Rule::redefinitions => rel.redefines.extend(all_refs_from(&spec)),
                     Rule::references => rel.references.extend(all_refs_from(&spec)),

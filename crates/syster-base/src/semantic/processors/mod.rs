@@ -6,3 +6,6 @@ pub use semantic_token_collector::{SemanticToken, SemanticTokenCollector, TokenT
 
 #[cfg(test)]
 mod tests;
+
+#[cfg(test)]
+mod semantic_token_text_extraction_test;

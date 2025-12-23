@@ -27,6 +27,16 @@ pub enum DefinitionKind {
     View,
     Viewpoint,
     Rendering,
+    Allocation,
+    Calculation,
+    Connection,
+    Constraint,
+    Enumeration,
+    Flow,
+    Individual,
+    Interface,
+    Occurrence,
+    Metadata,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -40,6 +50,7 @@ pub enum UsageKind {
     Concern,
     Case,
     View,
+    Enumeration,
     // Domain-specific usage types
     SatisfyRequirement,
     PerformAction,
@@ -56,4 +67,5 @@ pub enum DefinitionMember {
 #[derive(Debug, Clone, PartialEq)]
 pub enum UsageMember {
     Comment(Comment),
+    Usage(Box<Usage>),
 }

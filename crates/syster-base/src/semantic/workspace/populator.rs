@@ -35,12 +35,23 @@ impl<'a> WorkspacePopulator<'a> {
     /// Populates all files in sorted order
     pub fn populate_all(&mut self) -> Result<Vec<PathBuf>, String> {
         let paths = Self::get_sorted_paths(self.files);
+        let mut errors = Vec::new();
 
         for path in &paths {
-            self.populate_file(path)?;
+            if let Err(e) = self.populate_file(path) {
+                // Log error but continue processing other files
+                eprintln!("Warning: {}", e);
+                errors.push((path.clone(), e));
+            }
         }
 
         self.collect_references();
+
+        // Return first error if any occurred, but only after processing all files
+        if let Some((_path, error)) = errors.first() {
+            return Err(error.clone());
+        }
+
         Ok(paths)
     }
 

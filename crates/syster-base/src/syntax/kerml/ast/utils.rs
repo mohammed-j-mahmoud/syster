@@ -27,6 +27,27 @@ pub fn find_name<'a>(pairs: impl Iterator<Item = Pair<'a, Rule>>) -> Option<Stri
     None
 }
 
+/// Recursively find identifier and return (name, span)
+pub fn find_identifier_span<'a>(
+    pairs: impl Iterator<Item = Pair<'a, Rule>>,
+) -> (Option<String>, Option<Span>) {
+    for pair in pairs {
+        if matches!(
+            pair.as_rule(),
+            Rule::identification | Rule::name | Rule::identifier
+        ) {
+            return (
+                Some(pair.as_str().to_string()),
+                Some(to_span(pair.as_span())),
+            );
+        }
+        if let (Some(name), Some(span)) = find_identifier_span(pair.into_inner()) {
+            return (Some(name), Some(span));
+        }
+    }
+    (None, None)
+}
+
 /// Check if a pair has a specific flag (with recursion into modifiers)
 pub fn has_flag(pair: &Pair<Rule>, flag: Rule) -> bool {
     if pair.as_rule() == flag {

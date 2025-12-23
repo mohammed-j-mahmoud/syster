@@ -32,7 +32,7 @@
 
 mod kerml;
 pub mod kerml_adapter;
-mod syntax_factory;
+pub mod syntax_factory;
 mod sysml;
 pub mod sysml_adapter;
 mod validator_factory;

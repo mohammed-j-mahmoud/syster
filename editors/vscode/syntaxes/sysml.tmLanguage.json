@@ -3,10 +3,40 @@
   "scopeName": "source.sysml",
   "fileTypes": ["sysml"],
   "patterns": [
+    { "include": "#keywords" },
+    { "include": "#operators" },
     { "include": "#comments" },
     { "include": "#strings" }
   ],
   "repository": {
+    "keywords": {
+      "patterns": [
+        {
+          "name": "keyword.control.sysml",
+          "match": "\\b(standard\\s+library\\s+package|library\\s+package|package|import|private|public|protected|abstract|alias|readonly|derived|end|specializes|subsets|redefines|references|conjugate|inv|true|false|standard|library)\\b"
+        },
+        {
+          "name": "storage.type.sysml",
+          "match": "\\b(part|attribute|item|port|action|state|constraint|requirement|concern|case|analysis|verification|use\\s+case|view|viewpoint|rendering|connection|interface|allocation|flow|calc|enum|occurrence|individual|metadata)\\s+def\\b"
+        },
+        {
+          "name": "storage.type.sysml",
+          "match": "\\b(part|attribute|item|port|action|state|constraint|requirement|concern|case|use\\s+case|view|connection|interface|allocation|flow|calc|enum|occurrence|individual)\\b"
+        },
+        {
+          "name": "storage.type.sysml",
+          "match": "\\b(def)\\b"
+        }
+      ]
+    },
+    "operators": {
+      "patterns": [
+        {
+          "name": "keyword.operator.relationship.sysml",
+          "match": "(::>|:>>|:>|=>|\\|\\|)"
+        }
+      ]
+    },
     "comments": {
       "patterns": [
         {

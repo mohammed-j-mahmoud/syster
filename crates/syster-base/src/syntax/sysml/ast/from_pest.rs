@@ -30,10 +30,13 @@ impl_from_pest!(Package, |pest: &mut Pairs<Rule>| {
     let mut span = None;
 
     for pair in pest {
-        span.get_or_insert_with(|| to_span(pair.as_span()));
         match pair.as_rule() {
             Rule::package_declaration => {
-                name = find_in(&pair, Rule::identification).map(|p| p.as_str().to_string());
+                if let Some(p) = find_in(&pair, Rule::identification) {
+                    name = Some(p.as_str().to_string());
+                    // Set span to the identifier, not the whole declaration
+                    span = Some(to_span(p.as_span()));
+                }
             }
             Rule::package_body => {
                 elements = pair
@@ -80,9 +83,10 @@ impl_from_pest!(Import, |pest: &mut Pairs<Rule>| {
     let mut span = None;
 
     for pair in pest {
-        span.get_or_insert_with(|| to_span(pair.as_span()));
         if pair.as_rule() == Rule::imported_reference {
             path = pair.as_str().to_string();
+            // Capture the span of the imported path, not the whole import statement
+            span = Some(to_span(pair.as_span()));
             is_recursive = pair
                 .clone()
                 .into_inner()

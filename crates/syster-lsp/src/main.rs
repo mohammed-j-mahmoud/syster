@@ -28,10 +28,8 @@ impl LanguageServer for SysterLanguageServer {
                     .filter(|s| !s.is_empty())
                     .map(PathBuf::from);
 
-                eprintln!("[LSP] Stdlib config: enabled={}, path={:?}", enabled, path);
                 (enabled, path)
             } else {
-                eprintln!("[LSP] No initialization options, using defaults");
                 (true, None)
             };
 
@@ -41,8 +39,16 @@ impl LanguageServer for SysterLanguageServer {
 
         Ok(InitializeResult {
             capabilities: ServerCapabilities {
-                text_document_sync: Some(TextDocumentSyncCapability::Kind(
-                    TextDocumentSyncKind::FULL,
+                text_document_sync: Some(TextDocumentSyncCapability::Options(
+                    TextDocumentSyncOptions {
+                        open_close: Some(true),
+                        change: Some(TextDocumentSyncKind::FULL),
+                        will_save: None,
+                        will_save_wait_until: None,
+                        save: Some(TextDocumentSyncSaveOptions::SaveOptions(SaveOptions {
+                            include_text: Some(false),
+                        })),
+                    },
                 )),
                 hover_provider: Some(HoverProviderCapability::Simple(true)),
                 definition_provider: Some(OneOf::Left(true)),
@@ -83,10 +89,6 @@ impl LanguageServer for SysterLanguageServer {
         let mut server = self.server.lock().await;
         match server.open_document(&uri, &text) {
             Ok(_) => {
-                self.client
-                    .log_message(MessageType::INFO, format!("Opened document: {}", uri))
-                    .await;
-
                 // Publish diagnostics
                 let diagnostics = server.get_diagnostics(&uri);
                 self.client
@@ -112,10 +114,6 @@ impl LanguageServer for SysterLanguageServer {
             let mut server = self.server.lock().await;
             match server.change_document(&uri, &change.text) {
                 Ok(_) => {
-                    self.client
-                        .log_message(MessageType::INFO, format!("Updated document: {}", uri))
-                        .await;
-
                     // Publish diagnostics
                     let diagnostics = server.get_diagnostics(&uri);
                     self.client
@@ -138,21 +136,19 @@ impl LanguageServer for SysterLanguageServer {
         let uri = params.text_document.uri;
 
         let mut server = self.server.lock().await;
-        match server.close_document(&uri) {
-            Ok(_) => {
-                self.client
-                    .log_message(MessageType::INFO, format!("Closed document: {}", uri))
-                    .await;
-            }
-            Err(e) => {
-                self.client
-                    .log_message(
-                        MessageType::ERROR,
-                        format!("Failed to close document {}: {}", uri, e),
-                    )
-                    .await;
-            }
+        if let Err(e) = server.close_document(&uri) {
+            self.client
+                .log_message(
+                    MessageType::ERROR,
+                    format!("Failed to close document {}: {}", uri, e),
+                )
+                .await;
         }
+    }
+
+    async fn did_save(&self, _params: DidSaveTextDocumentParams) {
+        // Note: The document content is already up-to-date from did_change events
+        // No need to reload the file here since we track changes incrementally
     }
 
     async fn hover(&self, params: HoverParams) -> Result<Option<Hover>> {
@@ -209,7 +205,8 @@ impl LanguageServer for SysterLanguageServer {
         let uri = params.text_document.uri;
 
         let server = self.server.lock().await;
-        Ok(server.get_semantic_tokens(uri.as_str()))
+        let result = server.get_semantic_tokens(uri.as_str());
+        Ok(result)
     }
 
     async fn completion(&self, params: CompletionParams) -> Result<Option<CompletionResponse>> {
@@ -239,7 +236,9 @@ impl LanguageServer for SysterLanguageServer {
 
 #[tokio::main]
 async fn main() {
-    tracing_subscriber::fmt().init();
+    // Don't initialize tracing subscriber - it writes to stdout which corrupts LSP protocol
+    // LSP uses stdin/stdout for JSON-RPC communication
+    // If logging is needed, use client.log_message() instead
 
     let stdin = tokio::io::stdin();
     let stdout = tokio::io::stdout();

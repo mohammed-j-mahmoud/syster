@@ -566,7 +566,7 @@ definition_suffix = {
 }
 
 definition_declaration = {
-    identification? ~ subclassification_part?
+    identification? ~ (subclassification_part | redefinition_part)?
 }
 
 definition_body = {
@@ -2061,6 +2061,12 @@ specializes_token = @{ ":>" | "specializes" }
 
 subclassification_part = {
     specializes_token
+    ~ owned_subclassification
+    ~ ("," ~ owned_subclassification)*
+}
+
+redefinition_part = {
+    redefines_token
     ~ owned_subclassification
     ~ ("," ~ owned_subclassification)*
 }

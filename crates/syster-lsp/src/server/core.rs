@@ -38,7 +38,6 @@ impl LspServer {
 
         // Determine stdlib path - try multiple locations
         let stdlib_path = if let Some(path) = custom_stdlib_path {
-            eprintln!("[LSP] Using custom stdlib path: {:?}", path);
             path
         } else {
             // Get the binary directory (where syster-lsp executable is located)
@@ -47,23 +46,12 @@ impl LspServer {
                 .and_then(|exe| exe.parent().map(|p| p.to_path_buf()))
                 .unwrap_or_else(|| std::env::current_dir().unwrap_or_else(|_| PathBuf::from(".")));
 
-            eprintln!("[LSP] Binary directory: {:?}", binary_dir);
-
             // Look for sysml.library next to the binary (copied by build script)
             let stdlib_next_to_binary = binary_dir.join("sysml.library");
 
-            eprintln!(
-                "[LSP] Checking stdlib path: {:?} (exists: {}, is_dir: {})",
-                stdlib_next_to_binary,
-                stdlib_next_to_binary.exists(),
-                stdlib_next_to_binary.is_dir()
-            );
-
             if stdlib_next_to_binary.exists() && stdlib_next_to_binary.is_dir() {
-                eprintln!("[LSP] Found stdlib at: {:?}", stdlib_next_to_binary);
                 stdlib_next_to_binary
             } else {
-                eprintln!("[LSP] WARNING: No stdlib directory found next to binary");
                 PathBuf::from("sysml.library")
             }
         };
@@ -100,31 +88,17 @@ impl LspServer {
     /// Returns Ok(()) even if stdlib loading is disabled
     pub fn ensure_stdlib_loaded(&mut self) -> Result<(), String> {
         if !self.stdlib_enabled {
-            eprintln!("[LSP] Stdlib loading disabled");
             return Ok(());
         }
 
-        eprintln!("[LSP] Loading stdlib...");
         // Load stdlib files into workspace
         self.stdlib_loader.ensure_loaded(&mut self.workspace)?;
-        eprintln!(
-            "[LSP] Stdlib loaded: {} files",
-            self.workspace.files().len()
-        );
 
         // Populate symbols from loaded files
         let _ = self.workspace.populate_all();
-        eprintln!(
-            "[LSP] Symbols populated: {} symbols",
-            self.workspace.symbol_table().all_symbols().len()
-        );
 
         // Sync document texts so hover can access source code
         self.sync_document_texts_from_workspace();
-        eprintln!(
-            "[LSP] Document texts synced: {} texts",
-            self.document_texts.len()
-        );
 
         Ok(())
     }
@@ -134,10 +108,10 @@ impl LspServer {
     pub fn sync_document_texts_from_workspace(&mut self) {
         for path in self.workspace.files().keys() {
             // Only load if not already tracked (avoid overwriting editor versions)
-            if !self.document_texts.contains_key(path) {
-                if let Ok(text) = std::fs::read_to_string(path) {
-                    self.document_texts.insert(path.clone(), text);
-                }
+            if !self.document_texts.contains_key(path)
+                && let Ok(text) = std::fs::read_to_string(path)
+            {
+                self.document_texts.insert(path.clone(), text);
             }
         }
     }

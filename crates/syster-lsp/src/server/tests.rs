@@ -1,5 +1,6 @@
 use super::LspServer;
 use syster::core::constants::REL_TYPING;
+use syster::semantic::symbol_table::Symbol;
 use tower_lsp::lsp_types::{DiagnosticSeverity, HoverContents, MarkedString, Position, Url};
 
 #[test]
@@ -868,4 +869,485 @@ package TestPkg {
 
     let edit_texts: Vec<&str> = edits.iter().map(|e| e.new_text.as_str()).collect();
     assert!(edit_texts.iter().all(|&t| t == "Automobile"));
+}
+
+#[test]
+fn test_cross_file_reference_resolution_basic() {
+    // Test cross-file reference resolution at the workspace/symbol table level
+    // This is the foundational layer - if this doesn't work, nothing above it will
+
+    let mut server = LspServer::new();
+
+    // File 1: Define a type
+    let file1_uri = Url::parse("file:///base.sysml").unwrap();
+    let file1_text = r#"
+    package BasePackage {
+        attribute def BaseUnit {
+        }
+    }
+    "#;
+
+    // File 2: Reference the type from File 1
+    let file2_uri = Url::parse("file:///derived.sysml").unwrap();
+    let file2_text = r#"
+    package DerivedPackage {
+        import BasePackage::BaseUnit;
+        
+        attribute def DerivedUnit :> BaseUnit {
+        }
+    }
+    "#;
+
+    // Open both files
+    server.open_document(&file1_uri, file1_text).unwrap();
+    server.open_document(&file2_uri, file2_text).unwrap();
+
+    eprintln!("Workspace file count: {}", server.workspace().file_count());
+    eprintln!(
+        "Total symbols: {}",
+        server.workspace().symbol_table().all_symbols().len()
+    );
+
+    let all_syms = server.workspace().symbol_table().all_symbols();
+    eprintln!("\nAll symbols:");
+    for (name, sym) in all_syms.iter() {
+        let qualified = sym.qualified_name();
+        eprintln!("  {} -> {} (qualified: {})", name, sym.name(), qualified);
+    }
+
+    // Check if BaseUnit is in the symbol table
+    let symbol_table = server.workspace().symbol_table();
+
+    let by_simple = symbol_table.lookup("BaseUnit");
+    let by_qualified = symbol_table.lookup_qualified("BasePackage::BaseUnit");
+
+    eprintln!("\nLookup BaseUnit:");
+    eprintln!("  Simple name: {:?}", by_simple.is_some());
+    eprintln!("  Qualified: {:?}", by_qualified.is_some());
+
+    assert!(
+        by_simple.is_some() || by_qualified.is_some(),
+        "BaseUnit should be findable in symbol table"
+    );
+
+    // Now try to resolve the reference from file 2
+    // Position should be on "BaseUnit" in ":> BaseUnit"
+    let position = Position::new(4, 40); // Approximate position of BaseUnit after :>
+    let definition = server.get_definition(&file2_uri, position);
+
+    eprintln!(
+        "\nDefinition lookup result: {:?}",
+        definition.as_ref().map(|d| d.uri.path())
+    );
+
+    assert!(
+        definition.is_some(),
+        "Should resolve cross-file reference to BaseUnit"
+    );
+
+    let def_location = definition.unwrap();
+    assert!(
+        def_location.uri.path().contains("base.sysml"),
+        "Definition should point to base.sysml, got: {}",
+        def_location.uri.path()
+    );
+}
+
+#[test]
+fn test_cross_file_stdlib_reference_resolution() {
+    // This test verifies that references to stdlib types are resolved correctly
+    // Bug: attribute def SoundPressureLevelUnit :> DimensionOneUnit
+    // DimensionOneUnit from MeasurementReferences doesn't resolve
+
+    // For tests, we need to find the stdlib in target/debug, not target/debug/deps
+    let stdlib_path = std::env::current_exe()
+        .ok()
+        .and_then(|exe| {
+            // Test binary is at target/debug/deps/<binary>
+            // Stdlib is at target/debug/sysml.library
+            exe.parent()
+                .and_then(|deps| deps.parent())
+                .map(|debug| debug.join("sysml.library"))
+        })
+        .unwrap_or_else(|| std::path::PathBuf::from("sysml.library"));
+
+    let mut server = LspServer::with_config(true, Some(stdlib_path));
+
+    // Load stdlib
+    server.ensure_stdlib_loaded().unwrap();
+
+    eprintln!("After stdlib load:");
+    eprintln!("  Files: {}", server.workspace().file_count());
+    eprintln!(
+        "  Symbols: {}",
+        server.workspace().symbol_table().all_symbols().len()
+    );
+
+    // Check if MeasurementReferences file is loaded
+    let has_measurement_refs = server
+        .workspace()
+        .files()
+        .keys()
+        .any(|p| p.to_string_lossy().contains("MeasurementReferences"));
+    eprintln!(
+        "  Has MeasurementReferences.sysml: {}",
+        has_measurement_refs
+    );
+
+    // Check what symbols ARE in the symbol table from stdlib
+    eprintln!("\n  First 10 stdlib symbols:");
+    for (i, (name, symbol)) in server
+        .workspace()
+        .symbol_table()
+        .all_symbols()
+        .iter()
+        .enumerate()
+        .take(10)
+    {
+        let symbol_type = match symbol {
+            Symbol::Package { .. } => "Package",
+            Symbol::Classifier { .. } => "Classifier",
+            Symbol::Feature { .. } => "Feature",
+            Symbol::Definition { kind, .. } => kind.as_str(),
+            Symbol::Usage { kind, .. } => kind.as_str(),
+            Symbol::Alias { .. } => "Alias",
+        };
+        eprintln!("    {}: {} ({})", i, name, symbol_type);
+    }
+
+    // Check specifically for attribute definitions
+    eprintln!("\n  Attribute definitions in symbol table:");
+    let mut attr_count = 0;
+    for (name, symbol) in server.workspace().symbol_table().all_symbols() {
+        if let Symbol::Definition { kind, .. } = symbol
+            && kind == "Attribute"
+        {
+            attr_count += 1;
+            if attr_count <= 5 {
+                eprintln!("    - {}", name);
+            }
+        }
+    }
+    eprintln!("  Total attribute definitions: {}", attr_count);
+
+    // Open a file that references a stdlib type
+    let uri = Url::parse("file:///test.sysml").unwrap();
+    let text = r#"
+    package TestPackage {
+        import MeasurementReferences::DimensionOneUnit;
+        
+        attribute def MyUnit :> DimensionOneUnit {
+        }
+    }
+    "#;
+
+    server.open_document(&uri, text).unwrap();
+
+    eprintln!("\nAfter opening test file:");
+    eprintln!("  Files: {}", server.workspace().file_count());
+    eprintln!(
+        "  Symbols: {}",
+        server.workspace().symbol_table().all_symbols().len()
+    );
+
+    // Check if DimensionOneUnit is in symbol table
+    if let Some(symbol) = server
+        .workspace()
+        .symbol_table()
+        .lookup_qualified("MeasurementReferences::DimensionOneUnit")
+    {
+        eprintln!("\nFound DimensionOneUnit: {:?}", symbol);
+    } else {
+        eprintln!("\nDimensionOneUnit NOT found in symbol table");
+        eprintln!("\nLooking for any MeasurementReferences symbols:");
+        for (name, _) in server.workspace().symbol_table().all_symbols() {
+            if name.contains("MeasurementReferences") {
+                eprintln!("  - {}", name);
+            }
+        }
+    }
+
+    // Try to get definition of DimensionOneUnit at line 4, column 36 (the :> reference)
+    let position = Position::new(4, 36);
+    let definition = server.get_definition(&uri, position);
+
+    eprintln!("\nDefinition result: {:?}", definition);
+
+    assert!(
+        definition.is_some(),
+        "Should resolve definition for stdlib type DimensionOneUnit"
+    );
+
+    let def_location = definition.unwrap();
+    assert!(
+        def_location
+            .uri
+            .path()
+            .contains("MeasurementReferences.sysml"),
+        "Definition should point to stdlib MeasurementReferences.sysml file"
+    );
+}
+
+#[test]
+fn test_stdlib_files_actually_load() {
+    // Most basic test: do stdlib files get added to the workspace at all?
+    // For tests, we need to find the stdlib in target/debug, not target/debug/deps
+    let stdlib_path = std::env::current_exe()
+        .ok()
+        .and_then(|exe| {
+            // Test binary is at target/debug/deps/<binary>
+            // Stdlib is at target/debug/sysml.library
+            exe.parent()
+                .and_then(|deps| deps.parent())
+                .map(|debug| debug.join("sysml.library"))
+        })
+        .unwrap_or_else(|| std::path::PathBuf::from("sysml.library"));
+
+    let mut server = LspServer::with_config(true, Some(stdlib_path.clone()));
+
+    eprintln!("Before stdlib load:");
+    eprintln!("  Files: {}", server.workspace().file_count());
+
+    eprintln!("\nStdlib path: {}", stdlib_path.display());
+    eprintln!("  Exists: {}", stdlib_path.exists());
+    eprintln!("  Is dir: {}", stdlib_path.is_dir());
+
+    let load_result = server.ensure_stdlib_loaded();
+    eprintln!("\nLoad result: {:?}", load_result);
+
+    eprintln!("\nAfter stdlib load:");
+    eprintln!("  Files: {}", server.workspace().file_count());
+    eprintln!(
+        "  Symbols: {}",
+        server.workspace().symbol_table().all_symbols().len()
+    );
+
+    // Print some file paths
+    eprintln!("\nFirst 5 files:");
+    for (i, path) in server.workspace().files().keys().enumerate().take(5) {
+        eprintln!("  {}: {}", i, path.display());
+    }
+
+    assert!(
+        server.workspace().file_count() > 0,
+        "Stdlib files should be loaded into workspace"
+    );
+
+    assert!(
+        !server.workspace().symbol_table().all_symbols().is_empty(),
+        "Stdlib symbols should be populated"
+    );
+}
+
+#[test]
+fn test_measurement_references_file_directly() {
+    use std::path::PathBuf;
+
+    let file_path = PathBuf::from(
+        "/workspaces/syster/target/debug/sysml.library/Domain Libraries/Quantities and Units/MeasurementReferences.sysml",
+    );
+
+    eprintln!("File exists: {}", file_path.exists());
+
+    if !file_path.exists() {
+        eprintln!("File not found, skipping test");
+        return;
+    }
+
+    let content = std::fs::read_to_string(&file_path).expect("Failed to read file");
+    eprintln!("File size: {} bytes", content.len());
+
+    let parse_result = syster::project::file_loader::parse_with_result(&content, &file_path);
+
+    if parse_result.content.is_none() {
+        eprintln!("Parse FAILED!");
+        eprintln!("Errors: {}", parse_result.errors.len());
+        for (i, err) in parse_result.errors.iter().enumerate().take(5) {
+            eprintln!("  {}: {:?}", i, err);
+        }
+        panic!("Failed to parse MeasurementReferences.sysml");
+    }
+
+    eprintln!("Parse succeeded!");
+
+    let syntax_file = parse_result.content.unwrap();
+    let sysml_file = match syntax_file {
+        syster::syntax::SyntaxFile::SysML(f) => f,
+        _ => panic!("Expected SysML file"),
+    };
+
+    eprintln!("Top-level elements: {}", sysml_file.elements.len());
+
+    // Populate symbol table
+    let mut workspace = syster::semantic::Workspace::<syster::syntax::SyntaxFile>::new();
+    workspace.add_file(
+        file_path.clone(),
+        syster::syntax::SyntaxFile::SysML(sysml_file),
+    );
+    let _ = workspace.populate_all();
+
+    eprintln!(
+        "\nSymbols found: {}",
+        workspace.symbol_table().all_symbols().len()
+    );
+    eprintln!("\nAll symbols:");
+    for (name, symbol) in workspace.symbol_table().all_symbols() {
+        let sym_type = match symbol {
+            Symbol::Package { .. } => "Package",
+            Symbol::Definition { kind, .. } => kind.as_str(),
+            Symbol::Usage { kind, .. } => kind.as_str(),
+            Symbol::Classifier { .. } => "Classifier",
+            Symbol::Feature { .. } => "Feature",
+            Symbol::Alias { .. } => "Alias",
+        };
+        eprintln!("  {} ({})", name, sym_type);
+    }
+
+    // Check for attribute definitions
+    let all_syms = workspace.symbol_table().all_symbols();
+    let attr_defs: Vec<_> = all_syms
+        .iter()
+        .filter(|(_, sym)| matches!(sym, Symbol::Definition { kind, .. } if kind == "Attribute"))
+        .map(|(name, _)| name)
+        .collect();
+
+    eprintln!("\nAttribute definitions: {}", attr_defs.len());
+    for name in attr_defs.iter().take(10) {
+        eprintln!("  - {}", name);
+    }
+
+    assert!(!attr_defs.is_empty(), "Should have attribute definitions");
+
+    // Look for DimensionOneUnit specifically
+    let has_dimension_one = all_syms
+        .iter()
+        .any(|(name, _)| name.contains("DimensionOneUnit"));
+
+    eprintln!("\nHas DimensionOneUnit: {}", has_dimension_one);
+    assert!(has_dimension_one, "Should find DimensionOneUnit");
+}
+
+#[test]
+fn test_dimension_one_unit_cross_file_resolution() {
+    use syster::project::stdlib_loader::StdLibLoader;
+    use syster::semantic::Workspace;
+    use syster::syntax::parser::parse_content;
+
+    let stdlib_path = std::path::PathBuf::from("../../target/debug/sysml.library");
+    eprintln!("StdLib path: {:?}", stdlib_path.canonicalize().unwrap());
+
+    let mut workspace = Workspace::new();
+    let loader = StdLibLoader::with_path(stdlib_path);
+    loader.load(&mut workspace).unwrap();
+    let _populate_result = workspace.populate_all(); // Ignore errors, we want to test what DID load
+
+    eprintln!(
+        "Loaded stdlib - Files: {}, Symbols: {}",
+        workspace.file_count(),
+        workspace.symbol_table().all_symbols().len()
+    );
+
+    // Sample some package names from stdlib
+    let package_names: Vec<_> = workspace
+        .symbol_table()
+        .all_symbols()
+        .iter()
+        .filter_map(|(name, sym)| {
+            if matches!(sym, Symbol::Package { .. }) {
+                Some(name.as_str())
+            } else {
+                None
+            }
+        })
+        .take(10)
+        .collect();
+    eprintln!("Sample package names: {:?}", package_names);
+
+    // Check what symbols we actually have
+    let measurement_refs_syms: Vec<_> = workspace
+        .symbol_table()
+        .all_symbols()
+        .iter()
+        .filter(|(name, _)| name.contains("MeasurementReferences") || name.contains("DimensionOne"))
+        .map(|(name, _)| name.as_str())
+        .collect();
+    eprintln!("MeasurementReferences symbols: {:?}", measurement_refs_syms);
+
+    // Check if MeasurementReferences.sysml file is in workspace
+    let has_measurement_file = workspace
+        .files()
+        .keys()
+        .any(|path| path.to_string_lossy().contains("MeasurementReferences"));
+    eprintln!(
+        "Has MeasurementReferences.sysml file: {}",
+        has_measurement_file
+    );
+
+    // Check parse errors for MeasurementReferences
+    if let Some((_path, file)) = workspace
+        .files()
+        .iter()
+        .find(|(p, _)| p.to_string_lossy().contains("MeasurementReferences"))
+    {
+        let (file_type, elem_count) = match file.content() {
+            syster::syntax::SyntaxFile::SysML(sysml) => ("SysML", sysml.elements.len()),
+            syster::syntax::SyntaxFile::KerML(kerml) => ("KerML", kerml.elements.len()),
+        };
+        eprintln!(
+            "MeasurementReferences file type: {}, has {} top-level elements",
+            file_type, elem_count
+        );
+    }
+
+    // Check DimensionOneUnit exists
+    let found = workspace
+        .symbol_table()
+        .lookup_qualified("MeasurementReferences::DimensionOneUnit");
+    eprintln!(
+        "Lookup MeasurementReferences::DimensionOneUnit: {}",
+        found.is_some()
+    );
+    assert!(
+        found.is_some(),
+        "DimensionOneUnit should be found in stdlib"
+    );
+
+    // Now add a user file that uses it
+    let test_code = r#"
+package TestPkg {
+    import MeasurementReferences::DimensionOneUnit;
+    
+    attribute def MyUnit :> DimensionOneUnit {
+    }
+}
+"#;
+
+    let path = std::path::PathBuf::from("/test/myfile.sysml");
+    let file = parse_content(test_code, &path).unwrap();
+    workspace.add_file(path.clone(), file);
+    let _ = workspace.populate_all();
+
+    eprintln!(
+        "After adding user file - Files: {}, Symbols: {}",
+        workspace.file_count(),
+        workspace.symbol_table().all_symbols().len()
+    );
+
+    // Verify MyUnit is in the table
+    let my_unit = workspace.symbol_table().lookup_qualified("TestPkg::MyUnit");
+    eprintln!("Lookup TestPkg::MyUnit: {}", my_unit.is_some());
+    assert!(my_unit.is_some(), "MyUnit should be found");
+
+    // Verify DimensionOneUnit is still findable
+    let dim_one = workspace
+        .symbol_table()
+        .lookup_qualified("MeasurementReferences::DimensionOneUnit");
+    eprintln!(
+        "Lookup MeasurementReferences::DimensionOneUnit after user file: {}",
+        dim_one.is_some()
+    );
+    assert!(
+        dim_one.is_some(),
+        "DimensionOneUnit should still be found after adding user file"
+    );
 }

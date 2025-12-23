@@ -71,7 +71,7 @@ fn test_ensure_stdlib_loaded() {
         "Stdlib should be marked as loaded"
     );
     assert!(
-        server.workspace().files().len() > 0,
+        !server.workspace().files().is_empty(),
         "Workspace should have files after stdlib loading"
     );
 
@@ -167,13 +167,7 @@ fn test_hover_on_cross_file_symbol() {
     let (line_index, col_index) = lines
         .iter()
         .enumerate()
-        .find_map(|(i, line)| {
-            if let Some(pos) = line.find("ScalarValue") {
-                Some((i, pos))
-            } else {
-                None
-            }
-        })
+        .find_map(|(i, line)| line.find("ScalarValue").map(|pos| (i, pos)))
         .expect("Should find ScalarValue in file");
 
     println!(

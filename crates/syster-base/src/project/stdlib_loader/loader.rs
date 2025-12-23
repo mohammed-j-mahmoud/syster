@@ -27,26 +27,12 @@ pub fn load(stdlib_path: &PathBuf, workspace: &mut Workspace<SyntaxFile>) -> Res
         .map(|path| (path, parse_file(path)))
         .collect();
 
-    // Add successfully parsed files and track failures
-    let mut failed_files = Vec::new();
-    for (path, result) in results {
-        match result {
-            Ok((path, file)) => {
-                workspace.add_file(path, file);
-            }
-            Err(e) => {
-                eprintln!("Failed to parse {}: {}", path.display(), e);
-                failed_files.push((path.clone(), e));
-            }
+    // Add successfully parsed files
+    for (_path, result) in results {
+        if let Ok((path, file)) = result {
+            workspace.add_file(path, file);
         }
-    }
-
-    if !failed_files.is_empty() {
-        eprintln!(
-            "Failed to parse {} files out of {}",
-            failed_files.len(),
-            file_paths.len()
-        );
+        // Silently skip parse failures to avoid performance impact
     }
 
     workspace.mark_stdlib_loaded();

@@ -57,6 +57,7 @@ impl<'a> AstVisitor for SysmlAdapter<'a> {
                 semantic_role: Some(semantic_role),
                 scope_id,
                 source_file: self.symbol_table.current_file().map(String::from),
+                // Use name_span if available, fallback to full span
                 span: definition.span,
                 references: Vec::new(),
             };
@@ -69,6 +70,10 @@ impl<'a> AstVisitor for SysmlAdapter<'a> {
                         qualified_name.clone(),
                         target.clone(),
                     );
+                }
+
+                for target in &definition.relationships.redefines {
+                    graph.add_one_to_many(REL_REDEFINITION, qualified_name.clone(), target.clone());
                 }
 
                 // Extract top-level domain relationships (e.g., include in use case definitions)
@@ -139,6 +144,7 @@ impl<'a> AstVisitor for SysmlAdapter<'a> {
                 usage_type: usage.relationships.typed_by.clone(),
                 scope_id,
                 source_file: self.symbol_table.current_file().map(String::from),
+                // Use name_span if available, fallback to full span
                 span: usage.span,
                 references: Vec::new(),
             };
@@ -174,6 +180,20 @@ impl<'a> AstVisitor for SysmlAdapter<'a> {
                     );
                 }
             }
+
+            // Visit nested members in the usage body
+            self.enter_namespace(name.clone());
+            for member in &usage.body {
+                match member {
+                    crate::syntax::sysml::ast::enums::UsageMember::Usage(nested_usage) => {
+                        self.visit_usage(nested_usage);
+                    }
+                    crate::syntax::sysml::ast::enums::UsageMember::Comment(_) => {
+                        // Comments don't affect symbol table
+                    }
+                }
+            }
+            self.exit_namespace();
         }
     }
 
@@ -181,6 +201,7 @@ impl<'a> AstVisitor for SysmlAdapter<'a> {
         // Record the import in the current scope
         self.symbol_table
             .add_import(import.path.clone(), import.is_recursive);
+        // Note: We don't create semantic tokens for imports - let TextMate grammar handle keywords
     }
 
     fn visit_comment(&mut self, _comment: &Comment) {
