@@ -6,7 +6,12 @@
 ## LSP Feature Implementation (Priority Order)
 
 ### In Progress / Next Tasks
-- [ ] Add tests for KerML visitor
+- [ ] **Implement KerML visitor logic** (TDD - tests ready)
+  - 14 comprehensive tests written following SysML visitor pattern
+  - 4 tests currently pass (basic package handling)
+  - 10 tests failing, waiting for `KermlAdapter::populate()` implementation
+  - Tests cover: packages, classifiers, features, functions, relationships, imports
+  - Implementation should mirror SysMLAdapter structure and visitor patterns
 - [ ] Add tests for semantic tokens support
 - [ ] Do a code coverage analysis of missing tests
 - [ ] Remove logic from tests (match/if/else statements)
