@@ -49,7 +49,13 @@ fn test_server_initialization() {
 
 #[test]
 fn test_ensure_stdlib_loaded() {
-    let mut server = LspServer::new();
+    // Create server with explicit stdlib path for testing
+    let stdlib_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .parent()
+        .unwrap()
+        .join("syster-base")
+        .join("sysml.library");
+    let mut server = LspServer::with_config(true, Some(stdlib_path));
 
     // Initially workspace should be empty
     assert_eq!(
@@ -99,7 +105,13 @@ fn test_ensure_stdlib_loaded() {
 
 #[test]
 fn test_hover_on_cross_file_symbol() {
-    let mut server = LspServer::new();
+    // Create server with explicit stdlib path for testing
+    let stdlib_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .parent()
+        .unwrap()
+        .join("syster-base")
+        .join("sysml.library");
+    let mut server = LspServer::with_config(true, Some(stdlib_path));
 
     // Load stdlib first
     server.ensure_stdlib_loaded().expect("Should load stdlib");

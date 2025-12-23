@@ -83,7 +83,6 @@ impl<'a> AstVisitor for SysmlAdapter<'a> {
                 }
 
                 // Extract domain relationships from nested usages in the body
-                // Note: include relationships are at the definition level, not in nested usages
                 for member in &definition.body {
                     if let crate::syntax::sysml::ast::enums::DefinitionMember::Usage(usage) = member
                     {
@@ -111,7 +110,14 @@ impl<'a> AstVisitor for SysmlAdapter<'a> {
                                 target.clone(),
                             );
                         }
-                        // Note: include relationships are handled at the definition level above
+                        // Extract include relationships (from use case bodies)
+                        for target in &usage.relationships.includes {
+                            graph.add_one_to_many(
+                                REL_INCLUDE,
+                                qualified_name.clone(),
+                                target.clone(),
+                            );
+                        }
                     }
                 }
             }

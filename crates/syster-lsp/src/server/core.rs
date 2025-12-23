@@ -94,7 +94,7 @@ impl LspServer {
         // Load stdlib files into workspace
         self.stdlib_loader.ensure_loaded(&mut self.workspace)?;
 
-        // Populate symbols from loaded files
+        // Populate symbols from loaded files (ignore errors for duplicate symbols)
         let _ = self.workspace.populate_all();
 
         // Sync document texts so hover can access source code
