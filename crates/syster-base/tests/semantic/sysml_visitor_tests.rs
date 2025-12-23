@@ -139,6 +139,123 @@ fn test_same_name_in_different_namespaces_creates_two_symbols() {
 }
 
 #[test]
+fn test_comma_separated_redefinitions_do_not_create_duplicate_symbols() {
+    let source = r#"
+        package TestPkg {
+            item def Disc {
+                attribute semiMajorAxis;
+                attribute semiMinorAxis;
+                item shape {
+                    attribute semiMajorAxis;
+                    attribute semiMinorAxis;
+                }
+            }
+            
+            item def Circle {
+                attribute semiMajorAxis;
+                attribute semiMinorAxis;
+            }
+            
+            item def CircularDisc :> Disc {
+                item :>> shape : Circle {
+                    attribute :>> Disc::shape::semiMajorAxis, Circle::semiMajorAxis;
+                    attribute :>> Disc::shape::semiMinorAxis, Circle::semiMinorAxis;
+                }
+            }
+        }
+    "#;
+    let mut pairs = SysMLParser::parse(Rule::model, source).unwrap();
+    let file = SysMLFile::from_pest(&mut pairs).unwrap();
+
+    let mut symbol_table = SymbolTable::new();
+    let mut graph = RelationshipGraph::new();
+    let mut adapter = SysmlAdapter::with_relationships(&mut symbol_table, &mut graph);
+
+    let result = adapter.populate(&file);
+    assert!(
+        result.is_ok(),
+        "Should not have errors from comma-separated redefinitions, got: {:?}",
+        result.err()
+    );
+
+    // Disc and Circle should each be defined exactly once
+    let all_symbols = symbol_table.all_symbols();
+    let disc_count = all_symbols
+        .iter()
+        .filter(|(name, _)| *name == "Disc")
+        .count();
+    let circle_count = all_symbols
+        .iter()
+        .filter(|(name, _)| *name == "Circle")
+        .count();
+
+    assert_eq!(
+        disc_count, 1,
+        "Disc should be defined exactly once, got {} definitions",
+        disc_count
+    );
+    assert_eq!(
+        circle_count, 1,
+        "Circle should be defined exactly once, got {} definitions",
+        circle_count
+    );
+}
+
+#[test]
+fn test_simple_redefinition_creates_no_new_symbol() {
+    // When you redefine without giving it a new name: attribute :>> radius [1];
+    // This should NOT create a new symbol named "radius"
+    let source = r#"
+        package TestPkg {
+            item def Parent {
+                attribute radius;
+            }
+            
+            item def Child :> Parent {
+                attribute :>> radius [1];
+            }
+        }
+    "#;
+    let mut pairs = SysMLParser::parse(Rule::model, source).unwrap();
+    let file = SysMLFile::from_pest(&mut pairs).unwrap();
+
+    eprintln!("AST: {:#?}", file);
+
+    let mut symbol_table = SymbolTable::new();
+    let mut graph = RelationshipGraph::new();
+    let mut adapter = SysmlAdapter::with_relationships(&mut symbol_table, &mut graph);
+
+    let result = adapter.populate(&file);
+
+    // Count radius symbols
+    let all_symbols = symbol_table.all_symbols();
+    let radius_symbols: Vec<_> = all_symbols
+        .iter()
+        .filter(|(name, _)| *name == "radius")
+        .collect();
+
+    eprintln!("Found {} radius symbols:", radius_symbols.len());
+    for (name, symbol) in &radius_symbols {
+        eprintln!("  '{}': {:?}", name, symbol);
+    }
+
+    assert!(
+        result.is_ok(),
+        "Should not have errors, got: {:?}",
+        result.err()
+    );
+
+    // Should have exactly 1 radius: the one in Parent
+    // The redefinition in Child should NOT create a new symbol
+    assert_eq!(
+        radius_symbols.len(),
+        1,
+        "Should have 1 radius symbol (in Parent only), got {}",
+        radius_symbols.len()
+    );
+}
+
+#[test]
 fn test_visitor_creates_usage_symbol() {
     let source = "part myCar : Vehicle;";
     let mut pairs = SysMLParser::parse(Rule::model, source).unwrap();
