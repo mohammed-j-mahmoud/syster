@@ -31,13 +31,13 @@ fn extract_classifier_members(pair: &Pair<Rule>, members: &mut Vec<ClassifierMem
         Rule::specialization => {
             // Parse "specializes General"
             for inner in pair.clone().into_inner() {
-                if let Rule::inheritance = inner.as_rule() {
-                    if let Some(general) = extract_reference(&inner) {
-                        members.push(ClassifierMember::Specialization(Specialization {
-                            general,
-                            span: Some(to_span(inner.as_span())),
-                        }));
-                    }
+                if let Rule::inheritance = inner.as_rule()
+                    && let Some(general) = extract_reference(&inner)
+                {
+                    members.push(ClassifierMember::Specialization(Specialization {
+                        general,
+                        span: Some(to_span(inner.as_span())),
+                    }));
                 }
             }
         }
@@ -85,26 +85,26 @@ fn extract_feature_members(pair: &Pair<Rule>, members: &mut Vec<FeatureMember>) 
         Rule::redefinition => {
             // Parse "redefines Base"
             for inner in pair.clone().into_inner() {
-                if let Rule::inheritance = inner.as_rule() {
-                    if let Some(redefined) = extract_reference(&inner) {
-                        members.push(FeatureMember::Redefinition(Redefinition {
-                            redefined,
-                            span: Some(to_span(inner.as_span())),
-                        }));
-                    }
+                if let Rule::inheritance = inner.as_rule()
+                    && let Some(redefined) = extract_reference(&inner)
+                {
+                    members.push(FeatureMember::Redefinition(Redefinition {
+                        redefined,
+                        span: Some(to_span(inner.as_span())),
+                    }));
                 }
             }
         }
         Rule::subsetting => {
             // Parse "subsets General"
             for inner in pair.clone().into_inner() {
-                if let Rule::inheritance = inner.as_rule() {
-                    if let Some(subset) = extract_reference(&inner) {
-                        members.push(FeatureMember::Subsetting(Subsetting {
-                            subset,
-                            span: Some(to_span(inner.as_span())),
-                        }));
-                    }
+                if let Rule::inheritance = inner.as_rule()
+                    && let Some(subset) = extract_reference(&inner)
+                {
+                    members.push(FeatureMember::Subsetting(Subsetting {
+                        subset,
+                        span: Some(to_span(inner.as_span())),
+                    }));
                 }
             }
         }

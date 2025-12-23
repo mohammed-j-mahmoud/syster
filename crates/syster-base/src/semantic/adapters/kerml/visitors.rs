@@ -107,14 +107,10 @@ impl<'a> KermlAdapter<'a> {
             ClassifierMember::Feature(feature) => self.visit_feature(feature),
             ClassifierMember::Specialization(spec) => {
                 // Record relationship in graph if available
-                if let Some(graph) = &mut self.relationship_graph {
-                    if let Some(current) = self.current_namespace.last() {
-                        graph.add_one_to_one(
-                            REL_SPECIALIZATION,
-                            current.clone(),
-                            spec.general.clone(),
-                        );
-                    }
+                if let Some(graph) = &mut self.relationship_graph
+                    && let Some(current) = self.current_namespace.last()
+                {
+                    graph.add_one_to_one(REL_SPECIALIZATION, current.clone(), spec.general.clone());
                 }
             }
             ClassifierMember::Comment(_) | ClassifierMember::Import(_) => {
