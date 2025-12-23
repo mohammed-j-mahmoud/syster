@@ -1,15 +1,13 @@
 use super::enums::{DefinitionKind, DefinitionMember, Element, UsageKind, UsageMember};
 use crate::core::Span;
 
-// TODO: Refactor to support multiple packages per file
-// Currently only tracks the first package declaration as `namespace`,
-// but SysML files can contain multiple packages. Should change to:
-// - Either: `namespaces: Vec<NamespaceDeclaration>` to track all packages
-// - Or: Remove `namespace` field and query packages from `elements` directly
-// This affects parser (ast.rs) and all code using SysMLFile.namespace
+/// Represents a parsed SysML file with support for multiple package declarations
 #[derive(Debug, Clone, PartialEq)]
 pub struct SysMLFile {
+    /// Primary namespace (first package) - maintained for backward compatibility
     pub namespace: Option<NamespaceDeclaration>,
+    /// All namespace declarations in the file (Issue #10)
+    pub namespaces: Vec<NamespaceDeclaration>,
     pub elements: Vec<Element>,
 }
 

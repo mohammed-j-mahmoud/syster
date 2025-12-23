@@ -372,6 +372,7 @@ fn test_subscribe_to_file_added() {
 
     let path = PathBuf::from("test.sysml");
     let file = SysMLFile {
+        namespaces: vec![],
         namespace: None,
         elements: vec![],
     };
@@ -395,6 +396,7 @@ fn test_subscribe_to_file_updated() {
     workspace.add_file(
         path.clone(),
         crate::syntax::SyntaxFile::SysML(SysMLFile {
+            namespaces: vec![],
             namespace: None,
             elements: vec![],
         }),
@@ -411,6 +413,7 @@ fn test_subscribe_to_file_updated() {
     workspace.update_file(
         &path,
         crate::syntax::SyntaxFile::SysML(SysMLFile {
+            namespaces: vec![],
             namespace: None,
             elements: vec![],
         }),
@@ -430,6 +433,7 @@ fn test_invalidate_on_update() {
     workspace.add_file(
         path.clone(),
         crate::syntax::SyntaxFile::SysML(SysMLFile {
+            namespaces: vec![],
             namespace: None,
             elements: vec![],
         }),
@@ -443,6 +447,7 @@ fn test_invalidate_on_update() {
     workspace.update_file(
         &path,
         crate::syntax::SyntaxFile::SysML(SysMLFile {
+            namespaces: vec![],
             namespace: None,
             elements: vec![],
         }),
@@ -461,6 +466,7 @@ fn test_invalidate_dependent_files() {
     workspace.add_file(
         base_path.clone(),
         crate::syntax::SyntaxFile::SysML(SysMLFile {
+            namespaces: vec![],
             namespace: None,
             elements: vec![],
         }),
@@ -470,6 +476,7 @@ fn test_invalidate_dependent_files() {
     workspace.add_file(
         app_path.clone(),
         crate::syntax::SyntaxFile::SysML(SysMLFile {
+            namespaces: vec![],
             namespace: None,
             elements: vec![],
         }),
@@ -490,6 +497,7 @@ fn test_invalidate_dependent_files() {
     workspace.update_file(
         &base_path,
         crate::syntax::SyntaxFile::SysML(SysMLFile {
+            namespaces: vec![],
             namespace: None,
             elements: vec![],
         }),
@@ -511,6 +519,7 @@ fn test_invalidate_transitive_dependencies() {
     workspace.add_file(
         a_path.clone(),
         crate::syntax::SyntaxFile::SysML(SysMLFile {
+            namespaces: vec![],
             namespace: None,
             elements: vec![],
         }),
@@ -518,6 +527,7 @@ fn test_invalidate_transitive_dependencies() {
     workspace.add_file(
         b_path.clone(),
         crate::syntax::SyntaxFile::SysML(SysMLFile {
+            namespaces: vec![],
             namespace: None,
             elements: vec![],
         }),
@@ -525,6 +535,7 @@ fn test_invalidate_transitive_dependencies() {
     workspace.add_file(
         c_path.clone(),
         crate::syntax::SyntaxFile::SysML(SysMLFile {
+            namespaces: vec![],
             namespace: None,
             elements: vec![],
         }),
@@ -547,6 +558,7 @@ fn test_invalidate_transitive_dependencies() {
     workspace.update_file(
         &c_path,
         crate::syntax::SyntaxFile::SysML(SysMLFile {
+            namespaces: vec![],
             namespace: None,
             elements: vec![],
         }),
@@ -569,6 +581,7 @@ fn test_circular_dependency_simple() {
     workspace.add_file(
         a_path.clone(),
         crate::syntax::SyntaxFile::SysML(SysMLFile {
+            namespaces: vec![],
             namespace: None,
             elements: vec![],
         }),
@@ -576,6 +589,7 @@ fn test_circular_dependency_simple() {
     workspace.add_file(
         b_path.clone(),
         crate::syntax::SyntaxFile::SysML(SysMLFile {
+            namespaces: vec![],
             namespace: None,
             elements: vec![],
         }),
@@ -614,6 +628,7 @@ fn test_circular_dependency_complex() {
     workspace.add_file(
         a_path.clone(),
         crate::syntax::SyntaxFile::SysML(SysMLFile {
+            namespaces: vec![],
             namespace: None,
             elements: vec![],
         }),
@@ -621,6 +636,7 @@ fn test_circular_dependency_complex() {
     workspace.add_file(
         b_path.clone(),
         crate::syntax::SyntaxFile::SysML(SysMLFile {
+            namespaces: vec![],
             namespace: None,
             elements: vec![],
         }),
@@ -628,6 +644,7 @@ fn test_circular_dependency_complex() {
     workspace.add_file(
         c_path.clone(),
         crate::syntax::SyntaxFile::SysML(SysMLFile {
+            namespaces: vec![],
             namespace: None,
             elements: vec![],
         }),
@@ -674,6 +691,7 @@ fn test_no_circular_dependency_in_chain() {
     workspace.add_file(
         a_path.clone(),
         crate::syntax::SyntaxFile::SysML(SysMLFile {
+            namespaces: vec![],
             namespace: None,
             elements: vec![],
         }),
@@ -681,6 +699,7 @@ fn test_no_circular_dependency_in_chain() {
     workspace.add_file(
         b_path.clone(),
         crate::syntax::SyntaxFile::SysML(SysMLFile {
+            namespaces: vec![],
             namespace: None,
             elements: vec![],
         }),
@@ -688,6 +707,7 @@ fn test_no_circular_dependency_in_chain() {
     workspace.add_file(
         c_path.clone(),
         crate::syntax::SyntaxFile::SysML(SysMLFile {
+            namespaces: vec![],
             namespace: None,
             elements: vec![],
         }),
@@ -731,6 +751,7 @@ fn test_invalidation_with_circular_dependency() {
     workspace.add_file(
         a_path.clone(),
         crate::syntax::SyntaxFile::SysML(SysMLFile {
+            namespaces: vec![],
             namespace: None,
             elements: vec![],
         }),
@@ -738,6 +759,7 @@ fn test_invalidation_with_circular_dependency() {
     workspace.add_file(
         b_path.clone(),
         crate::syntax::SyntaxFile::SysML(SysMLFile {
+            namespaces: vec![],
             namespace: None,
             elements: vec![],
         }),
@@ -759,6 +781,7 @@ fn test_invalidation_with_circular_dependency() {
     workspace.update_file(
         &a_path,
         crate::syntax::SyntaxFile::SysML(SysMLFile {
+            namespaces: vec![],
             namespace: None,
             elements: vec![],
         }),
@@ -779,6 +802,7 @@ fn test_circular_dependency_self_reference() {
     workspace.add_file(
         a_path.clone(),
         crate::syntax::SyntaxFile::SysML(SysMLFile {
+            namespaces: vec![],
             namespace: None,
             elements: vec![],
         }),
@@ -844,6 +868,7 @@ fn test_populate_affected_after_update() {
     workspace.add_file(
         base_path.clone(),
         crate::syntax::SyntaxFile::SysML(SysMLFile {
+            namespaces: vec![],
             namespace: None,
             elements: vec![],
         }),
@@ -851,6 +876,7 @@ fn test_populate_affected_after_update() {
     workspace.add_file(
         app_path.clone(),
         crate::syntax::SyntaxFile::SysML(SysMLFile {
+            namespaces: vec![],
             namespace: None,
             elements: vec![],
         }),
@@ -870,6 +896,7 @@ fn test_populate_affected_after_update() {
     workspace.update_file(
         &base_path,
         crate::syntax::SyntaxFile::SysML(SysMLFile {
+            namespaces: vec![],
             namespace: None,
             elements: vec![],
         }),
@@ -900,6 +927,7 @@ fn test_populate_affected_selective() {
     workspace.add_file(
         a_path.clone(),
         crate::syntax::SyntaxFile::SysML(SysMLFile {
+            namespaces: vec![],
             namespace: None,
             elements: vec![],
         }),
@@ -907,6 +935,7 @@ fn test_populate_affected_selective() {
     workspace.add_file(
         b_path.clone(),
         crate::syntax::SyntaxFile::SysML(SysMLFile {
+            namespaces: vec![],
             namespace: None,
             elements: vec![],
         }),
@@ -914,6 +943,7 @@ fn test_populate_affected_selective() {
     workspace.add_file(
         c_path.clone(),
         crate::syntax::SyntaxFile::SysML(SysMLFile {
+            namespaces: vec![],
             namespace: None,
             elements: vec![],
         }),

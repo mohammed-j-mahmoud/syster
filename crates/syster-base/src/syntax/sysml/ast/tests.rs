@@ -372,6 +372,7 @@ impl AstVisitor for CountingVisitor {
 #[test]
 fn test_visitor_pattern() {
     let file = SysMLFile {
+        namespaces: vec![],
         namespace: None,
         elements: vec![
             Element::Package(Package {

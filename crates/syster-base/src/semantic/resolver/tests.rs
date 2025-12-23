@@ -914,6 +914,7 @@ fn test_resolve_import_nonexistent() {
 fn test_extract_no_imports() {
     // TDD: File with no imports returns empty vec
     let file = SysMLFile {
+        namespaces: vec![],
         namespace: None,
         elements: vec![],
     };
@@ -926,6 +927,7 @@ fn test_extract_no_imports() {
 fn test_extract_single_import() {
     // TDD: File with one import statement
     let file = SysMLFile {
+        namespaces: vec![],
         namespace: None,
         elements: vec![Element::Import(Import {
             path: "Base::Vehicle".to_string(),
@@ -943,6 +945,7 @@ fn test_extract_single_import() {
 fn test_extract_multiple_imports() {
     // TDD: File with multiple import statements
     let file = SysMLFile {
+        namespaces: vec![],
         namespace: None,
         elements: vec![
             Element::Import(Import {
@@ -974,6 +977,7 @@ fn test_extract_multiple_imports() {
 fn test_extract_recursive_imports() {
     // TDD: Wildcard imports should be captured
     let file = SysMLFile {
+        namespaces: vec![],
         namespace: None,
         elements: vec![Element::Import(Import {
             path: "SysML::*".to_string(),
@@ -993,6 +997,7 @@ fn test_extract_imports_mixed_elements() {
     use crate::syntax::sysml::ast::types::NamespaceDeclaration;
 
     let file = SysMLFile {
+        namespaces: vec![],
         namespace: Some(NamespaceDeclaration {
             name: "MyPackage".to_string(),
             span: None,

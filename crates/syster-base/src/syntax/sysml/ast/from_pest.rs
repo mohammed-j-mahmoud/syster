@@ -154,20 +154,29 @@ impl_from_pest!(SysMLFile, |pest: &mut Pairs<Rule>| {
 
     let mut elements = Vec::new();
     let mut namespace = None;
+    let mut namespaces = Vec::new();
 
     for pair in model.into_inner() {
         if pair.as_rule() == Rule::namespace_element
             && let Ok(element) = Element::from_pest(&mut pair.into_inner())
         {
+            // Track all package declarations (Issue #10)
             if let Element::Package(ref pkg) = element
-                && namespace.is_none()
                 && pkg.elements.is_empty()
                 && let Some(ref name) = pkg.name
             {
-                namespace = Some(NamespaceDeclaration {
+                let ns = NamespaceDeclaration {
                     name: name.clone(),
                     span: pkg.span,
-                });
+                };
+
+                // Keep first namespace for backward compatibility
+                if namespace.is_none() {
+                    namespace = Some(ns.clone());
+                }
+
+                // Collect all namespaces
+                namespaces.push(ns);
             }
             elements.push(element);
         }
@@ -175,6 +184,7 @@ impl_from_pest!(SysMLFile, |pest: &mut Pairs<Rule>| {
 
     Ok(SysMLFile {
         namespace,
+        namespaces,
         elements,
     })
 });

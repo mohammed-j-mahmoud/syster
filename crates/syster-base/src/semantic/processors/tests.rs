@@ -696,6 +696,7 @@ fn test_collect_package_tokens() {
         elements: vec![],
     };
     let sysml_file = SysMLFile {
+        namespaces: vec![],
         namespace: None,
         elements: vec![Element::Package(pkg)],
     };
@@ -730,6 +731,7 @@ fn test_collect_definition_tokens() {
     def.span = Some(Span::new(Position::new(1, 4), Position::new(1, 9)));
 
     let sysml_file = SysMLFile {
+        namespaces: vec![],
         namespace: None,
         elements: vec![Element::Definition(def)],
     };
@@ -761,6 +763,7 @@ fn test_collect_usage_tokens() {
     usage.span = Some(Span::new(Position::new(2, 4), Position::new(2, 11)));
 
     let sysml_file = SysMLFile {
+        namespaces: vec![],
         namespace: None,
         elements: vec![Element::Usage(usage)],
     };
@@ -789,6 +792,7 @@ fn test_collect_alias_tokens() {
         span: Some(Span::new(Position::new(3, 6), Position::new(3, 13))),
     };
     let sysml_file = SysMLFile {
+        namespaces: vec![],
         namespace: None,
         elements: vec![Element::Alias(alias)],
     };
@@ -825,6 +829,7 @@ fn test_collect_nested_tokens() {
         elements: vec![Element::Definition(inner_def)],
     };
     let sysml_file = SysMLFile {
+        namespaces: vec![],
         namespace: None,
         elements: vec![Element::Package(pkg)],
     };
@@ -865,6 +870,7 @@ fn test_tokens_sorted_by_position() {
     def2.span = Some(Span::new(Position::new(2, 0), Position::new(2, 6)));
 
     let sysml_file = SysMLFile {
+        namespaces: vec![],
         namespace: None,
         // Elements should be in document order (AST order)
         elements: vec![Element::Definition(def1), Element::Definition(def2)],
@@ -899,6 +905,7 @@ fn test_semantic_tokens_with_absolute_path() {
     def.span = Some(Span::new(Position::new(1, 4), Position::new(1, 11)));
 
     let sysml_file = SysMLFile {
+        namespaces: vec![],
         namespace: None,
         elements: vec![Element::Definition(def)],
     };
@@ -951,6 +958,7 @@ fn test_semantic_tokens_path_mismatch() {
     def.span = Some(Span::new(Position::new(1, 4), Position::new(1, 11)));
 
     let sysml_file = SysMLFile {
+        namespaces: vec![],
         namespace: None,
         elements: vec![Element::Definition(def)],
     };
@@ -1019,6 +1027,7 @@ fn test_semantic_tokens_path_with_spaces() {
     def.span = Some(Span::new(Position::new(2, 5), Position::new(2, 11)));
 
     let sysml_file = SysMLFile {
+        namespaces: vec![],
         namespace: None,
         elements: vec![Element::Definition(def)],
     };
@@ -1078,6 +1087,7 @@ fn test_semantic_tokens_stdlib_different_locations() {
         elements: vec![],
     };
     let sysml_file = SysMLFile {
+        namespaces: vec![],
         namespace: None,
         elements: vec![Element::Package(pkg)],
     };
@@ -1147,6 +1157,7 @@ fn test_semantic_tokens_shows_what_symbols_have_spans() {
     };
 
     let sysml_file = SysMLFile {
+        namespaces: vec![],
         namespace: None,
         elements: vec![Element::Package(pkg)],
     };

@@ -495,6 +495,7 @@ fn test_populate_sysml_file() {
 
     // Create a minimal valid SysML file
     let sysml_file = SysMLFile {
+        namespaces: vec![],
         namespace: None,
         elements: vec![],
     };
@@ -545,6 +546,7 @@ fn test_populate_preserves_existing_symbols() {
         .unwrap();
 
     let sysml_file = SysMLFile {
+        namespaces: vec![],
         namespace: None,
         elements: vec![],
     };
@@ -562,10 +564,12 @@ fn test_populate_multiple_files_sequentially() {
     let mut graph = RelationshipGraph::new();
 
     let file1 = SysMLFile {
+        namespaces: vec![],
         namespace: None,
         elements: vec![],
     };
     let file2 = SysMLFile {
+        namespaces: vec![],
         namespace: None,
         elements: vec![],
     };
@@ -587,6 +591,7 @@ fn test_populate_empty_file() {
     let mut populator = SysmlAdapter::new(&mut table);
 
     let file = SysMLFile {
+        namespaces: vec![],
         namespace: None,
         elements: vec![],
     };
@@ -601,6 +606,7 @@ fn test_populate_single_package() {
     let mut populator = SysmlAdapter::new(&mut table);
 
     let file = SysMLFile {
+        namespaces: vec![],
         namespace: None,
         elements: vec![Element::Package(Package {
             name: Some("TestPackage".to_string()),
@@ -633,6 +639,7 @@ fn test_populate_nested_packages() {
     let mut populator = SysmlAdapter::new(&mut table);
 
     let file = SysMLFile {
+        namespaces: vec![],
         namespace: None,
         elements: vec![Element::Package(Package {
             name: Some("Outer".to_string()),
@@ -671,6 +678,7 @@ fn test_populate_definition() {
     let mut populator = SysmlAdapter::new(&mut table);
 
     let file = SysMLFile {
+        namespaces: vec![],
         namespace: None,
         elements: vec![Element::Definition(Definition {
             kind: DefinitionKind::Part,

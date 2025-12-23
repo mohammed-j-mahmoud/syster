@@ -8,6 +8,7 @@ use crate::semantic::Severity;
 fn test_publish_no_errors() {
     // TDD: Empty errors should produce no diagnostics
     let result = ParseResult::success(crate::syntax::sysml::ast::SysMLFile {
+        namespaces: vec![],
         namespace: None,
         elements: vec![],
     });
