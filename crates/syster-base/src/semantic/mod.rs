@@ -11,11 +11,13 @@ pub mod symbol_table;
 pub mod types;
 pub mod workspace;
 
-pub use adapters::{SysmlAdapter, SysmlValidator, create_validator, populate_syntax_file};
+pub use adapters::{create_validator, populate_syntax_file, SysmlAdapter, SysmlValidator};
 pub use analyzer::{AnalysisContext, NoOpValidator, RelationshipValidator, SemanticAnalyzer};
 pub use graphs::{DependencyGraph, RelationshipGraph};
 pub use processors::ReferenceCollector;
-pub use resolver::{Resolver, extract_imports, is_wildcard_import, parse_import_path};
+pub use resolver::{
+    extract_imports, extract_kerml_imports, is_wildcard_import, parse_import_path, Resolver,
+};
 pub use symbol_table::SymbolTable;
 pub use types::{
     DependencyEvent, Diagnostic, Location as DiagnosticLocation, Location, Position, Range,
