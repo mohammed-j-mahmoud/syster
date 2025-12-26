@@ -67,8 +67,7 @@ pub fn apply_text_edit(text: &str, range: &Range, new_text: &str) -> Result<Stri
     // Validate range
     if start_byte > end_byte {
         return Err(format!(
-            "Invalid range: start ({}) > end ({})",
-            start_byte, end_byte
+            "Invalid range: start ({start_byte}) > end ({end_byte})"
         ));
     }
 
@@ -87,14 +86,6 @@ pub fn apply_text_edit(text: &str, range: &Range, new_text: &str) -> Result<Stri
     result.push_str(&text[end_byte..]);
 
     Ok(result)
-}
-
-/// Extract the word at the cursor position from the document text
-pub fn extract_word_at_cursor(text: &str, position: Position) -> Option<String> {
-    let lines: Vec<&str> = text.lines().collect();
-    let line = lines.get(position.line as usize)?;
-
-    syster::core::text_utils::extract_word_at_cursor(line, position.character as usize)
 }
 
 /// Convert our Span to LSP Range

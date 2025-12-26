@@ -685,6 +685,334 @@ fn test_find_references_nested_elements() {
     assert!(lines.contains(&4)); // rearWheel
 }
 
+// Edge case tests for references
+#[test]
+fn test_references_with_include_declaration() {
+    let mut server = LspServer::new();
+    let uri = Url::parse("file:///test.sysml").unwrap();
+    let text = r#"
+package Test {
+    part def Vehicle;
+    part car : Vehicle;
+}
+    "#;
+
+    server.open_document(&uri, text).unwrap();
+
+    // Find references including declaration
+    let position = Position::new(2, 14); // On "Vehicle" definition
+    let locations = server
+        .get_references(&uri, position, true)
+        .expect("Must find references");
+
+    // MUST include both definition and usage when include_declaration=true
+    assert_eq!(
+        locations.len(),
+        2,
+        "Must include exactly 2 references: declaration (line 2) and usage (line 3)"
+    );
+
+    let lines: Vec<u32> = locations.iter().map(|l| l.range.start.line).collect();
+    assert!(
+        lines.contains(&2),
+        "Must include definition line when include_declaration=true"
+    );
+    assert!(
+        lines.contains(&3),
+        "Must include usage line 'part car : Vehicle'"
+    );
+}
+
+#[test]
+fn test_references_exclude_declaration() {
+    let mut server = LspServer::new();
+    let uri = Url::parse("file:///test.sysml").unwrap();
+    let text = r#"
+package Test {
+    part def Vehicle;
+    part car : Vehicle;
+    part bike : Vehicle;
+}
+    "#;
+
+    server.open_document(&uri, text).unwrap();
+
+    // Find references excluding declaration
+    let position = Position::new(2, 14); // On "Vehicle" definition
+    let locations = server
+        .get_references(&uri, position, false)
+        .expect("Must find references even when excluding declaration");
+
+    // MUST NOT include definition when include_declaration=false
+    let lines: Vec<u32> = locations.iter().map(|l| l.range.start.line).collect();
+
+    assert!(
+        !lines.contains(&2),
+        "Must NOT include definition line when include_declaration=false"
+    );
+
+    // MUST include usages
+    assert!(
+        lines.contains(&3) && lines.contains(&4),
+        "Must include both usage lines (3: car, 4: bike)"
+    );
+
+    assert_eq!(
+        locations.len(),
+        2,
+        "Must have exactly 2 references (excluding definition)"
+    );
+}
+
+#[test]
+fn test_references_across_files() {
+    let mut server = LspServer::new();
+
+    // File 1: Define type
+    let file1_uri = Url::parse("file:///types.sysml").unwrap();
+    let file1_text = r#"
+package Types {
+    part def Vehicle;
+}
+    "#;
+
+    // File 2: Use type multiple times
+    let file2_uri = Url::parse("file:///usage.sysml").unwrap();
+    let file2_text = r#"
+package Usage {
+    import Types::Vehicle;
+    part car : Vehicle;
+    part truck : Vehicle;
+}
+    "#;
+
+    server.open_document(&file1_uri, file1_text).unwrap();
+    server.open_document(&file2_uri, file2_text).unwrap();
+
+    // Find references from definition in file1
+    let position = Position::new(2, 14); // On "Vehicle" in file1
+    let locations = server
+        .get_references(&file1_uri, position, true)
+        .expect("Must find cross-file references");
+
+    // MUST find references in both files
+    let uris: std::collections::HashSet<_> = locations.iter().map(|l| &l.uri).collect();
+
+    assert!(
+        uris.contains(&file1_uri),
+        "Must find reference in definition file (types.sysml)"
+    );
+    assert!(
+        uris.contains(&file2_uri),
+        "Must find references in usage file (usage.sysml)"
+    );
+
+    // Count references per file
+    let file1_refs: Vec<_> = locations.iter().filter(|l| l.uri == file1_uri).collect();
+    let file2_refs: Vec<_> = locations.iter().filter(|l| l.uri == file2_uri).collect();
+
+    assert_eq!(
+        file1_refs.len(),
+        1,
+        "Must have exactly 1 reference in file1 (definition)"
+    );
+    assert_eq!(
+        file2_refs.len(),
+        3,
+        "Must have exactly 3 references in file2 (import + 2 usages)"
+    );
+}
+
+#[test]
+fn test_references_qualified_name_fallback() {
+    let mut server = LspServer::new();
+    let uri = Url::parse("file:///test.sysml").unwrap();
+    let text = r#"
+package Outer {
+    package Inner {
+        part def Vehicle;
+    }
+    part car : Inner::Vehicle;
+}
+    "#;
+
+    server.open_document(&uri, text).unwrap();
+
+    // Debug: print all symbols and their references
+    eprintln!("\nAll symbols:");
+    for (name, symbol) in server.workspace.symbol_table().all_symbols() {
+        eprintln!(
+            "  '{}' -> '{}' with {} refs",
+            name,
+            symbol.qualified_name(),
+            symbol.references().len()
+        );
+        for r in symbol.references() {
+            eprintln!("    Ref at {}:{}", r.span.start.line, r.span.start.column);
+        }
+    }
+
+    // Debug: check relationship graph
+    eprintln!("\nTyping relationships:");
+    for (name, _) in server.workspace.symbol_table().all_symbols() {
+        if let Some((target, span)) = server
+            .workspace
+            .relationship_graph()
+            .get_one_to_one_with_span("typing", name)
+        {
+            eprintln!("  {name} -> {target} (span: {span:?})");
+        }
+    }
+
+    // Find references using qualified name
+    let position = Position::new(5, 23); // On "Vehicle" in "Inner::Vehicle"
+    let locations = server
+        .get_references(&uri, position, true)
+        .expect("Must resolve qualified name and find references");
+
+    // MUST find exactly definition and qualified usage
+    assert_eq!(
+        locations.len(),
+        2,
+        "Must find exactly 2 references: definition (line 3) and qualified usage (line 5)"
+    );
+
+    let lines: Vec<u32> = locations.iter().map(|l| l.range.start.line).collect();
+
+    assert!(
+        lines.contains(&3),
+        "Must find definition 'part def Vehicle' at line 3"
+    );
+    assert!(
+        lines.contains(&5),
+        "Must find qualified usage 'Inner::Vehicle' at line 5"
+    );
+}
+
+#[test]
+fn test_references_symbol_not_found() {
+    let mut server = LspServer::new();
+    let uri = Url::parse("file:///test.sysml").unwrap();
+    let text = "package Test {}";
+
+    server.open_document(&uri, text).unwrap();
+
+    // Try to find references at position with no symbol
+    let position = Position::new(0, 5); // On "age" in "package" keyword
+    let locations = server.get_references(&uri, position, true);
+
+    // MUST return None or empty for non-symbol positions
+    if let Some(locs) = locations {
+        assert!(
+            locs.is_empty(),
+            "Must return empty list when no symbol at position (keyword positions don't have references)"
+        );
+    }
+    // None is also acceptable: correctly identified no symbol to find references for
+}
+
+#[test]
+fn test_references_with_shadowing() {
+    let mut server = LspServer::new();
+    let uri = Url::parse("file:///test.sysml").unwrap();
+    let text = r#"
+package Test {
+    part def Vehicle;
+    package Nested {
+        part def Vehicle;
+        part car : Vehicle;
+    }
+    part truck : Vehicle;
+}
+    "#;
+
+    server.open_document(&uri, text).unwrap();
+
+    // Find references to outer Vehicle
+    let position = Position::new(2, 14); // On outer "Vehicle"
+    let locations = server
+        .get_references(&uri, position, true)
+        .expect("Must find references to outer Vehicle");
+
+    let lines: Vec<u32> = locations.iter().map(|l| l.range.start.line).collect();
+
+    // MUST include outer Vehicle definition
+    assert!(
+        lines.contains(&2),
+        "Must include outer Vehicle definition at line 2"
+    );
+
+    // MUST include usage of outer Vehicle (line 7: truck)
+    assert!(
+        lines.contains(&7),
+        "Must include usage of outer Vehicle at line 7 'part truck : Vehicle'"
+    );
+
+    // MUST NOT include shadowed inner Vehicle (line 4)
+    assert!(
+        !lines.contains(&4),
+        "Must NOT include shadowed inner 'part def Vehicle' at line 4 (different symbol)"
+    );
+
+    // MUST NOT include usage referring to inner Vehicle (line 5: car)
+    assert!(
+        !lines.contains(&5),
+        "Must NOT include 'part car : Vehicle' at line 5 (refers to inner Vehicle, not outer)"
+    );
+
+    // Exactly 2 references: definition + truck usage
+    assert_eq!(
+        locations.len(),
+        2,
+        "Must have exactly 2 references: outer definition + truck usage"
+    );
+}
+
+#[test]
+fn test_references_to_imported_symbol() {
+    let mut server = LspServer::new();
+    let uri = Url::parse("file:///test.sysml").unwrap();
+    let text = r#"
+package Test {
+    part def Vehicle;
+}
+package Usage {
+    import Test::Vehicle;
+    part car : Vehicle;
+}
+    "#;
+
+    server.open_document(&uri, text).unwrap();
+
+    // Find references to Vehicle from definition
+    let position = Position::new(2, 14); // On "Vehicle" definition
+    let locations = server
+        .get_references(&uri, position, true)
+        .expect("Must find references through import");
+
+    // MUST find definition, import, and usage
+    assert_eq!(
+        locations.len(),
+        3,
+        "Must find exactly 3 references: definition (line 2), import (line 5), and usage (line 6)"
+    );
+
+    let lines: Vec<u32> = locations.iter().map(|l| l.range.start.line).collect();
+
+    assert!(
+        lines.contains(&2),
+        "Must include definition 'part def Vehicle' at line 2"
+    );
+    assert!(
+        lines.contains(&5),
+        "Must include import 'import Test::Vehicle' at line 5"
+    );
+    assert!(
+        lines.contains(&6),
+        "Must include usage 'part car : Vehicle' at line 6"
+    );
+}
+
 #[test]
 fn test_document_symbols() {
     let mut server = LspServer::new();
@@ -951,6 +1279,246 @@ fn test_code_completion_file_types() {
     assert!(!sysml_keywords.contains(&"classifier"));
 }
 
+// Edge case tests for completion
+#[test]
+fn test_completion_filters_by_context() {
+    let mut server = LspServer::new();
+    let uri = Url::parse("file:///test.sysml").unwrap();
+    let text = r#"
+package Test {
+    part def Vehicle;
+    attribute def Speed;
+    part car : 
+}
+    "#;
+
+    server.open_document(&uri, text).unwrap();
+
+    eprintln!(
+        "DEBUG: Workspace file count: {}",
+        server.workspace().file_count()
+    );
+    eprintln!(
+        "DEBUG: Symbol table size: {}",
+        server.workspace().symbol_table().all_symbols().len()
+    );
+    eprintln!("DEBUG: Parse errors: {:?}", server.get_diagnostics(&uri));
+
+    // Position after colon - should suggest type symbols
+    let position = Position::new(4, 15);
+    let result = server.get_completions(std::path::Path::new("/test.sysml"), position);
+
+    match result {
+        tower_lsp::lsp_types::CompletionResponse::Array(items) => {
+            let labels: Vec<_> = items.iter().map(|i| i.label.as_str()).collect();
+
+            eprintln!("Completions returned: {} items", items.len());
+            eprintln!("Labels: {labels:?}");
+
+            // Should include both definition types as valid typing targets
+            assert!(
+                labels.contains(&"Vehicle"),
+                "Should suggest 'Vehicle' as a type after colon. Got: {labels:?}"
+            );
+            assert!(
+                labels.contains(&"Speed"),
+                "Should suggest 'Speed' as a type after colon. Got: {labels:?}"
+            );
+        }
+        _ => panic!("Expected completion array for type context"),
+    }
+}
+
+#[test]
+fn test_completion_includes_imported_symbols() {
+    let mut server = LspServer::new();
+
+    let file1_uri = Url::parse("file:///types.sysml").unwrap();
+    let file1_text = r#"
+package Types {
+    part def Engine;
+}
+    "#;
+
+    let file2_uri = Url::parse("file:///usage.sysml").unwrap();
+    let file2_text = r#"
+package Usage {
+    import Types::*;
+    part car : 
+}
+    "#;
+
+    server.open_document(&file1_uri, file1_text).unwrap();
+    server.open_document(&file2_uri, file2_text).unwrap();
+
+    // Position after colon in file2
+    let position = Position::new(3, 15);
+    let result = server.get_completions(std::path::Path::new("/usage.sysml"), position);
+
+    match result {
+        tower_lsp::lsp_types::CompletionResponse::Array(items) => {
+            let labels: Vec<_> = items.iter().map(|i| i.label.as_str()).collect();
+
+            assert!(
+                labels.contains(&"Engine"),
+                "Should suggest imported 'Engine' type in completions"
+            );
+        }
+        _ => panic!("Expected completion array with imported symbols"),
+    }
+}
+
+#[test]
+fn test_completion_respects_scope() {
+    let mut server = LspServer::new();
+    let uri = Url::parse("file:///test.sysml").unwrap();
+    let text = r#"
+package Outer {
+    part def OuterType;
+    
+    package Inner {
+        part def InnerType;
+        part item : 
+    }
+}
+    "#;
+
+    server.open_document(&uri, text).unwrap();
+
+    // Position in Inner package after colon
+    let position = Position::new(6, 20);
+    let result = server.get_completions(std::path::Path::new("/test.sysml"), position);
+
+    match result {
+        tower_lsp::lsp_types::CompletionResponse::Array(items) => {
+            let labels: Vec<_> = items.iter().map(|i| i.label.as_str()).collect();
+
+            // Should see both inner and outer types
+            assert!(
+                labels.contains(&"InnerType"),
+                "Should suggest InnerType from current scope"
+            );
+            assert!(
+                labels.contains(&"OuterType"),
+                "Should suggest OuterType from parent scope"
+            );
+        }
+        _ => panic!("Expected completion array with scoped symbols"),
+    }
+}
+
+#[test]
+fn test_completion_after_specializes_suggests_compatible_types() {
+    let mut server = LspServer::new();
+    let uri = Url::parse("file:///test.sysml").unwrap();
+    let text = r#"
+package Test {
+    part def Base;
+    part def Other;
+    part def Derived specializes 
+}
+    "#;
+
+    server.open_document(&uri, text).unwrap();
+
+    // Position after "specializes" keyword
+    let position = Position::new(4, 34);
+    let result = server.get_completions(std::path::Path::new("/test.sysml"), position);
+
+    match result {
+        tower_lsp::lsp_types::CompletionResponse::Array(items) => {
+            let labels: Vec<_> = items.iter().map(|i| i.label.as_str()).collect();
+
+            // Should suggest compatible types for specialization
+            assert!(
+                labels.contains(&"Base") || labels.contains(&"Other"),
+                "Should suggest type definitions after 'specializes'"
+            );
+        }
+        _ => panic!("Expected completion array after relationship keyword"),
+    }
+}
+
+#[test]
+fn test_completion_in_incomplete_expression() {
+    let mut server = LspServer::new();
+    let uri = Url::parse("file:///test.sysml").unwrap();
+    let text = r#"
+package Test {
+    attribute def Speed;
+    part def Vehicle {
+        attribute speed : Speed;
+        attribute maxSpeed : Speed = speed.
+    }
+}
+    "#;
+
+    server.open_document(&uri, text).unwrap();
+
+    // Position after "speed." - should suggest member access
+    let position = Position::new(5, 46);
+    let result = server.get_completions(std::path::Path::new("/test.sysml"), position);
+
+    // At minimum, should return a response (even if empty for now)
+    match result {
+        tower_lsp::lsp_types::CompletionResponse::Array(_items) => {
+            // Member access completion is complex,
+            // but we should at least handle the request without crashing
+        }
+        _ => {
+            // Other response types are acceptable
+        }
+    }
+}
+
+#[test]
+fn test_completion_empty_file() {
+    let mut server = LspServer::new();
+    let uri = Url::parse("file:///test.sysml").unwrap();
+    let text = "";
+
+    server.open_document(&uri, text).unwrap();
+
+    let position = Position::new(0, 0);
+    let result = server.get_completions(std::path::Path::new("/test.sysml"), position);
+
+    match result {
+        tower_lsp::lsp_types::CompletionResponse::Array(items) => {
+            assert!(
+                !items.is_empty(),
+                "Should provide top-level keywords in empty file"
+            );
+            let labels: Vec<_> = items.iter().map(|i| i.label.as_str()).collect();
+            assert!(
+                labels.contains(&"package"),
+                "Should suggest 'package' keyword in empty file"
+            );
+        }
+        _ => panic!("Expected completion array in empty file"),
+    }
+}
+
+#[test]
+fn test_completion_handles_invalid_position() {
+    let mut server = LspServer::new();
+    let uri = Url::parse("file:///test.sysml").unwrap();
+    let text = "package Test {}";
+
+    server.open_document(&uri, text).unwrap();
+
+    // Position beyond end of file
+    let position = Position::new(100, 100);
+    let result = server.get_completions(std::path::Path::new("/test.sysml"), position);
+
+    // Should handle gracefully without crashing
+    match result {
+        tower_lsp::lsp_types::CompletionResponse::Array(_)
+        | tower_lsp::lsp_types::CompletionResponse::List(_) => {
+            // Either response type is acceptable as long as it doesn't crash
+        }
+    }
+}
+
 #[test]
 fn test_rename_symbol() {
     let mut server = LspServer::new();
@@ -1018,6 +1586,230 @@ package TestPkg {
 
     let edit_texts: Vec<&str> = edits.iter().map(|e| e.new_text.as_str()).collect();
     assert!(edit_texts.iter().all(|&t| t == "Automobile"));
+}
+
+// Edge case tests for rename
+#[test]
+fn test_rename_across_multiple_files() {
+    let mut server = LspServer::new();
+
+    // File 1: Define the type
+    let file1_uri = Url::parse("file:///types.sysml").unwrap();
+    let file1_text = r#"
+package Types {
+    part def Vehicle;
+}
+    "#;
+
+    // File 2: Use the type
+    let file2_uri = Url::parse("file:///usage.sysml").unwrap();
+    let file2_text = r#"
+package Usage {
+    import Types::Vehicle;
+    part car : Vehicle;
+}
+    "#;
+
+    server.open_document(&file1_uri, file1_text).unwrap();
+    server.open_document(&file2_uri, file2_text).unwrap();
+
+    // Rename from file1 (definition)
+    let position = Position::new(2, 14); // On "Vehicle" in definition
+    let Some(edit) = server.get_rename_edits(&file1_uri, position, "Automobile") else {
+        panic!("Rename across files should be supported");
+    };
+
+    let Some(changes) = edit.changes else {
+        panic!("Should provide workspace edits for cross-file rename");
+    };
+
+    // MUST update both files
+    assert!(
+        changes.contains_key(&file1_uri),
+        "Must rename in definition file"
+    );
+    assert!(
+        changes.contains_key(&file2_uri),
+        "Must rename in usage file including import statement"
+    );
+
+    // Verify import statement updated
+    let file2_edits = &changes[&file2_uri];
+    let has_import_edit = file2_edits.iter().any(|e| e.range.start.line == 2);
+    assert!(
+        has_import_edit,
+        "Import statement 'import Types::Vehicle' must be updated to 'import Types::Automobile'"
+    );
+
+    // All edits must use new name
+    for (_uri, edits) in changes.iter() {
+        for edit in edits {
+            assert_eq!(
+                edit.new_text, "Automobile",
+                "All rename edits must use the new name"
+            );
+        }
+    }
+}
+
+#[test]
+fn test_rename_qualified_name() {
+    let mut server = LspServer::new();
+    let uri = Url::parse("file:///test.sysml").unwrap();
+    let text = r#"
+package Outer {
+    package Inner {
+        part def Vehicle;
+    }
+    part car : Inner::Vehicle;
+}
+    "#;
+
+    server.open_document(&uri, text).unwrap();
+
+    // Rename using qualified reference
+    let position = Position::new(5, 23); // On "Vehicle" in "Inner::Vehicle"
+    let Some(edit) = server.get_rename_edits(&uri, position, "Automobile") else {
+        panic!("Should support rename from qualified name position");
+    };
+
+    let Some(changes) = edit.changes else {
+        panic!("Should provide edits for qualified name rename");
+    };
+
+    let Some(edits) = changes.get(&uri) else {
+        panic!("Should have edits in file");
+    };
+
+    // Must update both definition and qualified usage
+    assert_eq!(
+        edits.len(),
+        2,
+        "Must update exactly 2 locations: definition at line 3 and qualified usage at line 5"
+    );
+
+    let def_updated = edits.iter().any(|e| e.range.start.line == 3);
+    let qualified_updated = edits.iter().any(|e| e.range.start.line == 5);
+
+    assert!(
+        def_updated,
+        "Must update definition 'part def Vehicle' -> 'part def Automobile'"
+    );
+    assert!(
+        qualified_updated,
+        "Must update qualified usage 'Inner::Vehicle' -> 'Inner::Automobile'"
+    );
+}
+
+#[test]
+fn test_rename_nonexistent_symbol() {
+    let mut server = LspServer::new();
+    let uri = Url::parse("file:///test.sysml").unwrap();
+    let text = "package Test {}";
+
+    server.open_document(&uri, text).unwrap();
+
+    // Try to rename at a position with no symbol
+    let position = Position::new(0, 5); // On "age" in "package" (not a renameable symbol)
+    let result = server.get_rename_edits(&uri, position, "NewName");
+
+    // Must return None for non-symbol positions
+    assert!(
+        result.is_none(),
+        "Must return None when no renameable symbol at position (keywords cannot be renamed)"
+    );
+}
+
+#[test]
+fn test_rename_with_no_usages() {
+    let mut server = LspServer::new();
+    let uri = Url::parse("file:///test.sysml").unwrap();
+    let text = r#"
+package Test {
+    part def UnusedType;
+}
+    "#;
+
+    server.open_document(&uri, text).unwrap();
+
+    // Rename the unused definition
+    let position = Position::new(2, 14); // On "UnusedType"
+    let Some(edit) = server.get_rename_edits(&uri, position, "NewType") else {
+        panic!("Should support rename even with no usages");
+    };
+
+    let Some(changes) = edit.changes else {
+        panic!("Should provide changes");
+    };
+
+    let Some(edits) = changes.get(&uri) else {
+        panic!("Should have edits in file");
+    };
+
+    // Must have exactly 1 edit (just the definition)
+    assert_eq!(
+        edits.len(),
+        1,
+        "Must have exactly one edit when symbol has no usages"
+    );
+    assert_eq!(edits[0].new_text, "NewType", "Edit must use the new name");
+    assert_eq!(
+        edits[0].range.start.line, 2,
+        "Edit must be on the definition line"
+    );
+}
+
+#[test]
+fn test_rename_preserves_other_symbols() {
+    let mut server = LspServer::new();
+    let uri = Url::parse("file:///test.sysml").unwrap();
+    let text = r#"
+package Test {
+    part def Car;
+    part def Bike;
+    part myCar : Car;
+}
+    "#;
+
+    server.open_document(&uri, text).unwrap();
+
+    // Rename only "Car"
+    let position = Position::new(2, 14); // On "Car"
+    let Some(edit) = server.get_rename_edits(&uri, position, "Vehicle") else {
+        panic!("Should provide rename edits");
+    };
+
+    let Some(changes) = edit.changes else {
+        panic!("Should provide changes");
+    };
+
+    let Some(edits) = changes.get(&uri) else {
+        panic!("Should have edits in file");
+    };
+
+    // Must rename Car and its usage only
+    assert_eq!(
+        edits.len(),
+        2,
+        "Must have exactly 2 edits: definition + one usage"
+    );
+
+    // Verify only "Car" lines are edited
+    for edit in edits {
+        let line = edit.range.start.line;
+        assert!(
+            line == 2 || line == 4,
+            "Must only edit lines with 'Car' (2 and 4), not 'Bike' (line 3)"
+        );
+        assert_eq!(edit.new_text, "Vehicle", "All edits must use new name");
+    }
+
+    // Verify Bike line is NOT in edits
+    let bike_edited = edits.iter().any(|e| e.range.start.line == 3);
+    assert!(
+        !bike_edited,
+        "Must NOT edit 'Bike' definition when renaming 'Car'"
+    );
 }
 
 #[test]
