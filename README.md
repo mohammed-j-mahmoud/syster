@@ -18,6 +18,10 @@ graph TB
         LSP[language-server<br/>LSP Implementation]
     end
 
+    subgraph "Python Bindings"
+        Tree[tree<br/>Python Wrapper]
+    end
+
     subgraph "VS Code Extensions (TypeScript)"
         Client[language-client<br/>LSP Extension]
         Modeller[modeller<br/>Diagram Editor]
@@ -32,6 +36,7 @@ graph TB
     SysML --> Base
     Base --> CLI
     Base --> LSP
+    CLI --> Tree
     LSP <--> Client
     Core --> UI
     UI --> Modeller
@@ -48,6 +53,7 @@ Feature-based organization with independent submodules for versioning flexibilit
 syster/
 ├── base/                  # Parser, AST, semantic analysis
 ├── cli/                   # Command-line tool
+├── tree/                  # Python wrapper (systree)
 ├── language-server/       # Language Server Protocol implementation
 ├── language-client/       # VS Code LSP extension
 ├── modeller/              # VS Code modeller extension
@@ -63,6 +69,7 @@ syster/
 |---------|------|------------|-------------|
 | **Base** | `base/` | [syster-base](https://github.com/jade-codes/syster-base) | Parser, AST, semantic analysis |
 | **CLI** | `cli/` | [syster-cli](https://github.com/jade-codes/syster-cli) | Command-line tool |
+| **Python** | `tree/` | [syster-tree](https://github.com/jade-codes/syster-tree) | Python wrapper (`pip install systree`) |
 | **LSP Server** | `language-server/` | [syster-lsp](https://github.com/jade-codes/syster-lsp) | Language Server Protocol |
 | **LSP Client** | `language-client/` | [syster-vscode-lsp](https://github.com/jade-codes/syster-vscode-lsp) | VS Code language support |
 | **Diagram Core** | `diagram-core/` | [syster-diagram-core](https://github.com/jade-codes/syster-diagram-core) | Diagram types (TS) |
@@ -108,10 +115,31 @@ cd cli && cargo build
 # Build the LSP server
 cd language-server && cargo build
 
+# Install Python wrapper
+cd tree && pip install -e ".[dev]"
+
 # Build VS Code extensions
 cd language-client && npm install && npm run compile
 cd modeller && npm install && npm run compile
 cd viewer && npm install && npm run compile
+```
+
+### Python Usage
+
+```python
+from systree import analyze, get_symbols, export_xmi
+
+# Analyze a SysML file
+result = analyze("model.sysml")
+print(f"Symbols: {result.symbol_count}, Errors: {result.error_count}")
+
+# Extract symbols
+for fs in get_symbols("model.sysml"):
+    for sym in fs.symbols:
+        print(f"{sym.kind}: {sym.qualified_name}")
+
+# Export to XMI
+xmi = export_xmi("model.sysml")
 ```
 
 ### Running the VS Code Extension Locally
@@ -133,6 +161,8 @@ cd viewer && npm install && npm run compile
 Documentation lives in each component's repository:
 
 - **[syster-base](https://github.com/jade-codes/syster-base)** - Core architecture, SysML primer, contributing guide
+- **[syster-cli](https://github.com/jade-codes/syster-cli)** - CLI usage and interchange formats
+- **[syster-tree](https://github.com/jade-codes/syster-tree)** - Python API reference
 - **[syster-lsp](https://github.com/jade-codes/syster-lsp)** - LSP features and VS Code extension usage
 
 ## License

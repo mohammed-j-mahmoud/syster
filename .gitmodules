@@ -25,3 +25,6 @@
 [submodule "viewer"]
 	path = viewer
 	url = https://github.com/jade-codes/syster-vscode-viewer.git
+[submodule "tree"]
+	path = tree
+	url = https://github.com/jade-codes/syster-tree.git
